@@ -19,6 +19,8 @@ typedef enum token_type_s {
 
 const char *token_type_to_string(TokenType type);
 
+#undef self_t
+
 typedef struct loc_s {
     size_t start;
     size_t end;
@@ -28,6 +30,20 @@ typedef struct token_s {
     TokenType type;
     Loc loc;
 } Token;
+
+typedef struct token_list_s {
+    uint32_t size;
+    uint32_t capacity;
+    Token *data;
+} TokenList;
+
+#define self_t TokenList *self
+
+void token_list_init(self_t);
+void token_list_free(self_t);
+void token_list_insert(self_t, Token token);
+
+#undef self_t
 
 typedef struct lexer_s {
     const uint8_t *start;

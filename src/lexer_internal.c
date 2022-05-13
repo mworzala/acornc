@@ -4,11 +4,11 @@
 
 
 // Character predicates
-bool is_digit(uint8_t c) {
+bool lex_is_digit(uint8_t c) {
     return c >= '0' && c <= '9';
 }
 
-bool is_alpha(uint8_t c) {
+bool lex_is_alpha(uint8_t c) {
     return c >= 'a' && c <= 'z' ||
            c >= 'A' && c <= 'Z' ||
            c == '_';
@@ -19,20 +19,20 @@ bool is_alpha(uint8_t c) {
 
 // Scanning utilities
 
-bool at_end(self_t) {
+bool lex_at_end(self_t) {
     return *self->current == '\0';
 }
 
-uint8_t peek0(self_t) {
+uint8_t lex_peek0(self_t) {
     return *self->current;
 }
 
-uint8_t peek1(self_t) {
-    if (at_end(self)) return '\0';
+uint8_t lex_peek1(self_t) {
+    if (lex_at_end(self)) return '\0';
     return *(self->current + 1);
 }
 
-uint8_t advance(self_t) {
+uint8_t lex_advance(self_t) {
     self->current++;
     return self->current[-1];
 }
@@ -63,21 +63,21 @@ Token new_token_error(self_t, const char *message) {
 
 // Complex lex rules
 
-void skip_trivia(self_t) {
+void lex_skip_trivia(self_t) {
     for (;;) {
-        uint8_t c = peek0(self);
+        uint8_t c = lex_peek0(self);
         switch (c) {
             case ' ':
             case '\t':
             case '\r':
             case '\n':
-                advance(self);
+                lex_advance(self);
                 break;
             case '/':
                 // If there are two slashes, its a comment. Ignore until end of line.
-                if (peek1(self) == '/') {
-                    while (peek0(self) != '\n' && !at_end(self))
-                        advance(self);
+                if (lex_peek1(self) == '/') {
+                    while (lex_peek0(self) != '\n' && !lex_at_end(self))
+                        lex_advance(self);
                 } else return; // not a comment, parse the slash normally
             default:
                 return;
@@ -87,17 +87,17 @@ void skip_trivia(self_t) {
 
 Token lex_number(self_t) {
     // Read digits before decimal
-    while (is_digit(peek0(self))) {
-        advance(self);
+    while (lex_is_digit(lex_peek0(self))) {
+        lex_advance(self);
     }
 
     // Fractional section
-    if (peek0(self) == '.' && is_digit(peek1(self))) {
-        advance(self); // Eat the .
+    if (lex_peek0(self) == '.' && lex_is_digit(lex_peek1(self))) {
+        lex_advance(self); // Eat the .
 
         // Consume the remaining digits
-        while (is_digit(peek0(self))) {
-            advance(self);
+        while (lex_is_digit(lex_peek0(self))) {
+            lex_advance(self);
         }
     }
 

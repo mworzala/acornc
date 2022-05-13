@@ -1,5 +1,31 @@
 #include "lexer.h"
 #include "lexer_internal.h"
+#include "array_util.h"
+
+#define self_t TokenList *self
+
+void token_list_init(self_t) {
+    self->size = 0;
+    self->capacity = 0;
+    self->data = NULL;
+}
+
+void token_list_free(self_t) {
+    ARRAY_FREE(Token, self->data);
+    token_list_init(self);
+}
+
+void token_list_insert(self_t, Token token) {
+    if (self->capacity < self->size + 1) {
+        self->capacity = ARRAY_GROW_CAPCITY(self->capacity);
+        self->data = ARRAY_GROW(Token, self->data, self->capacity);
+    }
+
+    self->data[self->size] = token;
+    self->size++;
+}
+
+#undef self_t
 
 #define self_t Lexer *self
 
@@ -9,18 +35,18 @@ void lexer_init(self_t, const uint8_t *source) {
 }
 
 Token lexer_next(self_t) {
-    skip_trivia(self);
+    lex_skip_trivia(self);
     self->start = self->current;
 
-    if (at_end(self)) {
+    if (lex_at_end(self)) {
         return new_token(self, TOK_EOF);
     }
 
-    uint8_t c = advance(self);
+    uint8_t c = lex_advance(self);
 
-//    if (is_alpha(self,c))
+//    if (lex_is_alpha(self,c))
 //        return lex_ident(self);
-    if (is_digit(c))
+    if (lex_is_digit(c))
         return lex_number(self);
 //    if (c == '"')
 //        return lex_string(self);

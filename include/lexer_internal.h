@@ -8,16 +8,16 @@ typedef struct lexer_s Lexer;
 typedef struct token_s Token;
 
 // Character predicates
-bool is_digit(uint8_t c);
-bool is_alpha(uint8_t c);
+bool lex_is_digit(uint8_t c);
+bool lex_is_alpha(uint8_t c);
 
 #define self_t Lexer *self
 
 // Scanning utilities
-bool at_end(self_t);
-uint8_t peek0(self_t);
-uint8_t peek1(self_t);
-uint8_t advance(self_t);
+bool lex_at_end(self_t);
+uint8_t lex_peek0(self_t);
+uint8_t lex_peek1(self_t);
+uint8_t lex_advance(self_t);
 //uint8_t peek_next(self_t);
 
 // Token factory
@@ -26,7 +26,7 @@ Token new_token_error(self_t, const char *message);
 
 // Complex lex rules
 
-void skip_trivia(self_t);
+void lex_skip_trivia(self_t);
 Token lex_number(self_t);
 Token lex_symbol(self_t, uint8_t c);
 
