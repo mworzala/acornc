@@ -47,18 +47,14 @@ Token parse_advance(self_t) {
 
 // Parse functions
 
-TokenIndex expr_bp(self_t) {
+AstIndex expr_bp(self_t) {
     ParseFrame top = {
         .min_bp = 0,
-        .lhs = ast_index_empty,
+        .lhs = expr_literal(self),
         .op_idx = UINT32_MAX,
     };
 
-    Token next = parse_peek_curr(self);
-    if (next.type == TOK_NUMBER) {
-        parse_advance(self);
-        top.lhs = expr_number(self);
-    }
+
 
     ParseFrameStack stack;
     // Freed in the single return below. Must be careful about returns here.
@@ -111,25 +107,33 @@ TokenIndex expr_bp(self_t) {
         parse_frame_stack_push(&stack, top);
         top = (ParseFrame) {
             .min_bp = bp.rhs,
-            .lhs = ast_index_empty,
+            .lhs = expr_literal(self),
             .op_idx = op_idx,
         };
-
-        Token next2 = parse_peek_curr(self);
-        if (next2.type == TOK_NUMBER) {
-            parse_advance(self);
-            top.lhs = expr_number(self);
-        }
     }
 }
 
-TokenIndex expr_number(self_t) {
-    ast_node_list_add(&self->nodes, (AstNode) {
-        .tag = AST_INTEGER,
-        .main_token = self->tok_index - 1,
-        .data = ast_data_empty,
-    });
-    return self->nodes.size - 1;
+AstIndex expr_literal(self_t) {
+    Token next = parse_peek_curr(self);
+    if (next.type == TOK_NUMBER) {
+        parse_advance(self);
+        ast_node_list_add(&self->nodes, (AstNode) {
+            .tag = AST_INTEGER,
+            .main_token = self->tok_index - 1,
+            .data = ast_data_empty,
+        });
+        return self->nodes.size - 1;
+    } else if (next.type == TOK_TRUE || next.type == TOK_FALSE) {
+        parse_advance(self);
+        ast_node_list_add(&self->nodes, (AstNode) {
+            .tag = AST_BOOL,
+            .main_token = self->tok_index - 1,
+            .data = ast_data_empty,
+        });
+        return self->nodes.size - 1;
+    }
+
+    return ast_index_empty;
 }
 
 
@@ -140,16 +144,16 @@ BindingPower token_bp(Token token, bool is_prefix) {
         case TOK_PLUS:
         case TOK_MINUS:
             return !is_prefix ? (BindingPower) {AST_BINARY, 5, 6} :
-                   (BindingPower) { AST_UNARY, 99, 9};
+                   (BindingPower) { 99, 9};
         case TOK_STAR:
         case TOK_SLASH:
-            return (BindingPower) {AST_BINARY, 7, 8};
+            return (BindingPower) {7, 8};
         case TOK_BANG:
-            return (BindingPower) {AST_UNARY, 11, 100};
+            return (BindingPower) {11, 100};
         case TOK_LPAREN:
-            return (BindingPower) {AST_EMPTY, 99, 0};
+            return (BindingPower) {99, 0};
         default:
-            return (BindingPower) {AST_EMPTY, 0, 0};
+            return (BindingPower) {0, 0};
     }
 }
 

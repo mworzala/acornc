@@ -86,6 +86,7 @@ void lex_skip_trivia(self_t) {
                 if (lex_peek1(self) == '/') {
                     while (lex_peek0(self) != '\n' && !lex_at_end(self))
                         lex_advance(self);
+                    break;
                 } else return; // not a comment, parse the slash normally
             default:
                 return;

@@ -59,7 +59,7 @@ TEST(Parser, LiteralTrue) {
 TEST(Parser, LiteralFalse) {
     auto input = "false";
     auto expected = R"#(
-%0 = bool(true)
+%0 = bool(false)
 )#";
     EXPECT_EXPR(input, expected);
 }

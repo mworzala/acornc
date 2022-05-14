@@ -56,6 +56,9 @@ void ast_debug_print_node(char *buffer, Ast *ast, AstIndex index, int indent) {
         case AST_INTEGER:
             sprintf(buffer + strlen(buffer), "int(%.*s)", (int)(main_token.loc.end - main_token.loc.start), src_start + (main_token.loc.start - src_start));
             break;
+        case AST_BOOL:
+            sprintf(buffer + strlen(buffer), "bool(%.*s)", (int)(main_token.loc.end - main_token.loc.start), src_start + (main_token.loc.start - src_start));
+            break;
         case AST_UNARY:
             sprintf(buffer + strlen(buffer), "%s(%%%d)", unary_op_token_to_string(main_token.type), node->data.lhs);
             break;

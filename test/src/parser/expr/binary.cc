@@ -44,8 +44,10 @@ TEST(Parser, BinaryExprWithComments) {
     auto input = "1\n  + 1 // Add one\n+ 10 // Add ten";
     auto expected = R"#(
 %0 = int(1)
-%1 = int(10)
+%1 = int(1)
 %2 = add(%0, %1)
+%3 = int(10)
+%4 = add(%2, %3)
 )#";
     EXPECT_EXPR(input, expected);
 }

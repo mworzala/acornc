@@ -17,7 +17,6 @@ Token parse_advance(self_t);
 
 // Pratt BP
 typedef struct {
-    AstTag tag;
     uint8_t lhs;
     uint8_t rhs;
 } BindingPower;
@@ -26,8 +25,9 @@ BindingPower token_bp(Token token, bool is_prefix);
 
 
 // Parse functions
-TokenIndex expr_bp(self_t);
-TokenIndex expr_number(self_t);
+AstIndex expr_bp(self_t);
+// Return a literal ast node or `empty_ast_index` if the next token is not a literal.
+AstIndex expr_literal(self_t);
 
 
 #undef self_t

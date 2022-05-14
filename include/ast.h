@@ -31,11 +31,18 @@ void ast_index_list_add(self_t, AstIndex index);
 typedef enum ast_tag_s {
 
     /*
-     * main_token:  The token representing the number
+     * main_token:  The token representing the number literal
      * lhs:         Empty
      * rhs:         Empty
      */
     AST_INTEGER,
+
+    /*
+     * main_token:  The token representing the bool literal
+     * lhs:         Empty
+     * rhs:         Empty
+     */
+    AST_BOOL,
 
     /*
      * main_token:  The token representing the operator
