@@ -47,7 +47,6 @@ Token parse_advance(self_t) {
 
 // Parse functions
 
-//todo remove the recursion here in favor of a stack.
 TokenIndex expr_bp(self_t) {
     ParseFrame top = {
         .min_bp = 0,
@@ -62,6 +61,7 @@ TokenIndex expr_bp(self_t) {
     }
 
     ParseFrameStack stack;
+    // Freed in the single return below. Must be careful about returns here.
     parse_frame_stack_init(&stack);
 
     for (;;) {
@@ -73,6 +73,7 @@ TokenIndex expr_bp(self_t) {
         if (is_not_op || is_low_bp) {
             ParseFrame res = top;
             if (parse_frame_stack_empty(&stack)) {
+                parse_frame_stack_free(&stack);
                 return res.lhs;
             }
 
@@ -107,10 +108,6 @@ TokenIndex expr_bp(self_t) {
         TokenIndex op_idx = self->tok_index;
         parse_advance(self); // Eat the operator symbol
 
-//        top.op_idx = op_idx;
-//        top.bp_tag = bp.tag;
-//        AstIndex rhs = expr_bp(self, bp.rhs);
-
         parse_frame_stack_push(&stack, top);
         top = (ParseFrame) {
             .min_bp = bp.rhs,
@@ -123,23 +120,6 @@ TokenIndex expr_bp(self_t) {
             parse_advance(self);
             top.lhs = expr_number(self);
         }
-
-        // Special case for prefix unary operators which only have an RHS value.
-        // AST_UNARY is normalized to always have the operand in the LHS data field.
-//        if (top.bp_tag == AST_UNARY && top.lhs == UINT32_MAX) {
-//            ast_node_list_add(&self->nodes, (AstNode) {
-//                .tag = top.bp_tag,
-//                .main_token = top.op_idx,
-//                .data = {rhs, ast_index_empty},
-//            });
-//        } else {
-//            ast_node_list_add(&self->nodes, (AstNode) {
-//                .tag = top.bp_tag,
-//                .main_token = top.op_idx,
-//                .data = {top.lhs, rhs},
-//            });
-//        }
-//        top.lhs = self->nodes.size - 1;
     }
 }
 
