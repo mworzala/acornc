@@ -16,7 +16,7 @@ Token parse_advance(self_t);
 
 
 // Pratt BP
-typedef struct {
+typedef struct binding_power_s {
     uint8_t lhs;
     uint8_t rhs;
 } BindingPower;

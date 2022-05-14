@@ -39,6 +39,22 @@ const char *binary_op_token_to_string(TokenType token) {
             return "mul";
         case TOK_SLASH:
             return "div";
+        case TOK_EQEQ:
+            return "cmp_eq";
+        case TOK_BANGEQ:
+            return "cmp_ne";
+        case TOK_LT:
+            return "cmp_lt";
+        case TOK_LTEQ:
+            return "cmp_le";
+        case TOK_GT:
+            return "cmp_gt";
+        case TOK_GTEQ:
+            return "cmp_ge";
+        case TOK_AMPAMP:
+            return "log_and";
+        case TOK_BARBAR:
+            return "log_or";
         default:
             return "<?>";
     }

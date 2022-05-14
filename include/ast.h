@@ -30,37 +30,24 @@ void ast_index_list_add(self_t, AstIndex index);
 //todo tests to verify that all required changes have been made when updating this list (tag to string, ast_debug)
 typedef enum ast_tag_s {
 
-    /*
-     * main_token:  The token representing the number literal
-     * lhs:         Empty
-     * rhs:         Empty
-     */
+    // main_token:  The token representing the integer literal
     AST_INTEGER,
 
-    /*
-     * main_token:  The token representing the bool literal
-     * lhs:         Empty
-     * rhs:         Empty
-     */
+    // main_token:  The token representing the bool literal
     AST_BOOL,
 
-    /*
-     * main_token:  The token representing the operator
-     * lhs:         The left side expr node
-     * rhs:         The right side expr node
-     */
+
+    // main_token:  The token representing the operator
+    // lhs:         The left side expr node
+    // rhs:         The right side expr node
     AST_BINARY,
 
-    /*
-     * main_token:  The token representing the operator
-     * lhs:         The expr being operated on
-     * rhs:         Empty
-     */
+    // main_token:  The token representing the operator
+    // lhs:         The expr being operated on
+    // rhs:         Empty
     AST_UNARY,
 
-    /*
-     * All values always empty value.
-     */
+    // All values always empty value.
     AST_EMPTY,
 
     __AST_LAST, //todo test case to ensure each one is stringified

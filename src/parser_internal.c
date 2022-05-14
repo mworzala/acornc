@@ -54,8 +54,6 @@ AstIndex expr_bp(self_t) {
         .op_idx = UINT32_MAX,
     };
 
-
-
     ParseFrameStack stack;
     // Freed in the single return below. Must be careful about returns here.
     parse_frame_stack_init(&stack);
@@ -141,15 +139,25 @@ AstIndex expr_literal(self_t) {
 
 BindingPower token_bp(Token token, bool is_prefix) {
     switch (token.type) {
+        case TOK_AMPAMP:
+        case TOK_BARBAR:
+            return (BindingPower) {3, 4};
+        case TOK_EQEQ:
+        case TOK_BANGEQ:
+        case TOK_GT:
+        case TOK_GTEQ:
+        case TOK_LT:
+        case TOK_LTEQ:
+            return (BindingPower) {5, 6};
         case TOK_PLUS:
         case TOK_MINUS:
-            return !is_prefix ? (BindingPower) {AST_BINARY, 5, 6} :
-                   (BindingPower) { 99, 9};
+            return !is_prefix ? (BindingPower) {15, 16} :
+                   (BindingPower) { 99, 19};
         case TOK_STAR:
         case TOK_SLASH:
-            return (BindingPower) {7, 8};
+            return (BindingPower) {17, 18};
         case TOK_BANG:
-            return (BindingPower) {11, 100};
+            return (BindingPower) {21, 100};
         case TOK_LPAREN:
             return (BindingPower) {99, 0};
         default:
