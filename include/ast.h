@@ -27,6 +27,7 @@ void ast_index_list_add(self_t, AstIndex index);
 
 #undef self_t
 
+//todo tests to verify that all required changes have been made when updating this list (tag to string, ast_debug)
 typedef enum ast_tag_s {
 
     /*
@@ -54,6 +55,8 @@ typedef enum ast_tag_s {
      * All values always empty value.
      */
     AST_EMPTY,
+
+    __AST_LAST, //todo test case to ensure each one is stringified
 } AstTag;
 
 const char *ast_tag_to_string(AstTag tag);
@@ -86,8 +89,10 @@ void ast_node_list_add(self_t, AstNode node);
 typedef struct ast_s {
     uint8_t *source;
     TokenList tokens;
+
     AstNodeList nodes;
     AstIndexList extra_data;
+    AstIndex root;
 } Ast;
 
 #endif //ACORNC_AST_H

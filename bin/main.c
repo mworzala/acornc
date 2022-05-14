@@ -3,6 +3,7 @@
 
 #include "lexer.h"
 #include "parser.h"
+#include "debug/ast_debug.h"
 
 static uint8_t *read_file(const char *path);
 static void run_file(const char *path);
@@ -76,6 +77,8 @@ static void run_file(const char *path) {
     }
 
     printf("\n");
+
+    ast_debug_print(&ast);
 }
 
 static uint8_t *read_file(const char *path) {
