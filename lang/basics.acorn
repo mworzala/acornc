@@ -1,0 +1,108 @@
+// TODO: Random questions
+//  Should semicolons be required on top level const?
+
+// Comments are two slashes, and span until the end of the line.
+// There is no such thing as a multiline comment.
+
+/// Triple slash comments are doc comments
+/// TODO this are needs some work, how would you document complex/generated types?
+
+// Integer types are `i` or `u` followed by a number representing
+//  the number of bits to represent the number.
+//  e.g. `u7` is a 7 bit unsigned integer, `i16` is a 16 bit signed integer.
+// Floating point is `f` followed by a number representing the number of bits
+//  e.g. `f32` is a 32 bit floating point number.
+// Other basic types include `bool`, todo strings.
+//  Additionally, `type`, TODO `fn`, `ident`, `syntax` (see TODO for more)
+
+// Types are first class citizens in Acorn. (see TODO for more)
+// As a result, type aliases may be created as constants.
+const MyInt = i32;
+
+
+// SECTION: Functions
+
+// Functions are first class citizens, and thus can be assigned to constants.
+// Sugar: Functions can also be defined with the `fn` keyword.
+const add = fn(a: i32, b: i32) i32 {
+    a + b
+};
+
+// Parameters are named, followed by a type. The return type comes after the parameters
+fn add(a: i32, b: i32) i32 {
+    a + b
+}
+
+// The return type may be omitted
+fn say_hi() {
+    println("Hi!")
+}
+
+
+// SECTION: Structs
+
+// As with types, structs are first class citizens.
+// As a result, they must be assigned to constants.
+const Point = struct {
+    // Each member is a name followed by its type.
+    a: i32,
+    b: f32,
+};
+
+// Structs may have methods, which have a first parameter named `self` and no type.
+const Vec2f = struct {
+    x: f32,
+    y: f32,
+
+    // Declared as a constant, so may not be edited (but may be referenced)
+    const zero = Vec2f {
+        x: 0.0,
+        y: 0.0,
+    };
+
+    fn length(self) f32 {
+        todo()
+    }
+
+    // If there is no `self` parameter, the function is "static", meaning it is called with the type as an operand.
+    fn new(x: f32, y: f32) Vec2f {
+        Vec2f { x, y }
+    }
+};
+
+// Extension methods may be implemented for a struct. Their first argument must be named `self`
+//   and have a type of the struct being extended.
+fn some_method(self: Vec2f) f32 {
+    todo()
+}
+
+// Any function with the first parameter named `self` with a type can be called as an extension method.
+// It still remains as a normal function, for example:
+const my_fn = fn(self: Vec2f) f32 {
+    todo()
+};
+
+// Both of the following are valid
+my_fn(Vec2f { x: 0.0, y: 0.0 });
+Vec2f {x: 0.0, y: 0.0}.my_fn();
+
+
+// SECTION: Interfaces
+// Interfaces define a set of methods which must be implemented by the type being used.
+// They are implemented _implicitly_ on types.
+// All interface methods must have an untyped `self` as the first parameter.
+
+// Interfaces are defined similarly to structs
+const AnySized = interface {
+
+    fn length(self) f32;
+
+}
+
+// Extension methods may be used to implement an interface
+fn length(self: Point) f32 {
+    todo()
+}
+
+
+

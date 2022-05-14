@@ -118,6 +118,8 @@ Token lex_symbol(self_t, uint8_t c) {
             return new_token(self, TOK_STAR);
         case '/':
             return new_token(self, TOK_SLASH);
+        case '!':
+            return new_token(self, TOK_BANG);
         default:
             return new_token_error(self, "Unknown symbol");
     }

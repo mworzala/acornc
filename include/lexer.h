@@ -7,11 +7,12 @@ typedef enum token_type_s {
     // Symbols
     TOK_LPAREN, TOK_RPAREN,
     TOK_MINUS, TOK_PLUS, TOK_STAR, TOK_SLASH,
+    TOK_BANG,
 
     // Keywords
 
     // Literals
-    TOK_NUMBER,
+    TOK_NUMBER, //TOK_TRUE, TOK_FALSE,
 
     // Special
     TOK_ERROR, TOK_EOF,

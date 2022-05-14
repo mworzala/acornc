@@ -17,17 +17,40 @@ Token parse_advance(self_t);
 
 // Pratt BP
 typedef struct {
+    AstTag tag;
     uint8_t lhs;
     uint8_t rhs;
 } BindingPower;
 
-BindingPower token_infix_bp(Token token);
+BindingPower token_bp(Token token, bool is_prefix);
 
 
 // Parse functions
-TokenIndex expr_bp(self_t, uint8_t min_bp);
+TokenIndex expr_bp(self_t);
 TokenIndex expr_number(self_t);
 
+
+#undef self_t
+
+typedef struct parse_frame_s {
+    uint8_t min_bp;
+    AstIndex lhs;
+    TokenIndex op_idx;
+} ParseFrame;
+
+typedef struct parse_frame_stack_s {
+    uint32_t size;
+    uint32_t capacity;
+    ParseFrame *data;
+} ParseFrameStack;
+
+#define self_t ParseFrameStack *self
+
+void parse_frame_stack_init(self_t);
+void parse_frame_stack_free(self_t);
+void parse_frame_stack_push(self_t, ParseFrame frame);
+ParseFrame parse_frame_stack_pop(self_t);
+bool parse_frame_stack_empty(self_t);
 
 #undef self_t
 

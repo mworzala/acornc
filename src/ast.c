@@ -2,6 +2,8 @@
 
 #include "array_util.h"
 
+//(-3)!+2*1
+
 
 const char *ast_tag_to_string(AstTag tag) {
     switch (tag) {
@@ -9,6 +11,8 @@ const char *ast_tag_to_string(AstTag tag) {
             return "integer";
         case AST_BINARY:
             return "binary";
+        case AST_UNARY:
+            return "unary";
         case AST_EMPTY:
             return "<empty>";
         default:

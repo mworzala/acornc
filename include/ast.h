@@ -37,11 +37,18 @@ typedef enum ast_tag_s {
     AST_INTEGER,
 
     /*
-     * main_token: The token representing the operator
-     * lhs: The left side expr node
-     * rhs: The right side expr node
+     * main_token:  The token representing the operator
+     * lhs:         The left side expr node
+     * rhs:         The right side expr node
      */
     AST_BINARY,
+
+    /*
+     * main_token:  The token representing the operator
+     * lhs:         The expr being operated on
+     * rhs:         Empty
+     */
+    AST_UNARY,
 
     /*
      * All values always empty value.

@@ -77,6 +77,9 @@ const char *token_type_to_string(TokenType type) {
             return "<err>";
         case TOK_EOF:
             return "<eof>";
+
+        case TOK_BANG:
+            return "BANG";
         default:
             return "<?>";
     }
