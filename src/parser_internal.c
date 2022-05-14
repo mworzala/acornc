@@ -129,6 +129,14 @@ AstIndex expr_literal(self_t) {
             .data = ast_data_empty,
         });
         return self->nodes.size - 1;
+    } else if (next.type == TOK_IDENT) {
+        parse_advance(self);
+        ast_node_list_add(&self->nodes, (AstNode) {
+            .tag = AST_REF,
+            .main_token = self->tok_index - 1,
+            .data = ast_data_empty,
+        });
+        return self->nodes.size - 1;
     }
 
     return ast_index_empty;

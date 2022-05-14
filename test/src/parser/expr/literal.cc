@@ -63,3 +63,11 @@ TEST(Parser, LiteralFalse) {
 )#";
     EXPECT_EXPR(input, expected);
 }
+
+TEST(Parser, LiteralRef) {
+    auto input = "foo";
+    auto expected = R"#(
+%0 = ref(foo)
+)#";
+    EXPECT_EXPR(input, expected);
+}

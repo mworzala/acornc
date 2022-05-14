@@ -36,6 +36,8 @@ typedef enum ast_tag_s {
     // main_token:  The token representing the bool literal
     AST_BOOL,
 
+    // main_token:  The token representing the reference identifier
+    AST_REF,
 
     // main_token:  The token representing the operator
     // lhs:         The left side expr node
