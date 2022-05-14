@@ -4,8 +4,9 @@
 #include "common.h"
 #include "ast.h"
 
-void ast_debug_print(Ast *ast);
+//todo this is EXTREMELY unsafe.
+char *ast_debug_print(Ast *ast);
 
-void ast_debug_print_node(Ast *ast, AstIndex index, int indent);
+void ast_debug_print_node(char *buffer, Ast *ast, AstIndex index, int indent);
 
 #endif //ACORNC_AST_DEBUG_H

@@ -72,6 +72,9 @@ typedef struct ast_node_s {
     AstData data;
 } AstNode;
 
+//todo Zig uses node position zero to represent the root, which cannot be referenced by another node,
+//     meaning that index value zero can be used to represent null.
+//     Could also get rid of "root" in Ast.
 typedef struct ast_node_list_s {
     uint32_t size;
     uint32_t capacity;

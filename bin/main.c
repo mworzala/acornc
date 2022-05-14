@@ -78,7 +78,9 @@ static void run_file(const char *path) {
 
     printf("\n");
 
-    ast_debug_print(&ast);
+    char *str = ast_debug_print(&ast);
+    printf("%s\n", str);
+    free(str);
 }
 
 static uint8_t *read_file(const char *path) {
