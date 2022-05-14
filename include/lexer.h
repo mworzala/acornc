@@ -7,15 +7,20 @@ typedef enum token_type_s {
     // Symbols
     TOK_LPAREN, TOK_RPAREN,
     TOK_MINUS, TOK_PLUS, TOK_STAR, TOK_SLASH,
-    TOK_BANG,
+    TOK_EQ, TOK_EQEQ,
+    TOK_BANG, TOK_BANGEQ,
+    TOK_LT, TOK_LTEQ,
+    TOK_GT, TOK_GTEQ,
+    TOK_AMPAMP, TOK_BARBAR,
 
     // Keywords
 
     // Literals
-    TOK_NUMBER, //TOK_TRUE, TOK_FALSE,
+    TOK_NUMBER, TOK_IDENT, TOK_TRUE, TOK_FALSE,
 
     // Special
     TOK_ERROR, TOK_EOF,
+    __TOK_LAST,
 } TokenType;
 
 const char *token_type_to_string(TokenType type);
@@ -38,6 +43,7 @@ typedef struct token_list_s {
     Token *data;
 } TokenList;
 
+//todo test token list
 #define self_t TokenList *self
 
 void token_list_init(self_t);

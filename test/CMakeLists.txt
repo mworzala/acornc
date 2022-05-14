@@ -1,12 +1,23 @@
 project(acornc_test CXX)
 
 set(CMAKE_CXX_STANDARD 11)
-#set(CMAKE_CXX_STANDARD_REQUIRED ON)
-#set(CMAKE_CXX_FLAGS "-g -Wall")
 
-add_subdirectory(lib)
-include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+# Fetch GoogleTest
+include(FetchContent)
+FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/5126f7166109666a9c0534021fb1a3038659494c.zip
+)
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
 
-add_executable(acornc_test_run src/hello_test.cc src/lexer/lex_individual_tokens.cc)
+enable_testing()
+
+# Create test executable
+file(GLOB_RECURSE TEST_SOURCES src/**.cc)
+add_executable(acornc_test_run ${TEST_SOURCES})
 target_link_libraries(acornc_test_run gtest gtest_main)
 target_link_libraries(acornc_test_run acornc_lib)
+
+include(GoogleTest)
+gtest_discover_tests(acornc_test_run)

@@ -18,17 +18,18 @@ bool lex_at_end(self_t);
 uint8_t lex_peek0(self_t);
 uint8_t lex_peek1(self_t);
 uint8_t lex_advance(self_t);
-//uint8_t peek_next(self_t);
+bool lex_match(self_t, uint8_t c);
 
 // Token factory
 Token new_token(self_t, TokenType type);
 Token new_token_error(self_t, const char *message);
 
 // Complex lex rules
-
 void lex_skip_trivia(self_t);
+Token lex_ident(self_t);
 Token lex_number(self_t);
 Token lex_symbol(self_t, uint8_t c);
+TokenType lex_ident_or_keyword(self_t);
 
 #undef self_t
 

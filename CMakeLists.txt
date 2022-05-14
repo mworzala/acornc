@@ -9,14 +9,16 @@ set(CMAKE_C_STANDARD 11)
 # Library
 file(GLOB_RECURSE SOURCES src/*.c)
 file(GLOB_RECURSE HEADERS include/*.h)
-add_library(${PROJECT_NAME}_lib ${SOURCES} ${HEADERS})
+add_library(${PROJECT_NAME}_lib STATIC ${SOURCES} ${HEADERS})
 target_include_directories(${PROJECT_NAME}_lib PUBLIC include)
 
 # Executable
 add_executable(${PROJECT_NAME} bin/main.c)
 target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_lib)
 
+if (test)
 add_subdirectory(test)
+endif()
 
 ## Testing
 #if (test)
@@ -43,7 +45,7 @@ add_subdirectory(test)
 ##    target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME}_lib)
 #
 #
-#    include(GoogleTest)
+#
 #    gtest_discover_tests(${PROJECT_NAME}_test)
 #
 #endif ()

@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
+
+extern "C" {
 #include "lexer.h"
+}
 
 testing::AssertionResult check(const char *input, TokenType expected) {
     Lexer lexer;
@@ -22,6 +25,47 @@ testing::AssertionResult check(const char *input, TokenType expected) {
     return testing::AssertionSuccess();
 }
 
-TEST(Lexer, SingleTokens) {
+TEST(Lexer, SingleTokensSymbols) {
     EXPECT_PRED2(check, "(", TOK_LPAREN);
+    EXPECT_PRED2(check, ")", TOK_RPAREN);
+    EXPECT_PRED2(check, "-", TOK_MINUS);
+    EXPECT_PRED2(check, "+", TOK_PLUS);
+    EXPECT_PRED2(check, "*", TOK_STAR);
+    EXPECT_PRED2(check, "/", TOK_SLASH);
+    EXPECT_PRED2(check, "=", TOK_EQ);
+    EXPECT_PRED2(check, "==", TOK_EQEQ);
+    EXPECT_PRED2(check, "!", TOK_BANG);
+    EXPECT_PRED2(check, "!=", TOK_BANGEQ);
+    EXPECT_PRED2(check, "<", TOK_LT);
+    EXPECT_PRED2(check, "<=", TOK_LTEQ);
+    EXPECT_PRED2(check, ">", TOK_GT);
+    EXPECT_PRED2(check, ">=", TOK_GTEQ);
+    EXPECT_PRED2(check, "&&", TOK_AMPAMP);
+    EXPECT_PRED2(check, "||", TOK_BARBAR);
+
+    // Sanity check of some hardcoded errors.
+    EXPECT_PRED2(check, "&", TOK_ERROR);
+    EXPECT_PRED2(check, "|", TOK_ERROR);
+}
+
+TEST(Lexer, SingleTokensKeywords) {
+
+}
+
+TEST(Lexer, SingleTokensLiteralNumber) {
+    EXPECT_PRED2(check, "1", TOK_NUMBER);
+    EXPECT_PRED2(check, "123", TOK_NUMBER);
+    EXPECT_PRED2(check, "12.3", TOK_NUMBER);
+}
+
+TEST(Lexer, SingleTokensLiteralIdent) {
+    EXPECT_PRED2(check, "a", TOK_IDENT);
+    EXPECT_PRED2(check, "aa", TOK_IDENT);
+    EXPECT_PRED2(check, "a12b", TOK_IDENT);
+    EXPECT_PRED2(check, "a1_2b_", TOK_IDENT);
+}
+
+TEST(Lexer, SingleTokensLiteralBool) {
+    EXPECT_PRED2(check, "true", TOK_TRUE);
+    EXPECT_PRED2(check, "false", TOK_FALSE);
 }

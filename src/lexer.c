@@ -44,8 +44,8 @@ Token lexer_next(self_t) {
 
     uint8_t c = lex_advance(self);
 
-//    if (lex_is_alpha(self,c))
-//        return lex_ident(self);
+    if (lex_is_alpha(c))
+        return lex_ident(self);
     if (lex_is_digit(c))
         return lex_number(self);
 //    if (c == '"')
@@ -58,30 +58,34 @@ Token lexer_next(self_t) {
 
 
 const char *token_type_to_string(TokenType type) {
+    // @formatter:off
     switch (type) {
-        case TOK_LPAREN:
-            return "LPAREN";
-        case TOK_RPAREN:
-            return "RPAREN";
-        case TOK_MINUS:
-            return "MINUS";
-        case TOK_PLUS:
-            return "PLUS";
-        case TOK_STAR:
-            return "STAR";
-        case TOK_SLASH:
-            return "SLASH";
-        case TOK_NUMBER:
-            return "NUMBER";
-        case TOK_ERROR:
-            return "<err>";
-        case TOK_EOF:
-            return "<eof>";
+        case TOK_LPAREN:    return "LPAREN";
+        case TOK_RPAREN:    return "RPAREN";
+        case TOK_MINUS:     return "MINUS";
+        case TOK_PLUS:      return "PLUS";
+        case TOK_STAR:      return "STAR";
+        case TOK_SLASH:     return "SLASH";
+        case TOK_EQ:        return "EQ";
+        case TOK_EQEQ:      return "EQEQ";
+        case TOK_BANG:      return "BANG";
+        case TOK_BANGEQ:    return "BANGEQ";
+        case TOK_LT:        return "LT";
+        case TOK_LTEQ:      return "LTEQ";
+        case TOK_GT:        return "GT";
+        case TOK_GTEQ:      return "GTEQ";
+        case TOK_AMPAMP:    return "AMPAMP";
+        case TOK_BARBAR:    return "BARBAR";
 
-        case TOK_BANG:
-            return "BANG";
-        default:
-            return "<?>";
+        case TOK_NUMBER:    return "NUMBER";
+        case TOK_IDENT:     return "IDENT";
+        case TOK_TRUE:
+        case TOK_FALSE:     return "BOOLEAN";
+
+        case TOK_ERROR:     return "<err>";
+        case TOK_EOF:       return "<eof>";
+        default:            return "<?>";
     }
+    // @formatter:on
 }
 
