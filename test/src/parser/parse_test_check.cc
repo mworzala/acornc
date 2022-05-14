@@ -14,8 +14,8 @@ testing::AssertionResult parse_check_expr(const char *expr, const char *expected
 
     bool result = memcmp(actual, expected, strlen(expected)) == 0;
     if (!result) {
-        printf("Expected: %s\n", expected);
-        printf("Actual: %s\n", actual);
+        printf("Expected:\n%s\n", expected);
+        printf("Actual:\n%s\n", actual);
         return testing::AssertionFailure() << "Expected: " << expected << "\nActual: " << actual;
     }
 
