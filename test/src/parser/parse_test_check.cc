@@ -1,16 +1,14 @@
 #include "parse_test_check.h"
 
 extern "C" {
-#include "parser.h"
-#include "parser_internal.h"
 #include "debug/ast_debug.h"
 }
 
-testing::AssertionResult parse_check_expr(const char *expr, const char *expected) {
+testing::AssertionResult parse_check_generic(ParseFn parse, const char *expr, const char *expected) {
     Parser parser;
     parser_init(&parser, (uint8_t *) expr);
 
-    AstIndex root = int_expr(&parser);
+    AstIndex root = parse(&parser);
     Ast ast = (Ast) {
         .source = parser.source,
         .tokens = parser.tokens,

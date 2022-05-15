@@ -15,6 +15,8 @@ const char *ast_tag_to_string(AstTag tag) {
             return "binary";
         case AST_UNARY:
             return "unary";
+        case AST_LET:
+            return "let";
         case AST_EMPTY:
             return "<empty>";
         default:

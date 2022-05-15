@@ -5,7 +5,7 @@
 #include "ast.h"
 
 
-typedef void (*AstDebugFn)(char *, Ast *, AstIndex, int);
+typedef void (*AstDebugFn)(char *, Ast *, AstIndex, AstNode *, Token *, int);
 
 extern AstDebugFn ast_debug_fns[__AST_LAST];
 

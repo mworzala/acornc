@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <assert.h>
 #include "debug/ast_debug.h"
 
 void ast_debug_append_default_header(char *buffer, AstIndex index, int indent) {
@@ -15,9 +16,10 @@ void ast_debug_append_token_content(char *buffer, Ast *ast, TokenIndex token_idx
             (char *)token.loc.start);
 }
 
-void ast_debug_literal_generic(char *buffer, Ast *ast, AstIndex index, int indent) {
-    AstNode *node = &ast->nodes.data[index];
 
+// Expressions
+
+void ast_debug_literal_generic(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token *main_token, int indent) {
     ast_debug_append_default_header(buffer, index, indent);
     sprintf(buffer + strlen(buffer), "%s", ast_tag_to_string(node->tag));
     sprintf(buffer + strlen(buffer), "(");
@@ -58,16 +60,13 @@ const char *binary_op_token_to_string(TokenType token) {
     }
 }
 
-void ast_debug_binary(char *buffer, Ast *ast, AstIndex index, int indent) {
-    AstNode *node = &ast->nodes.data[index];
-    Token main_token = ast->tokens.data[node->main_token];
-
+void ast_debug_binary(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token *main_token, int indent) {
     ast_debug_print_node(buffer, ast, node->data.lhs, indent);
     ast_debug_print_node(buffer, ast, node->data.rhs, indent);
 
     ast_debug_append_default_header(buffer, index, indent);
     sprintf(buffer + strlen(buffer), "%s(%%%d, %%%d)",
-            binary_op_token_to_string(main_token.type),
+            binary_op_token_to_string(main_token->type),
             node->data.lhs, node->data.rhs);
 }
 
@@ -82,19 +81,44 @@ const char *unary_op_token_to_string(TokenType token) {
     }
 }
 
-void ast_debug_unary(char *buffer, Ast *ast, AstIndex index, int indent) {
-    AstNode *node = &ast->nodes.data[index];
-    Token main_token = ast->tokens.data[node->main_token];
-
+void ast_debug_unary(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token *main_token, int indent) {
     ast_debug_print_node(buffer, ast, node->data.lhs, indent);
 
     ast_debug_append_default_header(buffer, index, indent);
     sprintf(buffer + strlen(buffer), "%s(%%%d)",
-            unary_op_token_to_string(main_token.type),
+            unary_op_token_to_string(main_token->type),
             node->data.lhs);
 }
 
-void ast_debug_empty(char *buffer, Ast *ast, AstIndex index, int indent) {
+
+// Statements
+
+void ast_debug_stmt_let(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token *main_token, int indent) {
+    ast_debug_append_default_header(buffer, index, indent);
+
+    sprintf(buffer + strlen(buffer), "let(");
+    ast_debug_append_token_content(buffer, ast, node->main_token + 1);
+    sprintf(buffer + strlen(buffer), ", type = ");
+    if (node->data.lhs == ast_index_empty) {
+        sprintf(buffer + strlen(buffer), "_");
+    } else {
+        //todo
+        assert(false);
+    }
+
+    sprintf(buffer + strlen(buffer), ", init = ");
+    if (node->data.rhs == ast_index_empty) {
+        sprintf(buffer + strlen(buffer), "_");
+    } else {
+        sprintf(buffer + strlen(buffer), "{\n");
+        ast_debug_print_node(buffer, ast, node->data.rhs, indent + 2);
+        sprintf(buffer + strlen(buffer), "%*s}", indent, "");
+    }
+
+    sprintf(buffer + strlen(buffer), ")");
+}
+
+void ast_debug_empty(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token *main_token, int indent) {
     sprintf(buffer + strlen(buffer), "%*s", indent, "");
     sprintf(buffer + strlen(buffer), "%%%d = <empty>", index);
 }
@@ -105,6 +129,9 @@ AstDebugFn ast_debug_fns[__AST_LAST] = {
     ast_debug_literal_generic,  // ref
     ast_debug_binary,           // binary
     ast_debug_unary,            // unary
+
+    ast_debug_stmt_let,         // let
+
     ast_debug_empty,            // empty
 };
 
@@ -123,7 +150,8 @@ char *ast_debug_print(Ast *ast) {
 
 void ast_debug_print_node(char *buffer, Ast *ast, AstIndex index, int indent) {
     AstNode *node = &ast->nodes.data[index];
-    ast_debug_fns[node->tag](buffer, ast, index, indent);
+    Token *main_token = &ast->tokens.data[node->main_token];
+    ast_debug_fns[node->tag](buffer, ast, index, node, main_token, indent);
 
     //todo should add an offset to ast that covers the entire portion that the node takes up. For now this is really inaccurate for anything but numbers.
     //printf(" offset:%zu..%zu", main_token.loc.start - src_start, main_token.loc.end - src_start);

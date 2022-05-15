@@ -44,13 +44,63 @@ Token parse_advance(self_t) {
     return tok;
 }
 
+bool parse_match(self_t, TokenType type) {
+    Token tok = parse_peek_curr(self);
+    if (tok.type != type) {
+        return false;
+    }
+
+    parse_advance(self);
+    return true;
+}
+
+TokenIndex parse_assert(self_t, TokenType type) {
+    Token tok = parse_advance(self);
+    if (tok.type != type) {
+        printf("Expected token of type %d, got %d\n", type, tok.type);
+        assert(false);
+    }
+    return self->tok_index - 1;
+}
+
 
 // Statements
 
 AstIndex int_stmt(self_t) {
-//    if (parse_peek_curr(self).type == TOK_LET)
+    if (parse_peek_curr(self).type == TOK_LET) {
+        return stmt_let(self);
+    }
 
     return ast_index_empty;
+}
+
+AstIndex stmt_let(self_t) {
+    TokenIndex main_token = parse_assert(self, TOK_LET);
+
+    // Ensure identifier is present.
+    // The token stream stays around in the next phase, so this may be fetched in the future.
+    parse_assert(self, TOK_IDENT);
+
+    // Parse the type expression, if present
+    AstIndex type_expr = ast_index_empty;
+    //todo
+
+    // Parse the initializer, if present
+    AstIndex init_expr = ast_index_empty;
+    if (parse_match(self, TOK_EQ)) {
+        init_expr = int_expr(self);
+    }
+
+    // Generate the AST node itself.
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_LET,
+        .main_token = main_token,
+        .data = {
+            .lhs = type_expr,
+            .rhs = init_expr,
+        },
+    });
+    return self->nodes.size - 1;
 }
 
 

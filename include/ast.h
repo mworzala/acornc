@@ -49,6 +49,12 @@ typedef enum ast_tag_s {
     // rhs:         Empty
     AST_UNARY,
 
+    // main_token:  The token representing the `let` keyword
+    //              The identifier always follows this token
+    // lhs:         The type expression, if present todo this is never present for now.
+    // rhs:         The initializer expression, if present
+    AST_LET,
+
     // All values always empty value.
     AST_EMPTY,
 

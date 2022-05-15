@@ -14,6 +14,14 @@ Token parse_peek_last(self_t);
 Token parse_peek_curr(self_t);
 Token parse_advance(self_t);
 
+// Returns true and advances if the next token is the expected token
+// Otherwise returns false and does not advance
+bool parse_match(self_t, TokenType type);
+
+// Assert that the next token is of the given type, or panic
+//todo very unsafe mechanic, should enter recovery mode or at least skip until it finds that token
+TokenIndex parse_assert(self_t, TokenType type);
+
 
 // Pratt BP
 typedef struct binding_power_s {
@@ -26,6 +34,7 @@ BindingPower token_bp(Token token, bool is_prefix);
 
 // Statements
 AstIndex int_stmt(self_t);
+AstIndex stmt_let(self_t);
 
 
 // Expressions
