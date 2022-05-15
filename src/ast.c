@@ -2,13 +2,15 @@
 
 #include "array_util.h"
 
-//(-3)!+2*1
-
 
 const char *ast_tag_to_string(AstTag tag) {
     switch (tag) {
         case AST_INTEGER:
-            return "integer";
+            return "int";
+        case AST_BOOL:
+            return "bool";
+        case AST_REF:
+            return "ref";
         case AST_BINARY:
             return "binary";
         case AST_UNARY:

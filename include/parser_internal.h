@@ -24,8 +24,12 @@ typedef struct binding_power_s {
 BindingPower token_bp(Token token, bool is_prefix);
 
 
-// Parse functions
-AstIndex expr_bp(self_t);
+// Statements
+AstIndex int_stmt(self_t);
+
+
+// Expressions
+AstIndex int_expr(self_t);
 // Return a literal ast node or `empty_ast_index` if the next token is not a literal.
 AstIndex expr_literal(self_t);
 

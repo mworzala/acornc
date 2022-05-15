@@ -45,9 +45,18 @@ Token parse_advance(self_t) {
 }
 
 
-// Parse functions
+// Statements
 
-AstIndex expr_bp(self_t) {
+AstIndex int_stmt(self_t) {
+//    if (parse_peek_curr(self).type == TOK_LET)
+
+    return ast_index_empty;
+}
+
+
+// Expressions
+
+AstIndex int_expr(self_t) {
     ParseFrame top = {
         .min_bp = 0,
         .lhs = expr_literal(self),

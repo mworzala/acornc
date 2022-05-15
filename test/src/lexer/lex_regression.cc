@@ -37,4 +37,8 @@ TEST(Lexer, LexNumberFollowingComment) {
     CHECK("// comment\n10", "NUMBER~10");
 }
 
+TEST(Lexer, LexTwoDifferentWords) {
+    CHECK("false let", "BOOLEAN~false LET~let");
+}
+
 

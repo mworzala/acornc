@@ -153,12 +153,15 @@ static TokenType check_keyword(self_t, int32_t start, int32_t length,
 /*
  * Based on the following string table:
  * false
+ * let
  * true
  */
 TokenType lex_ident_or_keyword(self_t) {
     switch (self->start[0]) {
         case 'f':
             return check_keyword(self, 1, 4, "alse", TOK_FALSE);
+        case 'l':
+            return check_keyword(self, 1, 2, "et", TOK_LET);
         case 't':
             return check_keyword(self, 1, 3, "rue", TOK_TRUE);
         default:

@@ -49,7 +49,7 @@ TEST(Lexer, SingleTokensSymbols) {
 }
 
 TEST(Lexer, SingleTokensKeywords) {
-
+    EXPECT_PRED2(check, "let", TOK_LET);
 }
 
 TEST(Lexer, SingleTokensLiteralNumber) {

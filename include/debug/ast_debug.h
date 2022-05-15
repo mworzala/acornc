@@ -4,6 +4,11 @@
 #include "common.h"
 #include "ast.h"
 
+
+typedef void (*AstDebugFn)(char *, Ast *, AstIndex, int);
+
+extern AstDebugFn ast_debug_fns[__AST_LAST];
+
 //todo this is EXTREMELY unsafe.
 char *ast_debug_print(Ast *ast);
 

@@ -25,7 +25,7 @@ void parser_init(self_t, uint8_t *source) {
 }
 
 Ast parser_parse(self_t) {
-    AstIndex root = expr_bp(self);
+    AstIndex root = int_expr(self);
 
     return (Ast) {
         .source = self->source,

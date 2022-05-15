@@ -14,6 +14,7 @@ typedef enum token_type_s {
     TOK_AMPAMP, TOK_BARBAR,
 
     // Keywords
+    TOK_LET,
 
     // Literals
     TOK_NUMBER, TOK_IDENT, TOK_TRUE, TOK_FALSE,
