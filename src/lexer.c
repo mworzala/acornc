@@ -62,6 +62,8 @@ const char *token_type_to_string(TokenType type) {
     switch (type) {
         case TOK_LPAREN:    return "LPAREN";
         case TOK_RPAREN:    return "RPAREN";
+        case TOK_LBRACE:    return "LBRACE";
+        case TOK_RBRACE:    return "RBRACE";
         case TOK_MINUS:     return "MINUS";
         case TOK_PLUS:      return "PLUS";
         case TOK_STAR:      return "STAR";

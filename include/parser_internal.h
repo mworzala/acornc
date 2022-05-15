@@ -39,8 +39,10 @@ AstIndex stmt_let(self_t);
 
 // Expressions
 AstIndex int_expr(self_t);
+AstIndex int_expr_bp(self_t);
 // Return a literal ast node or `empty_ast_index` if the next token is not a literal.
 AstIndex expr_literal(self_t);
+AstIndex expr_block(self_t);
 
 
 #undef self_t

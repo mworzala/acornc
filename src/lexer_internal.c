@@ -124,6 +124,8 @@ Token lex_symbol(self_t, uint8_t c) {
         // @formatter:off
         case '(':   return new_token(self, TOK_LPAREN);
         case ')':   return new_token(self, TOK_RPAREN);
+        case '{':   return new_token(self, TOK_LBRACE);
+        case '}':   return new_token(self, TOK_RBRACE);
         case '-':   return new_token(self, TOK_MINUS);
         case '+':   return new_token(self, TOK_PLUS);
         case '*':   return new_token(self, TOK_STAR);

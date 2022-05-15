@@ -6,6 +6,7 @@
 typedef enum token_type_s {
     // Symbols
     TOK_LPAREN, TOK_RPAREN,
+    TOK_LBRACE, TOK_RBRACE,
     TOK_MINUS, TOK_PLUS, TOK_STAR, TOK_SLASH,
     TOK_EQ, TOK_EQEQ,
     TOK_BANG, TOK_BANGEQ,

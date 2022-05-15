@@ -3,6 +3,8 @@
 #include "array_util.h"
 
 
+//todo there should probably be an AST_PAREN to account for them in the ast.
+//     I dont think the AST should be in charge of removing syntax sugar, that should be when lowering it to HIR.
 const char *ast_tag_to_string(AstTag tag) {
     switch (tag) {
         case AST_INTEGER:
@@ -15,6 +17,8 @@ const char *ast_tag_to_string(AstTag tag) {
             return "binary";
         case AST_UNARY:
             return "unary";
+        case AST_BLOCK:
+            return "block";
         case AST_LET:
             return "let";
         case AST_EMPTY:

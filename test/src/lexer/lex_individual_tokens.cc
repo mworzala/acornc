@@ -28,6 +28,8 @@ testing::AssertionResult check(const char *input, TokenType expected) {
 TEST(Lexer, SingleTokensSymbols) {
     EXPECT_PRED2(check, "(", TOK_LPAREN);
     EXPECT_PRED2(check, ")", TOK_RPAREN);
+    EXPECT_PRED2(check, "{", TOK_LBRACE);
+    EXPECT_PRED2(check, "}", TOK_RBRACE);
     EXPECT_PRED2(check, "-", TOK_MINUS);
     EXPECT_PRED2(check, "+", TOK_PLUS);
     EXPECT_PRED2(check, "*", TOK_STAR);

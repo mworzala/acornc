@@ -90,6 +90,32 @@ void ast_debug_unary(char *buffer, Ast *ast, AstIndex index, AstNode *node, Toke
             node->data.lhs);
 }
 
+void ast_debug_block(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token *main_token, int indent) {
+    ast_debug_append_default_header(buffer, index, indent);
+
+    sprintf(buffer + strlen(buffer), "block(stmts = ");
+
+    if (node->data.lhs == ast_index_empty) {
+        sprintf(buffer + strlen(buffer), "_");
+    } else {
+        AstIndex start = node->data.lhs;
+        uint32_t expr_count = node->data.rhs - node->data.lhs + 1; // Add one since end actually references the last node.
+
+        sprintf(buffer + strlen(buffer), "{\n");
+        if (expr_count == 1) {
+            ast_debug_print_node(buffer, ast, start, indent + 2);
+        } else {
+            for (uint32_t i = 0; i < expr_count; i++) {
+                sprintf(buffer + strlen(buffer), "%*s// @%d\n", indent + 2, "", i + 1);
+                ast_debug_print_node(buffer, ast, start + i, indent + 2);
+            }
+        }
+        sprintf(buffer + strlen(buffer), "%*s}", indent, "");
+    }
+
+    sprintf(buffer + strlen(buffer), ")");
+}
+
 
 // Statements
 
@@ -129,6 +155,7 @@ AstDebugFn ast_debug_fns[__AST_LAST] = {
     ast_debug_literal_generic,  // ref
     ast_debug_binary,           // binary
     ast_debug_unary,            // unary
+    ast_debug_block,            // block
 
     ast_debug_stmt_let,         // let
 

@@ -107,6 +107,14 @@ AstIndex stmt_let(self_t) {
 // Expressions
 
 AstIndex int_expr(self_t) {
+    if (parse_peek_curr(self).type == TOK_LBRACE) {
+        return expr_block(self);
+    }
+
+    return int_expr_bp(self);
+}
+
+AstIndex int_expr_bp(self_t) {
     ParseFrame top = {
         .min_bp = 0,
         .lhs = expr_literal(self),
@@ -199,6 +207,41 @@ AstIndex expr_literal(self_t) {
     }
 
     return ast_index_empty;
+}
+
+AstIndex expr_block(self_t) {
+    parse_assert(self, TOK_LBRACE);
+    TokenIndex main_token = self->tok_index - 1;
+
+    // First node
+    AstIndex start = self->extra_data.size;
+
+    // Parse inner expressions
+    while (parse_peek_curr(self).type != TOK_RBRACE) {
+        AstIndex idx = int_expr(self);
+        ast_index_list_add(&self->extra_data, idx);
+    }
+    parse_assert(self, TOK_RBRACE);
+
+    // Last node
+    AstIndex end = self->extra_data.size;
+
+    if (start == end) {
+        // Empty block
+        start = ast_index_empty;
+        end = ast_index_empty;
+    } else {
+        // Last element should reference the last node, so subtract one.
+        end -= 1;
+    }
+
+    // Create the block node
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_BLOCK,
+        .main_token = main_token,
+        .data = {start, end},
+    });
+    return self->nodes.size - 1;
 }
 
 
