@@ -71,7 +71,7 @@ AstIndex int_stmt(self_t) {
         return stmt_let(self);
     }
 
-    return ast_index_empty;
+    return int_expr(self);
 }
 
 AstIndex stmt_let(self_t) {
@@ -218,8 +218,21 @@ AstIndex expr_block(self_t) {
 
     // Parse inner expressions
     while (parse_peek_curr(self).type != TOK_RBRACE) {
-        AstIndex idx = int_expr(self);
+        AstIndex idx = int_stmt(self);
         ast_index_list_add(&self->extra_data, idx);
+
+        if (idx == ast_index_empty) {
+            assert(false);
+        }
+
+        if (parse_peek_curr(self).type == TOK_SEMI) {
+            parse_advance(self);
+        } else if (parse_peek_curr(self).type == TOK_RBRACE) {
+            break;
+        } else {
+//            assert(false);
+//            parse_error(self, "Expected ';' or '}'");
+        }
     }
     parse_assert(self, TOK_RBRACE);
 

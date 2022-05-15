@@ -44,6 +44,7 @@ TEST(Lexer, SingleTokensSymbols) {
     EXPECT_PRED2(check, ">=", TOK_GTEQ);
     EXPECT_PRED2(check, "&&", TOK_AMPAMP);
     EXPECT_PRED2(check, "||", TOK_BARBAR);
+    EXPECT_PRED2(check, ";", TOK_SEMI);
 
     // Sanity check of some hardcoded errors.
     EXPECT_PRED2(check, "&", TOK_ERROR);
