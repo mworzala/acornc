@@ -21,6 +21,8 @@ const char *ast_tag_to_string(AstTag tag) {
             return "unary";
         case AST_BLOCK:
             return "block";
+        case AST_RETURN:
+            return "return";
 
         case AST_LET:
             return "let";

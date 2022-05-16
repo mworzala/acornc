@@ -45,6 +45,10 @@ Token parse_advance(self_t) {
 }
 
 bool parse_match(self_t, TokenType type) {
+    return parse_peek_curr(self).type == type;
+}
+
+bool parse_match_advance(self_t, TokenType type) {
     Token tok = parse_peek_curr(self);
     if (tok.type != type) {
         return false;
@@ -119,7 +123,7 @@ AstIndex stmt_let(self_t) {
 
     // Parse the initializer, if present
     AstIndex init_expr = ast_index_empty;
-    if (parse_match(self, TOK_EQ)) {
+    if (parse_match_advance(self, TOK_EQ)) {
         init_expr = int_expr(self);
     }
 
@@ -139,8 +143,10 @@ AstIndex stmt_let(self_t) {
 // Expressions
 
 AstIndex int_expr(self_t) {
-    if (parse_peek_curr(self).type == TOK_LBRACE) {
+    if (parse_match(self, TOK_LBRACE)) {
         return expr_block(self);
+    } else if (parse_match(self, TOK_RETURN)) {
+        return expr_return(self);
     }
 
     return int_expr_bp(self);
@@ -254,6 +260,24 @@ AstIndex expr_block(self_t) {
         .tag = AST_BLOCK,
         .main_token = main_token,
         .data = {data.first, data.second},
+    });
+    return self->nodes.size - 1;
+}
+
+AstIndex expr_return(self_t) {
+    TokenIndex main_token = parse_assert(self, TOK_RETURN);
+
+    AstIndex expr = ast_index_empty;
+    TokenType next = parse_peek_curr(self).type;
+    // Semicolon to manually terminate, rbrace if it is last in a block.
+    if (next != TOK_SEMI && next != TOK_RBRACE) {
+        expr = int_expr(self);
+    }
+
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_RETURN,
+        .main_token = main_token,
+        .data = {expr, ast_index_empty},
     });
     return self->nodes.size - 1;
 }

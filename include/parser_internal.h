@@ -14,9 +14,11 @@ Token parse_peek_last(self_t);
 Token parse_peek_curr(self_t);
 Token parse_advance(self_t);
 
+bool parse_match(self_t, TokenType type);
+
 // Returns true and advances if the next token is the expected token
 // Otherwise returns false and does not advance
-bool parse_match(self_t, TokenType type);
+bool parse_match_advance(self_t, TokenType type);
 
 // Assert that the next token is of the given type, or panic
 //todo very unsafe mechanic, should enter recovery mode or at least skip until it finds that token
@@ -48,6 +50,7 @@ AstIndex int_expr_bp(self_t);
 // Return a literal ast node or `empty_ast_index` if the next token is not a literal.
 AstIndex expr_literal(self_t);
 AstIndex expr_block(self_t);
+AstIndex expr_return(self_t);
 
 
 // Special

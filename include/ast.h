@@ -59,6 +59,10 @@ typedef enum ast_tag_s {
     //              Both empty if block is empty
     AST_BLOCK,
 
+    // main_token:  The token representing 'return'
+    // lhs/rhs:     The expr being returned, if present/Empty
+    AST_RETURN,
+
     // Statements
 
     // main_token:  The token representing the `let` keyword

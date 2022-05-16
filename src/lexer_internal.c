@@ -156,14 +156,28 @@ static TokenType check_keyword(self_t, int32_t start, int32_t length,
 
 /*
  * Based on the following string table:
+ * else
+ *  num
  * false
  *  n
+ * if
  * let
+ * return
+ * struct
  * true
+ * while
  */
 TokenType lex_ident_or_keyword(self_t) {
     // @formatter:off
     switch (self->start[0]) {
+        case 'e':
+            if (self->current - self->start > 1) {
+                switch (self->start[1]) {
+                    case 'l': return check_keyword(self, 2, 2, "se", TOK_ELSE);
+                    case 'n': return check_keyword(self, 2, 2, "um", TOK_ENUM);
+                }
+            }
+            break;
         case 'f':
             if (self->current - self->start > 1) {
                 switch (self->start[1]) {
@@ -172,8 +186,12 @@ TokenType lex_ident_or_keyword(self_t) {
                 }
             }
             break;
+        case 'i': return check_keyword(self, 1, 1, "f", TOK_IF);
         case 'l': return check_keyword(self, 1, 2, "et", TOK_LET);
+        case 'r': return check_keyword(self, 1, 5, "eturn", TOK_RETURN);
+        case 's': return check_keyword(self, 1, 5, "truct", TOK_STRUCT);
         case 't': return check_keyword(self, 1, 3, "rue", TOK_TRUE);
+        case 'w': return check_keyword(self, 1, 4, "hile", TOK_WHILE);
     }
     // @formatter:on
     return TOK_IDENT;

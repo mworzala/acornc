@@ -170,6 +170,19 @@ void ast_debug_block(char *buffer, Ast *ast, AstIndex index, AstNode *node, Toke
     sprintf(buffer + strlen(buffer), ")");
 }
 
+void ast_debug_return(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token *main_token, int indent) {
+    if (node->data.lhs != ast_index_empty) {
+        ast_debug_print_node(buffer, ast, node->data.lhs, indent);
+    }
+
+    ast_debug_append_default_header(buffer, index, indent);
+
+    sprintf(buffer + strlen(buffer), "ret");
+    if (node->data.lhs != ast_index_empty) {
+        sprintf(buffer + strlen(buffer), "(%%%d)", node->data.lhs);
+    }
+}
+
 //endregion
 
 //region Statements
@@ -236,6 +249,7 @@ AstDebugFn ast_debug_fns[__AST_LAST] = {
     ast_debug_binary,           // binary
     ast_debug_unary,            // unary
     ast_debug_block,            // block
+    ast_debug_return,           // return
 
     ast_debug_stmt_let,         // let
 

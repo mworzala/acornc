@@ -81,8 +81,14 @@ const char *token_type_to_string(TokenType type) {
         case TOK_SEMI:      return "SEMI";
         case TOK_COMMA:     return "COMMA";
 
+        case TOK_ELSE:      return "ELSE";
+        case TOK_ENUM:      return "ENUM";
         case TOK_FN:        return "FN";
+        case TOK_IF:        return "IF";
         case TOK_LET:       return "LET";
+        case TOK_RETURN:    return "RETURN";
+        case TOK_STRUCT:    return "STRUCT";
+        case TOK_WHILE:     return "WHILE";
 
         case TOK_NUMBER:    return "NUMBER";
         case TOK_IDENT:     return "IDENT";
