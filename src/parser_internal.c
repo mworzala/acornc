@@ -64,6 +64,38 @@ TokenIndex parse_assert(self_t, TokenType type) {
 }
 
 
+// Top level declarations
+
+AstIndex int_top_level_decls(self_t) {
+    if (parse_peek_curr(self).type == TOK_FN) {
+        return tl_fn_decl(self);
+    }
+
+    return ast_index_empty;
+}
+
+AstIndex tl_fn_decl(self_t) {
+    TokenIndex main_token = parse_assert(self, TOK_FN);
+
+    // Parse prototype
+    AstIndex prototype = fn_proto(self);
+
+    // Parse body
+    AstIndex body_block = expr_block(self);
+
+    // Construct node
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_NAMED_FN,
+        .main_token = main_token,
+        .data = {
+            .lhs = prototype,
+            .rhs = body_block,
+        }
+    });
+    return self->nodes.size - 1;
+}
+
+
 // Statements
 
 AstIndex int_stmt(self_t) {
@@ -129,7 +161,8 @@ AstIndex int_expr_bp(self_t) {
         Token token = parse_peek_curr(self);
         BindingPower bp = token_bp(token, top.lhs == UINT32_MAX);
 
-        bool is_not_op = bp.lhs == 0; // We return 0, 0 if it was not a valid operator, and none of them return 0 for LHS.
+        bool is_not_op =
+            bp.lhs == 0; // We return 0, 0 if it was not a valid operator, and none of them return 0 for LHS.
         bool is_low_bp = bp.lhs < top.min_bp; // Too low of binding power (precedence) to continue.
         if (is_not_op || is_low_bp) {
             ParseFrame res = top;
@@ -210,51 +243,114 @@ AstIndex expr_literal(self_t) {
 }
 
 AstIndex expr_block(self_t) {
-    parse_assert(self, TOK_LBRACE);
-    TokenIndex main_token = self->tok_index - 1;
+    assert(parse_peek_curr(self).type == TOK_LBRACE);
+    TokenIndex main_token = self->tok_index;
 
-    // First node
-    AstIndex start = self->extra_data.size;
-
-    // Parse inner expressions
-    while (parse_peek_curr(self).type != TOK_RBRACE) {
-        AstIndex idx = int_stmt(self);
-        ast_index_list_add(&self->extra_data, idx);
-
-        if (idx == ast_index_empty) {
-            assert(false);
-        }
-
-        if (parse_peek_curr(self).type == TOK_SEMI) {
-            parse_advance(self);
-        } else if (parse_peek_curr(self).type == TOK_RBRACE) {
-            break;
-        } else {
-//            assert(false);
-//            parse_error(self, "Expected ';' or '}'");
-        }
-    }
-    parse_assert(self, TOK_RBRACE);
-
-    // Last node
-    AstIndex end = self->extra_data.size;
-
-    if (start == end) {
-        // Empty block
-        start = ast_index_empty;
-        end = ast_index_empty;
-    } else {
-        // Last element should reference the last node, so subtract one.
-        end -= 1;
-    }
+    AstIndexPair data = int_parse_list(self, int_stmt,
+                                       TOK_LBRACE, TOK_RBRACE, TOK_SEMI);
 
     // Create the block node
     ast_node_list_add(&self->nodes, (AstNode) {
         .tag = AST_BLOCK,
         .main_token = main_token,
-        .data = {start, end},
+        .data = {data.first, data.second},
     });
     return self->nodes.size - 1;
+}
+
+
+// Special
+
+AstIndex fn_proto(self_t) {
+    TokenIndex main_token = parse_assert(self, TOK_IDENT);
+
+    // Parse parameters
+    AstIndexPair param_data = int_parse_list(self, fn_param,
+                                             TOK_LPAREN, TOK_RPAREN, TOK_COMMA);
+
+    // Parse type expression
+    AstIndex type_expr = ast_index_empty;
+    //todo
+
+    AstIndex proto_data_idx = self->extra_data.size;
+    FnProto proto_data = {
+        .param_start = param_data.first,
+        .param_end = param_data.second,
+    };
+    ast_index_list_add_sized(&self->extra_data, proto_data);
+//    ast_index_list_add_multi(&self->extra_data, &proto_data, sizeof(proto_data) / sizeof(AstIndex));
+
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_FN_PROTO,
+        .main_token = main_token,
+        .data = {proto_data_idx, type_expr},
+    });
+    return self->nodes.size - 1;
+}
+
+AstIndex fn_param(self_t) {
+    TokenIndex main_token = parse_assert(self, TOK_IDENT);
+
+    // Parse type expression
+    AstIndex type_expr = ast_index_empty;
+    //todo
+
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_FN_PARAM,
+        .main_token = main_token,
+        .data = {ast_index_empty, type_expr},
+    });
+    return self->nodes.size - 1;
+}
+
+
+// Unmapped
+
+AstIndexPair
+int_parse_list(self_t, AstIndex (*parse_fn)(self_t), TokenType open, TokenType close, TokenType delimiter) {
+    parse_assert(self, open);
+
+    // Need to store the inner indices so that they can all be added at once to ensure
+    //  they are continuous inside extra_data. Consider the case of {{x}}.
+    AstIndexList inner_indices;
+    ast_index_list_init(&inner_indices);
+
+    // Parse inner expressions
+    while (parse_peek_curr(self).type != close) {
+        AstIndex idx = parse_fn(self);
+        ast_index_list_add(&inner_indices, idx);
+
+        if (idx == ast_index_empty) {
+            assert(false);
+        }
+
+        if (parse_peek_curr(self).type == delimiter) {
+            parse_advance(self);
+        } else if (parse_peek_curr(self).type == close) {
+            break;
+        } else {
+            assert(false);
+//            parse_error(self, "Expected ';' or '}'");
+        }
+    }
+    parse_assert(self, close);
+
+    // First node
+    AstIndex start = ast_index_empty;
+    AstIndex end = ast_index_empty;
+
+    if (inner_indices.size != 0) {
+        start = self->extra_data.size;
+        end = self->extra_data.size + inner_indices.size - 1;
+
+        // Copy inner_indices to extra_data
+        for (size_t i = 0; i < inner_indices.size; i++) {
+            ast_index_list_add(&self->extra_data, inner_indices.data[i]);
+        }
+    }
+
+    ast_index_list_free(&inner_indices);
+    return (AstIndexPair) {start, end};
 }
 
 
@@ -275,7 +371,7 @@ BindingPower token_bp(Token token, bool is_prefix) {
         case TOK_PLUS:
         case TOK_MINUS:
             return !is_prefix ? (BindingPower) {15, 16} :
-                   (BindingPower) { 99, 19};
+                   (BindingPower) {99, 19};
         case TOK_STAR:
         case TOK_SLASH:
             return (BindingPower) {17, 18};

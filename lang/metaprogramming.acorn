@@ -80,12 +80,14 @@ fn max(comptime T: type, a: T, b: T) T {
 // The following are equivalent
 max(i32, 1, 2);
 max(_, 1i32, 2);
+max(1i32, 2);
 // Multiple things are happening here automatically:
 // 1. The type of `1i32` is i32 (specified by the trailing i32)
 // 2. The type of `2` is comptime_int, which may be implicitly cast to i32
 // 3. The compiler is instructed to infer the type of `a` and `b`. It uses
 //    the most restrictive of the two. In this case, i32.
 // 4. 2 is implicitly converted to an i32 according to previous note.
+// 5. Any type arguments at the start of a fn call may be omitted, which is equivalent to _.
 
 
 

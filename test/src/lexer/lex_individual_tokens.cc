@@ -52,6 +52,7 @@ TEST(Lexer, SingleTokensSymbols) {
 }
 
 TEST(Lexer, SingleTokensKeywords) {
+    EXPECT_PRED2(check, "fn", TOK_FN);
     EXPECT_PRED2(check, "let", TOK_LET);
 }
 

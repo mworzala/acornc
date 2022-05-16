@@ -1,3 +1,5 @@
+#include <string.h>
+#include <assert.h>
 #include "ast.h"
 
 #include "array_util.h"
@@ -19,8 +21,18 @@ const char *ast_tag_to_string(AstTag tag) {
             return "unary";
         case AST_BLOCK:
             return "block";
+
         case AST_LET:
             return "let";
+
+        case AST_NAMED_FN:
+            return "named_fn";
+
+        case AST_FN_PROTO:
+            return "fn_proto";
+        case AST_FN_PARAM:
+            return "fn_param";
+
         case AST_EMPTY:
             return "<empty>";
         default:
@@ -50,6 +62,20 @@ void ast_index_list_add(self_t, AstIndex index) {
 
     self->data[self->size] = index;
     self->size++;
+}
+
+void ast_index_list_add_multi(self_t, void *data, size_t size) {
+    // Size may not be greater than 8 because then ARRAY_GROW_CAPACITY is not guaranteed to allocate enough new memory.
+    // The initial size is 8, and will always double after that.
+    assert(size <= 8);
+
+    if (self->capacity < self->size + size) {
+        self->capacity = ARRAY_GROW_CAPCITY(self->capacity);
+        self->data = ARRAY_GROW(AstIndex, self->data, self->capacity);
+    }
+
+    memcpy(self->data + self->size, data, size * sizeof(AstIndex));
+    self->size += size;
 }
 
 #undef self_t

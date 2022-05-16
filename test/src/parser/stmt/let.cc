@@ -31,11 +31,9 @@ TEST(Parser, LetComplexInit) {
 }
 
 TEST(Parser, LetRequiresSpaceBetweenLetAndIdent) {
-    GTEST_SKIP_("TODO: implement");
     auto input = "letfoo";
     auto expected = R"#(
-EMPTY AST
+%0 = ref(letfoo)
 )#";
-    //todo eventually this should be a parse error, not just an empty ast
     EXPECT_STMT(input, expected);
 }

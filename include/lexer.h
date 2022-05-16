@@ -13,10 +13,10 @@ typedef enum token_type_s {
     TOK_LT, TOK_LTEQ,
     TOK_GT, TOK_GTEQ,
     TOK_AMPAMP, TOK_BARBAR,
-    TOK_SEMI,
+    TOK_SEMI, TOK_COMMA,
 
     // Keywords
-    TOK_LET,
+    TOK_FN, TOK_LET,
 
     // Literals
     TOK_NUMBER, TOK_IDENT, TOK_TRUE, TOK_FALSE,

@@ -56,3 +56,19 @@ TEST(Parser, BlockAcceptExprOrStmt) {
 )#";
     EXPECT_EXPR(input, expected);
 }
+
+
+// Regressions
+
+
+TEST(Parser, BlockWithinBlock) {
+    auto input = "{{x}}";
+    auto expected = R"#(
+%2 = block(stmts = {
+  %1 = block(stmts = {
+    %0 = ref(x)
+  })
+})
+)#";
+    EXPECT_EXPR(input, expected);
+}

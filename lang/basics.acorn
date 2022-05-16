@@ -64,6 +64,19 @@ const Vec2f = struct {
         todo()
     }
 
+    // Can also be declared as constants
+    const length2 = fn(self) f32 {
+        todo()
+    };
+
+    // The initializer can be anything that can resolve to a function _at compile time_.
+    const length2 = fn(self) f32 {
+        return fn() f32 {
+            sqrt(self.x * self.x + self.y * self.y)
+            todo()
+        }
+    }();
+
     // If there is no `self` parameter, the function is "static", meaning it is called with the type as an operand.
     fn new(x: f32, y: f32) Vec2f {
         Vec2f { x, y }

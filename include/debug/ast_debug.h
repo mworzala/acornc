@@ -12,6 +12,7 @@ extern AstDebugFn ast_debug_fns[__AST_LAST];
 //todo this is EXTREMELY unsafe.
 char *ast_debug_print(Ast *ast);
 
+void ast_debug_print_node_raw(char *buffer, Ast *ast, AstIndex index, int indent);
 void ast_debug_print_node(char *buffer, Ast *ast, AstIndex index, int indent);
 
 #endif //ACORNC_AST_DEBUG_H

@@ -24,11 +24,16 @@ typedef struct ast_index_list_s {
 void ast_index_list_init(self_t);
 void ast_index_list_free(self_t);
 void ast_index_list_add(self_t, AstIndex index);
+void ast_index_list_add_multi(self_t, void *data, size_t size);
+
+#define ast_index_list_add_sized(self, data) ast_index_list_add_multi(self, &data, sizeof(data) / sizeof(AstIndex))
 
 #undef self_t
 
 //todo tests to verify that all required changes have been made when updating this list (tag to string, ast_debug)
 typedef enum ast_tag_s {
+
+    // Expressions
 
     // main_token:  The token representing the integer literal
     AST_INTEGER,
@@ -54,17 +59,44 @@ typedef enum ast_tag_s {
     //              Both empty if block is empty
     AST_BLOCK,
 
+    // Statements
+
     // main_token:  The token representing the `let` keyword
     //              The identifier always follows this token
     // lhs:         The type expression, if present todo this is never present for now.
     // rhs:         The initializer expression, if present
     AST_LET,
 
+    // Top level decls
+
+    // main_token:  The token representing the `fn` keyword
+    // lhs/rhs:     Prototype/Body
+    AST_NAMED_FN,
+
+    // Special
+
+    // main_token:  The token representing the function name
+    // lhs/rhs   :  FnProto (see below) within extra_data/Type expr
+    //todo this eventually will be changed since it will be anonymous/not know the function name.
+    AST_FN_PROTO,
+
+    // main_token:  The token representing the identifier
+    // lhs/rhs   :  Unused/Type expr
+    // Note: Type expr is _not_ required in the AST. It will be an error during lowering if it is not present.
+    //       todo it actually might end up as a parse error and be required in later phases
+    //todo lhs will eventually be used to store flags like is_mut, is_ref, etc.
+    AST_FN_PARAM,
+
     // All values always empty value.
     AST_EMPTY,
 
     __AST_LAST, //todo test case to ensure each one is stringified
 } AstTag;
+
+typedef struct fn_proto_s {
+    AstIndex param_start;
+    AstIndex param_end;
+} FnProto;
 
 const char *ast_tag_to_string(AstTag tag);
 

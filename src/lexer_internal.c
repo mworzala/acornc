@@ -137,6 +137,7 @@ Token lex_symbol(self_t, uint8_t c) {
         case '&':   return new_token(self, lex_match(self, '&') ? TOK_AMPAMP : TOK_ERROR);
         case '|':   return new_token(self, lex_match(self, '|') ? TOK_BARBAR : TOK_ERROR);
         case ';':   return new_token(self, TOK_SEMI);
+        case ',':   return new_token(self, TOK_COMMA);
         default:    return new_token_error(self, "Unknown symbol");
         // @formatter:on
     }
@@ -156,20 +157,26 @@ static TokenType check_keyword(self_t, int32_t start, int32_t length,
 /*
  * Based on the following string table:
  * false
+ *  n
  * let
  * true
  */
 TokenType lex_ident_or_keyword(self_t) {
+    // @formatter:off
     switch (self->start[0]) {
         case 'f':
-            return check_keyword(self, 1, 4, "alse", TOK_FALSE);
-        case 'l':
-            return check_keyword(self, 1, 2, "et", TOK_LET);
-        case 't':
-            return check_keyword(self, 1, 3, "rue", TOK_TRUE);
-        default:
-            return TOK_IDENT;
+            if (self->current - self->start > 1) {
+                switch (self->start[1]) {
+                    case 'a': return check_keyword(self, 2, 3, "lse", TOK_FALSE);
+                    case 'n': return check_keyword(self, 2, 0, "", TOK_FN);
+                }
+            }
+            break;
+        case 'l': return check_keyword(self, 1, 2, "et", TOK_LET);
+        case 't': return check_keyword(self, 1, 3, "rue", TOK_TRUE);
     }
+    // @formatter:on
+    return TOK_IDENT;
 }
 
 #undef self_t
