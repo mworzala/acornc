@@ -40,3 +40,4 @@ fn foo(bar, baz) {}
 )#";
     EXPECT_TL_DECL(input, expected);
 }
+

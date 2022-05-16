@@ -153,15 +153,15 @@ void ast_debug_block(char *buffer, Ast *ast, AstIndex index, AstNode *node, Toke
         sprintf(buffer + strlen(buffer), "_");
     } else {
         AstIndex start = node->data.lhs;
-        uint32_t expr_count = node->data.rhs - node->data.lhs + 1; // Add one since end actually references the last node.
+        uint32_t expr_count = node->data.rhs - start + 1; // Add one since end actually references the last node.
 
         sprintf(buffer + strlen(buffer), "{\n");
         if (expr_count == 1) {
-            ast_debug_print_node(buffer, ast, start, indent + 2);
+            ast_debug_print_node(buffer, ast, ast->extra_data.data[start], indent + 2);
         } else {
             for (uint32_t i = 0; i < expr_count; i++) {
                 sprintf(buffer + strlen(buffer), "%*s// @%d\n", indent + 2, "", i + 1);
-                ast_debug_print_node(buffer, ast, start + i, indent + 2);
+                ast_debug_print_node(buffer, ast, ast->extra_data.data[start + i], indent + 2);
             }
         }
         sprintf(buffer + strlen(buffer), "%*s}", indent, "");
