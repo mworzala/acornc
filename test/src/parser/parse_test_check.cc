@@ -17,8 +17,15 @@ testing::AssertionResult parse_check_generic(ParseFn parse, const char *expr, co
         .root = root,
     };
     char *actual = ast_debug_print(&ast);
+    size_t actual_len = strlen(actual);
+    // If there are two newlines at the end, remove one of them.
+    // Module does this at the moment, should fix it inside module then this is not necessary.
+    if (actual[actual_len - 1] == '\n' && actual[actual_len - 2] == '\n') {
+        actual[actual_len - 1] = '\0';
+        actual_len -= 1;
+    }
 
-    bool result = memcmp(actual, expected, strlen(expected)) == 0;
+    bool result = actual_len == strlen(expected) && strcmp(actual, expected) == 0;
     if (!result) {
         printf("Expected:\n%s\n", expected);
         printf("Actual:\n%s\n", actual);

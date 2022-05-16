@@ -275,10 +275,19 @@ AstIndex int_expr_bp(self_t) {
                 rhs = ast_index_empty;
             }
 
+            // Determine the appropriate node type, default to binary if there is no special case.
+            AstTag tag = AST_BINARY;
+            Token op_token = self->tokens.data[res.op_idx];
+            if (rhs == ast_index_empty) {
+                // Unary operators only ever have a LHS, this is normalized between prefix/postfix above.
+                tag = AST_UNARY;
+            } else if (op_token.type == TOK_DOT) {
+                tag = AST_DOT;
+            }
+
             // Write the node to the node array.
             ast_node_list_add(&self->nodes, (AstNode) {
-                // Unary ops have an empty rhs, whereas binary ops have a value.
-                .tag = rhs == ast_index_empty ? AST_UNARY : AST_BINARY,
+                .tag = tag,
                 .main_token = res.op_idx,
                 .data = {lhs, rhs},
             });
@@ -530,7 +539,10 @@ int_parse_list(self_t, AstIndex (*parse_fn)(self_t), TokenType open, TokenType c
 // Pratt BP
 
 BindingPower token_bp(Token token, bool is_prefix) {
+    // a.b + c
     switch (token.type) {
+        case TOK_DOT:
+            return (BindingPower) {41, 42};
         case TOK_AMPAMP:
         case TOK_BARBAR:
             return (BindingPower) {3, 4};

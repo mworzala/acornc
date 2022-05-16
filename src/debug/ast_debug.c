@@ -54,6 +54,12 @@ const char *binary_op_token_to_string(TokenType token) {
             return "log_and";
         case TOK_BARBAR:
             return "log_or";
+
+        // This is a special case since it is actually a distinct ast node.
+        // The rendering is identical so the print fn for binary op is reused.
+        case TOK_DOT:
+            return "dot";
+
         default:
             return "<?>";
     }
@@ -362,6 +368,7 @@ AstDebugFn ast_debug_fns[__AST_LAST] = {
     ast_debug_return,           // return
     ast_debug_if,               // if
     ast_debug_while,            // while
+    ast_debug_binary,           // dot
     ast_debug_call,             // call
 
     ast_debug_stmt_let,         // let

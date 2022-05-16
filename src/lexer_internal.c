@@ -138,6 +138,7 @@ Token lex_symbol(self_t, uint8_t c) {
         case '|':   return new_token(self, lex_match(self, '|') ? TOK_BARBAR : TOK_ERROR);
         case ';':   return new_token(self, TOK_SEMI);
         case ',':   return new_token(self, TOK_COMMA);
+        case '.':   return new_token(self, TOK_DOT);
         default:    return new_token_error(self, "Unknown symbol");
         // @formatter:on
     }

@@ -27,6 +27,8 @@ const char *ast_tag_to_string(AstTag tag) {
             return "if";
         case AST_WHILE:
             return "while";
+        case AST_DOT:
+            return "dot";
         case AST_CALL:
             return "call";
 

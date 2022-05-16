@@ -11,9 +11,8 @@ TEST(Parser, BasicLet) {
 TEST(Parser, BasicLetWithInit) {
     auto input = "let foo = 1";
     auto expected = R"#(
-%1 = let(foo, type = _, init = {
-  %0 = int(1)
-})
+%0 = int(1)
+%1 = let(foo, type = _, init = %0)
 )#";
     EXPECT_STMT(input, expected);
 }
@@ -21,11 +20,10 @@ TEST(Parser, BasicLetWithInit) {
 TEST(Parser, LetComplexInit) {
     auto input = "let foo = 1 + 2";
     auto expected = R"#(
-%3 = let(foo, type = _, init = {
-  %0 = int(1)
-  %1 = int(2)
-  %2 = add(%0, %1)
-})
+%0 = int(1)
+%1 = int(2)
+%2 = add(%0, %1)
+%3 = let(foo, type = _, init = %2)
 )#";
     EXPECT_STMT(input, expected);
 }

@@ -8,9 +8,8 @@ TEST(Parser, WrongBlockEntryOrdering) {
 )#";
     auto expected = R"#(
 %2 = block(stmts = {
-  %1 = let(a, type = _, init = {
-    %0 = ref(bar)
-  })
+  %0 = ref(bar)
+  %1 = let(a, type = _, init = %0)
 })
 )#";
     EXPECT_EXPR(input, expected);

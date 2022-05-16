@@ -71,6 +71,10 @@ typedef enum ast_tag_s {
     // lhs/rhs   :  Condition expr/Body block
     AST_WHILE,
 
+    // main_token:  The token representing the '.'
+    // lhs/rhs   :  LHS expr/RHS expr (identifier
+    AST_DOT, //todo what is this usually called? access?
+
     // main_token:  The token representing '('
     // lhs/rhs   :  The expr being called/AstCallData (see below)
     AST_CALL,
