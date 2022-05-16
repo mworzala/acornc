@@ -147,6 +147,10 @@ AstIndex int_expr(self_t) {
         return expr_block(self);
     } else if (parse_match(self, TOK_RETURN)) {
         return expr_return(self);
+    } else if (parse_match(self, TOK_IF)) {
+        return expr_if(self);
+    } else if (parse_match(self, TOK_WHILE)) {
+        return expr_while(self);
     }
 
     return int_expr_bp(self);
@@ -282,6 +286,46 @@ AstIndex expr_return(self_t) {
     return self->nodes.size - 1;
 }
 
+AstIndex expr_if(self_t) {
+    TokenIndex main_token = parse_assert(self, TOK_IF);
+
+    AstIndex cond = int_expr(self);
+
+    AstIndex then = expr_block(self);
+
+    AstIndex else_ = ast_index_empty;
+    if (parse_match_advance(self, TOK_ELSE)) {
+        else_ = parse_match(self, TOK_IF) ?
+            expr_if(self) : expr_block(self);
+    }
+
+    AstIfData data = {then, else_};
+    AstIndex data_idx = self->extra_data.size;
+    ast_index_list_add_sized(&self->extra_data, data);
+
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_IF,
+        .main_token = main_token,
+        .data = {cond, data_idx},
+    });
+    return self->nodes.size - 1;
+}
+
+AstIndex expr_while(self_t) {
+    TokenIndex main_token = parse_assert(self, TOK_WHILE);
+
+    AstIndex cond = int_expr(self);
+
+    AstIndex body = expr_block(self);
+
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_WHILE,
+        .main_token = main_token,
+        .data = {cond, body},
+    });
+    return self->nodes.size - 1;
+}
+
 
 // Special
 
@@ -297,7 +341,7 @@ AstIndex fn_proto(self_t) {
     //todo
 
     AstIndex proto_data_idx = self->extra_data.size;
-    FnProto proto_data = {
+    AstFnProto proto_data = {
         .param_start = param_data.first,
         .param_end = param_data.second,
     };

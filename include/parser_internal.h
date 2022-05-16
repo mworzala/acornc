@@ -51,6 +51,8 @@ AstIndex int_expr_bp(self_t);
 AstIndex expr_literal(self_t);
 AstIndex expr_block(self_t);
 AstIndex expr_return(self_t);
+AstIndex expr_if(self_t);
+AstIndex expr_while(self_t);
 
 
 // Special

@@ -19,4 +19,4 @@ The inspiration comes from a mix of Go and Zig (and maybe some Rust?).
   - ✓ arithmetic / comparison / logic
   - if/else
   - while (just while, no for, no break/continue)
-  - return
+  - ✓ return

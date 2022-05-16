@@ -20,7 +20,7 @@ void ast_debug_append_token_content(char *buffer, Ast *ast, TokenIndex token_idx
 //region Special
 
 void ast_debug_fn_proto(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token *main_token, int indent) {
-    FnProto proto = *((FnProto*) &ast->extra_data.data[node->data.lhs]);
+    AstFnProto proto = *((AstFnProto*) &ast->extra_data.data[node->data.lhs]);
 
     sprintf(buffer + strlen(buffer), "{ ");
 
@@ -183,6 +183,33 @@ void ast_debug_return(char *buffer, Ast *ast, AstIndex index, AstNode *node, Tok
     }
 }
 
+void ast_debug_if(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token *main_token, int indent) {
+    ast_debug_print_node(buffer, ast, node->data.lhs, indent);
+    AstIfData data = *((AstIfData*) &ast->extra_data.data[node->data.rhs]);
+    ast_debug_print_node(buffer, ast, data.then_block, indent);
+    if (data.else_block != ast_index_empty) {
+        ast_debug_print_node(buffer, ast, data.else_block, indent);
+    }
+
+    ast_debug_append_default_header(buffer, index, indent);
+
+    sprintf(buffer + strlen(buffer), "if(%%%d, then = %%%d, else = ", node->data.lhs, data.then_block);
+    if (data.else_block == ast_index_empty) {
+        sprintf(buffer + strlen(buffer), "_");
+    } else {
+        sprintf(buffer + strlen(buffer), "%%%d", data.else_block);
+    }
+    sprintf(buffer + strlen(buffer), ")");
+}
+
+void ast_debug_while(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token *main_token, int indent) {
+    ast_debug_print_node(buffer, ast, node->data.lhs, indent);
+    ast_debug_print_node(buffer, ast, node->data.rhs, indent);
+
+    ast_debug_append_default_header(buffer, index, indent);
+    sprintf(buffer + strlen(buffer), "while(%%%d, body = %%%d)", node->data.lhs, node->data.rhs);
+}
+
 //endregion
 
 //region Statements
@@ -250,6 +277,8 @@ AstDebugFn ast_debug_fns[__AST_LAST] = {
     ast_debug_unary,            // unary
     ast_debug_block,            // block
     ast_debug_return,           // return
+    ast_debug_if,               // if
+    ast_debug_while,            // while
 
     ast_debug_stmt_let,         // let
 

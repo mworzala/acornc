@@ -63,6 +63,14 @@ typedef enum ast_tag_s {
     // lhs/rhs:     The expr being returned, if present/Empty
     AST_RETURN,
 
+    // main_token:  The token representing 'if'
+    // lhs/rhs   :  Condition expr/IfData
+    AST_IF,
+
+    // main_token:  The token representing the 'while'
+    // lhs/rhs   :  Condition expr/Body block
+    AST_WHILE,
+
     // Statements
 
     // main_token:  The token representing the `let` keyword
@@ -80,7 +88,7 @@ typedef enum ast_tag_s {
     // Special
 
     // main_token:  The token representing the function name
-    // lhs/rhs   :  FnProto (see below) within extra_data/Type expr
+    // lhs/rhs   :  AstFnProto (see below) within extra_data/Type expr
     //todo this eventually will be changed since it will be anonymous/not know the function name.
     AST_FN_PROTO,
 
@@ -97,10 +105,15 @@ typedef enum ast_tag_s {
     __AST_LAST, //todo test case to ensure each one is stringified
 } AstTag;
 
-typedef struct fn_proto_s {
+typedef struct ast_fn_proto_s {
     AstIndex param_start;
     AstIndex param_end;
-} FnProto;
+} AstFnProto;
+
+typedef struct ast_if_data_s {
+    AstIndex then_block;
+    AstIndex else_block;
+} AstIfData;
 
 const char *ast_tag_to_string(AstTag tag);
 

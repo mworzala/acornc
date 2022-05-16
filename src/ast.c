@@ -22,7 +22,11 @@ const char *ast_tag_to_string(AstTag tag) {
         case AST_BLOCK:
             return "block";
         case AST_RETURN:
-            return "return";
+            return "ret";
+        case AST_IF:
+            return "if";
+        case AST_WHILE:
+            return "while";
 
         case AST_LET:
             return "let";
