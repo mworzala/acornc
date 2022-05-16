@@ -72,7 +72,7 @@ typedef enum ast_tag_s {
     AST_WHILE,
 
     // main_token:  The token representing the '.'
-    // lhs/rhs   :  LHS expr/RHS expr (identifier
+    // lhs/rhs   :  LHS expr/RHS expr (identifier)
     AST_DOT, //todo what is this usually called? access?
 
     // main_token:  The token representing '('

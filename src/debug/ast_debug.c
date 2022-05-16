@@ -162,7 +162,34 @@ void ast_debug_while(char *buffer, Ast *ast, AstIndex index, AstNode *node, Toke
 }
 
 void ast_debug_call(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token *main_token, int indent) {
+    ast_debug_print_node(buffer, ast, node->data.lhs, indent);
+
+    AstCallData call_data = *((AstCallData*) &ast->extra_data.data[node->data.rhs]);
+    uint32_t param_count = call_data.arg_start == ast_index_empty ? 0 : call_data.arg_end - call_data.arg_start + 1;
+
+    for (uint32_t i = 0; i < param_count; i++) {
+        ast_debug_print_node(buffer, ast, ast->extra_data.data[call_data.arg_start + i], indent);
+    }
+
+
+
     ast_debug_append_default_header(buffer, index, indent);
+    sprintf(buffer + strlen(buffer), "call(%%%d, args = ", node->data.lhs);
+
+    if (param_count == 0) {
+        sprintf(buffer + strlen(buffer), "_");
+    } else {
+        sprintf(buffer + strlen(buffer), "[");
+        for (uint32_t i = 0; i < param_count; i++) {
+            sprintf(buffer + strlen(buffer), "%%%d", ast->extra_data.data[call_data.arg_start + i]);
+            if (i != param_count - 1) {
+                sprintf(buffer + strlen(buffer), ", ");
+            }
+        }
+        sprintf(buffer + strlen(buffer), "]");
+    }
+
+    sprintf(buffer + strlen(buffer), ")");
 }
 
 //endregion

@@ -260,7 +260,9 @@ AstIndex int_expr_bp(self_t) {
 
             top = parse_frame_stack_pop(&stack);
 
-            if (self->tokens.data[res.op_idx].type == TOK_LPAREN) {
+            // This is kind of a hack, we need to treat lparen as a call, not parens when its not in a prefix position.
+            bool is_postfix = res.min_bp == 100;
+            if (self->tokens.data[res.op_idx].type == TOK_LPAREN && !is_postfix) {
                 assert(parse_advance(self).type == TOK_RPAREN);
                 top.lhs = res.lhs;
                 continue;
@@ -278,11 +280,14 @@ AstIndex int_expr_bp(self_t) {
             // Determine the appropriate node type, default to binary if there is no special case.
             AstTag tag = AST_BINARY;
             Token op_token = self->tokens.data[res.op_idx];
-            if (rhs == ast_index_empty) {
+            if (op_token.type == TOK_DOT) {
+                tag = AST_DOT;
+            } else if (op_token.type == TOK_LPAREN) {
+                // If it is a paren, the lparen does not make it here. It is flattened above.
+                tag = AST_CALL;
+            } else if (rhs == ast_index_empty) {
                 // Unary operators only ever have a LHS, this is normalized between prefix/postfix above.
                 tag = AST_UNARY;
-            } else if (op_token.type == TOK_DOT) {
-                tag = AST_DOT;
             }
 
             // Write the node to the node array.
@@ -295,13 +300,26 @@ AstIndex int_expr_bp(self_t) {
             continue;
         }
 
+        // This rhs param is somewhat confusing and I am not in love. It is used to specify a
+        //  rhs for a postfix operator. In particular, AST_CALL has AstCallData in its rhs.
+        // In practice, what it does is override the creation of the RHS. For a postfix operator,
+        //  the following expression will always be empty, so we just fill it with call data.
+        AstIndex rhs = ast_index_empty;
         TokenIndex op_idx = self->tok_index;
-        parse_advance(self); // Eat the operator symbol
+        if (self->tokens.data[op_idx].type == TOK_LPAREN && top.lhs != UINT32_MAX) {
+            rhs = call_data(self); // See above comment
+        } else {
+            parse_advance(self); // Eat the operator symbol
+        }
 
+        // If an override (eg call data) was not specified, try to parse a literal following the operator.
+        //  This fills the default case of 1 + 2 for example.
+        if (rhs == ast_index_empty)
+            rhs = expr_literal(self);
         parse_frame_stack_push(&stack, top);
         top = (ParseFrame) {
             .min_bp = bp.rhs,
-            .lhs = expr_literal(self),
+            .lhs = rhs,
             .op_idx = op_idx,
         };
     }
@@ -484,6 +502,21 @@ AstIndex enum_case(self_t) {
     return self->nodes.size - 1;
 }
 
+AstIndex call_data(self_t) {
+    // Parse parameters
+    AstIndexPair param_data = int_parse_list(self, int_expr,
+                                             TOK_LPAREN, TOK_RPAREN, TOK_COMMA);
+
+    AstIndex call_data_idx = self->extra_data.size;
+    AstCallData call_data = {
+        .arg_start = param_data.first,
+        .arg_end = param_data.second,
+    };
+    ast_index_list_add_sized(&self->extra_data, call_data);
+
+    return call_data_idx;
+}
+
 //endregion
 
 // Unmapped
@@ -539,10 +572,7 @@ int_parse_list(self_t, AstIndex (*parse_fn)(self_t), TokenType open, TokenType c
 // Pratt BP
 
 BindingPower token_bp(Token token, bool is_prefix) {
-    // a.b + c
     switch (token.type) {
-        case TOK_DOT:
-            return (BindingPower) {41, 42};
         case TOK_AMPAMP:
         case TOK_BARBAR:
             return (BindingPower) {3, 4};
@@ -560,10 +590,13 @@ BindingPower token_bp(Token token, bool is_prefix) {
         case TOK_STAR:
         case TOK_SLASH:
             return (BindingPower) {17, 18};
-        case TOK_BANG:
+        case TOK_BANG: //todo unused postfix, remove me.
             return (BindingPower) {21, 100};
+        case TOK_DOT:
+            return (BindingPower) {41, 42};
         case TOK_LPAREN:
-            return (BindingPower) {99, 0};
+            return is_prefix ? (BindingPower) {99, 0} :
+                   (BindingPower) {19, 100};
         default:
             return (BindingPower) {0, 0};
     }

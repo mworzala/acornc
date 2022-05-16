@@ -62,6 +62,8 @@ AstIndex fn_proto(self_t);
 AstIndex fn_param(self_t);
 AstIndex struct_field(self_t);
 AstIndex enum_case(self_t);
+// Returns an extra_data index for an AstCallData
+AstIndex call_data(self_t);
 
 // Unmapped
 typedef struct ast_index_pair_s {
