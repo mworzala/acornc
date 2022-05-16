@@ -1,0 +1,71 @@
+// module
+
+// @1
+%2 = struct(Person, fields = [
+  field(name, type = _),
+  field(age, type = _),
+])
+
+// @2
+%6 = enum(Color, cases = [
+  case(red),
+  case(green),
+  case(blue),
+])
+
+// @3
+%50 = fn(main, proto = { params = _, ret = _ }, body = {
+  %49 = block(stmts = {
+    // @1
+    %8 = int(1)
+    %9 = let(a, type = _, init = %8)
+    // @2
+    %10 = ref(a)
+    %11 = int(20)
+    %12 = int(1)
+    %13 = add(%11, %12)
+    %14 = mul(%10, %13)
+    %15 = let(b, type = _, init = %14)
+    // @3
+    %16 = ref(a)
+    %17 = int(1)
+    %18 = div(%16, %17)
+    %19 = int(2)
+    %20 = mul(%18, %19)
+    %21 = let(c, type = _, init = %20)
+    // @4
+    %22 = ref(c)
+    %23 = int(42)
+    %24 = cmp_eq(%22, %23)
+    %26 = block(stmts = {
+      %25 = bool(true)
+    })
+    %27 = ref(b)
+    %28 = int(21)
+    %29 = cmp_ne(%27, %28)
+    %31 = block(stmts = {
+      %30 = bool(false)
+    })
+    %35 = block(stmts = {
+      %32 = int(1)
+      %33 = int(2)
+      %34 = cmp_gt(%32, %33)
+    })
+    %36 = if(%29, then = %31, else = %35)
+    %37 = if(%24, then = %26, else = %36)
+    %38 = let(d, type = _, init = %37)
+    // @5
+    %39 = ref(a)
+    %40 = int(10)
+    %41 = cmp_lt(%39, %40)
+    %43 = block(stmts = {
+      %42 = bool(true)
+    })
+    %44 = while(%41, body = %43)
+    // @6
+    %45 = ref(d)
+    %46 = bool(true)
+    %47 = log_or(%45, %46)
+    %48 = ret(%47)
+  })
+}

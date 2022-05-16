@@ -71,6 +71,10 @@ typedef enum ast_tag_s {
     // lhs/rhs   :  Condition expr/Body block
     AST_WHILE,
 
+    // main_token:  The token representing '('
+    // lhs/rhs   :  The expr being called/AstCallData (see below)
+    AST_CALL,
+
     // Statements
 
     // main_token:  The token representing the `let` keyword
@@ -84,6 +88,14 @@ typedef enum ast_tag_s {
     // main_token:  The token representing the `fn` keyword
     // lhs/rhs:     Prototype/Body
     AST_NAMED_FN,
+
+    // main_token:  The token representing the `struct` keyword
+    // lhs..rhs  :  The field entries
+    AST_STRUCT,
+
+    // main_token:  The token representing the `enum` keyword
+    // lhs..rhs  :  The variant cases
+    AST_ENUM,
 
     // Special
 
@@ -99,6 +111,19 @@ typedef enum ast_tag_s {
     //todo lhs will eventually be used to store flags like is_mut, is_ref, etc.
     AST_FN_PARAM,
 
+    // main_token:  The token representing the identifier
+    // lhs/rhs   :  Unused/Type expr
+    //todo lhs will eventually be used to store flags like is_ref, etc.
+    AST_FIELD,
+
+    // main_token:  The token representing the identifier
+    // lhs/rhs   :  Unused/Unused
+    AST_ENUM_CASE,
+
+    // main_token:  Unused
+    // lhs..rhs  :  first..last top level decl
+    AST_MODULE,
+
     // All values always empty value.
     AST_EMPTY,
 
@@ -109,6 +134,11 @@ typedef struct ast_fn_proto_s {
     AstIndex param_start;
     AstIndex param_end;
 } AstFnProto;
+
+typedef struct ast_call_data_s {
+    AstIndex arg_start;
+    AstIndex arg_end;
+} AstCallData;
 
 typedef struct ast_if_data_s {
     AstIndex then_block;

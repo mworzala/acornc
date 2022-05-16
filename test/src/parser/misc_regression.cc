@@ -15,3 +15,29 @@ TEST(Parser, WrongBlockEntryOrdering) {
 )#";
     EXPECT_EXPR(input, expected);
 }
+
+
+TEST(Parser, EnumOffByOne) {
+    auto input = R"#(
+struct Person { }
+enum Color {
+    red,
+    green,
+    blue,
+}
+)#";
+    auto expected = R"#(
+// module
+
+// @1
+%0 = struct(Person, fields = _)
+
+// @2
+%4 = enum(Color, cases = [
+  case(red),
+  case(green),
+  case(blue),
+])
+)#";
+    EXPECT_MODULE(input, expected);
+}

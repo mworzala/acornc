@@ -15,7 +15,10 @@ extern "C" {
     EXPECT_PRED3(parse_check_generic, int_stmt, expr, (expected) + 1)
 
 #define EXPECT_TL_DECL(expr, expected) \
-    EXPECT_PRED3(parse_check_generic, int_top_level_decls, expr, (expected) + 1)
+    EXPECT_PRED3(parse_check_generic, int_top_level_decl, expr, (expected) + 1)
+
+#define EXPECT_MODULE(expr, expected) \
+    EXPECT_PRED3(parse_check_generic, int_module, expr, (expected) + 1)
 
 
 typedef AstIndex (*ParseFn)(Parser *);

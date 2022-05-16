@@ -40,43 +40,43 @@ static void run_file(const char *path) {
 
     Ast ast = parser_parse(&parser);
 
-    printf("%s\n", source);
-
-    printf("\nIDX |  AST TY | LHS/RHS |  TOK TY | TOK VAL\n");
-
-    for (size_t i = 0; i < ast.nodes.size; i++) {
-        AstNode *node = &ast.nodes.data[i];
-        printf("%03zu | %7s", i, ast_tag_to_string(node->tag));
-
-        printf(" | ");
-
-        if (node->data.lhs != ast_index_empty) {
-            printf("%03u", node->data.lhs);
-        } else {
-            printf("---");
-        }
-
-        printf("/");
-
-        if (node->data.rhs != ast_index_empty) {
-            printf("%03u", node->data.rhs);
-        } else {
-            printf("---");
-        }
-
-        printf(" | ");
-
-        Token tok = ast.tokens.data[node->main_token];
-        printf("%7s", token_type_to_string(tok.type));
-
-        printf(" | ");
-
-        printf("%.*s", (int)(tok.loc.end - tok.loc.start), source + (tok.loc.start - start));
-
-        printf("\n");
-    }
-
-    printf("\n");
+//    printf("%s\n", source);
+//
+//    printf("\nIDX |  AST TY | LHS/RHS |  TOK TY | TOK VAL\n");
+//
+//    for (size_t i = 0; i < ast.nodes.size; i++) {
+//        AstNode *node = &ast.nodes.data[i];
+//        printf("%03zu | %7s", i, ast_tag_to_string(node->tag));
+//
+//        printf(" | ");
+//
+//        if (node->data.lhs != ast_index_empty) {
+//            printf("%03u", node->data.lhs);
+//        } else {
+//            printf("---");
+//        }
+//
+//        printf("/");
+//
+//        if (node->data.rhs != ast_index_empty) {
+//            printf("%03u", node->data.rhs);
+//        } else {
+//            printf("---");
+//        }
+//
+//        printf(" | ");
+//
+//        Token tok = ast.tokens.data[node->main_token];
+//        printf("%7s", token_type_to_string(tok.type));
+//
+//        printf(" | ");
+//
+//        printf("%.*s", (int)(tok.loc.end - tok.loc.start), source + (tok.loc.start - start));
+//
+//        printf("\n");
+//    }
+//
+//    printf("\n");
 
     char *str = ast_debug_print(&ast);
     printf("%s\n", str);

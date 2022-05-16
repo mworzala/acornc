@@ -12,11 +12,12 @@ The inspiration comes from a mix of Go and Zig (and maybe some Rust?).
 
 ### Rough plan
 - Keep working on the parser until it can parse:
-  - structs (c structs. just fields/types, no methods)
-  - enums (c enums. just values, no methods or tagging)
+  - ✓ structs (c structs. just fields/types, no methods)
+  - ✓ enums (c enums. just values, no methods or tagging)
+  - field access
   - ✓ functions (name params type body, no methods)
   - calls (todo merge up)
   - ✓ arithmetic / comparison / logic
-  - if/else
-  - while (just while, no for, no break/continue)
+  - ✓ if/else
+  - ✓ while (just while, no for, no break/continue)
   - ✓ return

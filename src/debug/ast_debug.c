@@ -16,61 +16,6 @@ void ast_debug_append_token_content(char *buffer, Ast *ast, TokenIndex token_idx
             (char *)token.loc.start);
 }
 
-
-//region Special
-
-void ast_debug_fn_proto(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token *main_token, int indent) {
-    AstFnProto proto = *((AstFnProto*) &ast->extra_data.data[node->data.lhs]);
-
-    sprintf(buffer + strlen(buffer), "{ ");
-
-    // Append params
-    sprintf(buffer + strlen(buffer), "params = ");
-    if (proto.param_start == ast_index_empty) {
-        sprintf(buffer + strlen(buffer), "_");
-    } else {
-        sprintf(buffer + strlen(buffer), "[\n");
-        size_t param_count = proto.param_end - proto.param_start + 1;
-        if (param_count == 1) {
-            ast_debug_print_node(buffer, ast, proto.param_start, indent + 2);
-        } else {
-            for (uint32_t i = 0; i < param_count; i++) {
-                ast_debug_print_node(buffer, ast, proto.param_start + i, indent + 2);
-            }
-        }
-        sprintf(buffer + strlen(buffer), "%*s]", indent, "");
-    }
-
-    // Append return type expr
-    sprintf(buffer + strlen(buffer), ", ret = ");
-    if (node->data.rhs == ast_index_empty) {
-        sprintf(buffer + strlen(buffer), "_");
-    } else {
-        //todo
-        assert(false);
-    }
-
-    sprintf(buffer + strlen(buffer), " }");
-}
-
-void ast_debug_fn_param(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token *main_token, int indent) {
-    sprintf(buffer + strlen(buffer), "%*s", indent, "");
-
-    sprintf(buffer + strlen(buffer), "param(");
-    ast_debug_append_token_content(buffer, ast, node->main_token);
-
-    sprintf(buffer + strlen(buffer), ", type = ");
-    if (node->data.rhs == ast_index_empty) {
-        sprintf(buffer + strlen(buffer), "_");
-    } else {
-        //todo
-        assert(false);
-    }
-    sprintf(buffer + strlen(buffer), "),");
-}
-
-//endregion
-
 //region Expressions
 
 void ast_debug_literal_generic(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token *main_token, int indent) {
@@ -210,15 +155,24 @@ void ast_debug_while(char *buffer, Ast *ast, AstIndex index, AstNode *node, Toke
     sprintf(buffer + strlen(buffer), "while(%%%d, body = %%%d)", node->data.lhs, node->data.rhs);
 }
 
+void ast_debug_call(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token *main_token, int indent) {
+    ast_debug_append_default_header(buffer, index, indent);
+}
+
 //endregion
 
 //region Statements
 
 void ast_debug_stmt_let(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token *main_token, int indent) {
+    if (node->data.rhs != ast_index_empty) {
+        ast_debug_print_node(buffer, ast, node->data.rhs, indent);
+    }
+
     ast_debug_append_default_header(buffer, index, indent);
 
     sprintf(buffer + strlen(buffer), "let(");
     ast_debug_append_token_content(buffer, ast, node->main_token + 1);
+
     sprintf(buffer + strlen(buffer), ", type = ");
     if (node->data.lhs == ast_index_empty) {
         sprintf(buffer + strlen(buffer), "_");
@@ -231,9 +185,7 @@ void ast_debug_stmt_let(char *buffer, Ast *ast, AstIndex index, AstNode *node, T
     if (node->data.rhs == ast_index_empty) {
         sprintf(buffer + strlen(buffer), "_");
     } else {
-        sprintf(buffer + strlen(buffer), "{\n");
-        ast_debug_print_node(buffer, ast, node->data.rhs, indent + 2);
-        sprintf(buffer + strlen(buffer), "%*s}", indent, "");
+        sprintf(buffer + strlen(buffer), "%%%d", node->data.rhs);
     }
 
     sprintf(buffer + strlen(buffer), ")");
@@ -262,7 +214,138 @@ void ast_debug_fn_named(char *buffer, Ast *ast, AstIndex index, AstNode *node, T
     }
 }
 
+void ast_debug_struct(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token *main_token, int indent) {
+    ast_debug_append_default_header(buffer, index, indent);
+
+    sprintf(buffer + strlen(buffer), "struct(");
+    ast_debug_append_token_content(buffer, ast, node->main_token + 1);
+    sprintf(buffer + strlen(buffer), ", fields = ");
+
+    if (node->data.lhs == ast_index_empty) {
+        sprintf(buffer + strlen(buffer), "_");
+    } else {
+        size_t field_count = node->data.rhs - node->data.lhs + 1;
+        sprintf(buffer + strlen(buffer), "[\n");
+        for (uint32_t i = 0; i < field_count; i++) {
+            ast_debug_print_node(buffer, ast, ast->extra_data.data[node->data.lhs + i], indent + 2);
+        }
+        sprintf(buffer + strlen(buffer), "%*s]", indent, "");
+    }
+
+    sprintf(buffer + strlen(buffer), ")");
+}
+
+void ast_debug_enum(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token *main_token, int indent) {
+    ast_debug_append_default_header(buffer, index, indent);
+
+    sprintf(buffer + strlen(buffer), "enum(");
+    ast_debug_append_token_content(buffer, ast, node->main_token + 1);
+    sprintf(buffer + strlen(buffer), ", cases = ");
+
+    if (node->data.lhs == ast_index_empty) {
+        sprintf(buffer + strlen(buffer), "_");
+    } else {
+        size_t case_count = node->data.rhs - node->data.lhs + 1;
+        sprintf(buffer + strlen(buffer), "[\n");
+        for (uint32_t i = 0; i < case_count; i++) {
+            ast_debug_print_node(buffer, ast, ast->extra_data.data[node->data.lhs + i], indent + 2);
+        }
+        sprintf(buffer + strlen(buffer), "%*s]", indent, "");
+    }
+
+    sprintf(buffer + strlen(buffer), ")");
+}
+
 //endregion
+
+
+//region Special
+
+void ast_debug_fn_proto(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token *main_token, int indent) {
+    AstFnProto proto = *((AstFnProto*) &ast->extra_data.data[node->data.lhs]);
+
+    sprintf(buffer + strlen(buffer), "{ ");
+
+    // Append params
+    sprintf(buffer + strlen(buffer), "params = ");
+    if (proto.param_start == ast_index_empty) {
+        sprintf(buffer + strlen(buffer), "_");
+    } else {
+        sprintf(buffer + strlen(buffer), "[\n");
+        size_t param_count = proto.param_end - proto.param_start + 1;
+        for (uint32_t i = 0; i < param_count; i++) {
+            ast_debug_print_node(buffer, ast, proto.param_start + i, indent + 2);
+        }
+        sprintf(buffer + strlen(buffer), "%*s]", indent, "");
+    }
+
+    // Append return type expr
+    sprintf(buffer + strlen(buffer), ", ret = ");
+    if (node->data.rhs == ast_index_empty) {
+        sprintf(buffer + strlen(buffer), "_");
+    } else {
+        //todo
+        assert(false);
+    }
+
+    sprintf(buffer + strlen(buffer), " }");
+}
+
+void ast_debug_fn_param(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token *main_token, int indent) {
+    sprintf(buffer + strlen(buffer), "%*s", indent, "");
+
+    sprintf(buffer + strlen(buffer), "param(");
+    ast_debug_append_token_content(buffer, ast, node->main_token);
+
+    sprintf(buffer + strlen(buffer), ", type = ");
+    if (node->data.rhs == ast_index_empty) {
+        sprintf(buffer + strlen(buffer), "_");
+    } else {
+        //todo
+        assert(false);
+    }
+    sprintf(buffer + strlen(buffer), "),");
+}
+
+void ast_debug_field(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token *main_token, int indent) {
+    sprintf(buffer + strlen(buffer), "%*s", indent, "");
+
+    sprintf(buffer + strlen(buffer), "field(");
+    ast_debug_append_token_content(buffer, ast, node->main_token);
+
+    sprintf(buffer + strlen(buffer), ", type = ");
+    if (node->data.rhs == ast_index_empty) {
+        sprintf(buffer + strlen(buffer), "_");
+    } else {
+        //todo
+        assert(false);
+    }
+    sprintf(buffer + strlen(buffer), "),");
+}
+
+void ast_debug_enum_case(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token *main_token, int indent) {
+    sprintf(buffer + strlen(buffer), "%*s", indent, "");
+
+    sprintf(buffer + strlen(buffer), "case(");
+    ast_debug_append_token_content(buffer, ast, node->main_token);
+    sprintf(buffer + strlen(buffer), "),");
+}
+
+//endregion
+
+void ast_debug_module(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token *main_token, int indent) {
+    sprintf(buffer + strlen(buffer), "// module\n");
+
+    if (node->data.lhs != ast_index_empty) {
+        AstIndex start = node->data.lhs;
+        uint32_t expr_count = node->data.rhs - start + 1;
+
+        for (uint32_t i = 0; i < expr_count; i++) {
+            sprintf(buffer + strlen(buffer), "\n%*s// @%d\n", indent, "", i + 1);
+            ast_debug_print_node(buffer, ast, ast->extra_data.data[start + i], indent);
+        }
+    }
+}
 
 void ast_debug_empty(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token *main_token, int indent) {
     sprintf(buffer + strlen(buffer), "%*s", indent, "");
@@ -279,14 +362,20 @@ AstDebugFn ast_debug_fns[__AST_LAST] = {
     ast_debug_return,           // return
     ast_debug_if,               // if
     ast_debug_while,            // while
+    ast_debug_call,             // call
 
     ast_debug_stmt_let,         // let
 
     ast_debug_fn_named,         // fn_named
+    ast_debug_struct,           // struct
+    ast_debug_enum,             // enum
 
     ast_debug_fn_proto,         // fn_proto
     ast_debug_fn_param,         // fn_param
+    ast_debug_field,            // field
+    ast_debug_enum_case,        // enum_case
 
+    ast_debug_module,           // module
     ast_debug_empty,            // empty
 };
 

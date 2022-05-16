@@ -27,18 +27,30 @@ const char *ast_tag_to_string(AstTag tag) {
             return "if";
         case AST_WHILE:
             return "while";
+        case AST_CALL:
+            return "call";
 
         case AST_LET:
             return "let";
 
         case AST_NAMED_FN:
             return "named_fn";
+        case AST_STRUCT:
+            return "struct";
+        case AST_ENUM:
+            return "enum";
 
         case AST_FN_PROTO:
             return "fn_proto";
         case AST_FN_PARAM:
             return "fn_param";
+        case AST_FIELD:
+            return "field";
+        case AST_ENUM_CASE:
+            return "enum_case";
 
+        case AST_MODULE:
+            return "module";
         case AST_EMPTY:
             return "<empty>";
         default:

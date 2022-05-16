@@ -61,18 +61,61 @@ bool parse_match_advance(self_t, TokenType type) {
 TokenIndex parse_assert(self_t, TokenType type) {
     Token tok = parse_advance(self);
     if (tok.type != type) {
-        printf("Expected token of type %d, got %d\n", type, tok.type);
+        printf("Expected token of type %s, got %s\n", token_type_to_string(type), token_type_to_string(tok.type));
         assert(false);
     }
     return self->tok_index - 1;
 }
 
 
-// Top level declarations
+//region Top level declarations
 
-AstIndex int_top_level_decls(self_t) {
-    if (parse_peek_curr(self).type == TOK_FN) {
+AstIndex int_module(self_t) {
+    // See int_parse_list, it is a better documented, similar version of this logic.
+
+    AstIndexList inner_indices;
+    ast_index_list_init(&inner_indices);
+
+    // Parse inner expressions
+    while (!parse_match(self, TOK_EOF)) {
+        AstIndex idx = int_top_level_decl(self);
+        ast_index_list_add(&inner_indices, idx);
+
+        if (idx == ast_index_empty) {
+            assert(false);
+        }
+    }
+
+    // First node
+    AstIndex start = ast_index_empty;
+    AstIndex end = ast_index_empty;
+
+    if (inner_indices.size != 0) {
+        start = self->extra_data.size;
+        end = self->extra_data.size + inner_indices.size - 1;
+
+        // Copy inner_indices to extra_data
+        for (size_t i = 0; i < inner_indices.size; i++) {
+            ast_index_list_add(&self->extra_data, inner_indices.data[i]);
+        }
+    }
+    ast_index_list_free(&inner_indices);
+
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_MODULE,
+        .main_token = UINT32_MAX,
+        .data = { start, end },
+    });
+    return self->nodes.size - 1;
+}
+
+AstIndex int_top_level_decl(self_t) {
+    if (parse_match(self, TOK_FN)) {
         return tl_fn_decl(self);
+    } else if (parse_match(self, TOK_STRUCT)) {
+        return tl_struct_decl(self);
+    } else if (parse_match(self, TOK_ENUM)) {
+        return tl_enum_decl(self);
     }
 
     return ast_index_empty;
@@ -99,8 +142,41 @@ AstIndex tl_fn_decl(self_t) {
     return self->nodes.size - 1;
 }
 
+AstIndex tl_struct_decl(self_t) {
+    TokenIndex main_token = parse_assert(self, TOK_STRUCT);
 
-// Statements
+    parse_assert(self, TOK_IDENT); // Eat the identifier, can be accessed using main_token + 1
+
+    AstIndexPair entry_data = int_parse_list(self, struct_field,
+                                             TOK_LBRACE, TOK_RBRACE, TOK_SEMI);
+
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_STRUCT,
+        .main_token = main_token,
+        .data = {entry_data.first, entry_data.second}
+    });
+    return self->nodes.size - 1;
+}
+
+AstIndex tl_enum_decl(self_t) {
+    TokenIndex main_token = parse_assert(self, TOK_ENUM);
+
+    parse_assert(self, TOK_IDENT); // Eat the identifier, can be accessed using main_token + 1
+
+    AstIndexPair entry_data = int_parse_list(self, enum_case,
+                                             TOK_LBRACE, TOK_RBRACE, TOK_COMMA);
+
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_ENUM,
+        .main_token = main_token,
+        .data = {entry_data.first, entry_data.second}
+    });
+    return self->nodes.size - 1;
+}
+
+//endregion
+
+//region Statements
 
 AstIndex int_stmt(self_t) {
     if (parse_peek_curr(self).type == TOK_LET) {
@@ -139,8 +215,9 @@ AstIndex stmt_let(self_t) {
     return self->nodes.size - 1;
 }
 
+//endregion
 
-// Expressions
+//region Expressions
 
 AstIndex int_expr(self_t) {
     if (parse_match(self, TOK_LBRACE)) {
@@ -296,7 +373,7 @@ AstIndex expr_if(self_t) {
     AstIndex else_ = ast_index_empty;
     if (parse_match_advance(self, TOK_ELSE)) {
         else_ = parse_match(self, TOK_IF) ?
-            expr_if(self) : expr_block(self);
+                expr_if(self) : expr_block(self);
     }
 
     AstIfData data = {then, else_};
@@ -326,8 +403,9 @@ AstIndex expr_while(self_t) {
     return self->nodes.size - 1;
 }
 
+//endregion
 
-// Special
+//region Special
 
 AstIndex fn_proto(self_t) {
     TokenIndex main_token = parse_assert(self, TOK_IDENT);
@@ -371,6 +449,33 @@ AstIndex fn_param(self_t) {
     return self->nodes.size - 1;
 }
 
+AstIndex struct_field(self_t) {
+    TokenIndex main_token = parse_assert(self, TOK_IDENT);
+
+    // Parse type expression
+    AstIndex type_expr = ast_index_empty;
+    //todo
+
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_FIELD,
+        .main_token = main_token,
+        .data = {ast_index_empty, type_expr},
+    });
+    return self->nodes.size - 1;
+}
+
+AstIndex enum_case(self_t) {
+    TokenIndex main_token = parse_assert(self, TOK_IDENT);
+
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_ENUM_CASE,
+        .main_token = main_token,
+        .data = {ast_index_empty, ast_index_empty},
+    });
+    return self->nodes.size - 1;
+}
+
+//endregion
 
 // Unmapped
 

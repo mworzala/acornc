@@ -34,10 +34,12 @@ typedef struct binding_power_s {
 BindingPower token_bp(Token token, bool is_prefix);
 
 // Top level
-AstIndex int_top_level_decls(self_t);
+AstIndex int_module(self_t);
+AstIndex int_top_level_decl(self_t);
 //AstIndex tl_const_decl(self_t); todo not included for now, structs and functions are declared like in c
-//AstIndex tl_struct_decl(self_t);
 AstIndex tl_fn_decl(self_t);
+AstIndex tl_struct_decl(self_t);
+AstIndex tl_enum_decl(self_t);
 
 // Statements
 AstIndex int_stmt(self_t);
@@ -58,6 +60,8 @@ AstIndex expr_while(self_t);
 // Special
 AstIndex fn_proto(self_t);
 AstIndex fn_param(self_t);
+AstIndex struct_field(self_t);
+AstIndex enum_case(self_t);
 
 // Unmapped
 typedef struct ast_index_pair_s {
