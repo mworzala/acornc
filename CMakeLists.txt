@@ -6,11 +6,17 @@ option(test "Build all tests." OFF)
 
 set(CMAKE_C_STANDARD 11)
 
+#export LDFLAGS="-L/opt/homebrew/opt/llvm@12/lib"
+#export CPPFLAGS="-I/opt/homebrew/opt/llvm@12/include"
+link_directories(/opt/homebrew/opt/llvm@12/lib)
+
 # Library
 file(GLOB_RECURSE SOURCES src/*.c)
 file(GLOB_RECURSE HEADERS include/*.h)
 add_library(${PROJECT_NAME}_lib STATIC ${SOURCES} ${HEADERS})
 target_include_directories(${PROJECT_NAME}_lib PUBLIC include)
+target_include_directories(${PROJECT_NAME}_lib PUBLIC /opt/homebrew/opt/llvm@12/include)
+target_link_libraries(${PROJECT_NAME}_lib PRIVATE LLVM)
 
 # Executable
 add_executable(${PROJECT_NAME} bin/main.c)

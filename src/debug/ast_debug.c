@@ -307,7 +307,7 @@ void ast_debug_fn_proto(char *buffer, Ast *ast, AstIndex index, AstNode *node, T
         sprintf(buffer + strlen(buffer), "[\n");
         size_t param_count = proto.param_end - proto.param_start + 1;
         for (uint32_t i = 0; i < param_count; i++) {
-            ast_debug_print_node(buffer, ast, proto.param_start + i, indent + 2);
+            ast_debug_print_node(buffer, ast, ast->extra_data.data[proto.param_start + i], indent + 2);
         }
         sprintf(buffer + strlen(buffer), "%*s]", indent, "");
     }

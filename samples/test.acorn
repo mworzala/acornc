@@ -1,28 +1,7 @@
-
-struct Person {
-    name;
-    age;
-}
-
-enum Color {
-    red,
-    green,
-    blue,
-}
-
 fn main() {
-    let a = 1;
-    let b = a * (20 + 1);
-    let c = a / 1 * 2;
-    let d = if c == 42 {
-        true
-    } else if b != 21 {
-        false
-    } else {
-        1 > 2
-    };
-    while a < 10 {
-        true
-    };
-    return d || true
+    5 + 5
+}
+
+fn add(a, b, c): i32 {
+
 }
