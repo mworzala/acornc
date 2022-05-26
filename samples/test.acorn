@@ -1,7 +1,9 @@
+
+
 fn main() {
-    5 + 5
+    add(1, 4 + add(3, 4))
 }
 
-fn add(a, b, c): i32 {
-
+fn add(a, b) {
+    a + b
 }

@@ -11,6 +11,7 @@
 #define self_t AcgScope *self
 
 void acg_scope_init(self_t, AcgScope *parent) {
+    assert(self != parent);
     self->size = 0;
     self->capacity = 0;
     self->names = NULL;
@@ -50,6 +51,10 @@ LLVMValueRef *acg_scope_get(self_t, const char *name) {
         }
     }
 
+    if (self->parent != NULL) {
+        return acg_scope_get(self->parent, name);
+    }
+
     return NULL;
 }
 
@@ -80,6 +85,7 @@ void compile_ast_to_file(Ast *ast, const char *filename) {
 
 void ast_codegen_init(self_t, Ast *ast) {
     self->ast = ast;
+    acg_scope_init(&self->root_scope, NULL);
     self->context = LLVMContextCreate();
     self->module = LLVMModuleCreateWithNameInContext("unnamed_module", self->context);
     self->builder = LLVMCreateBuilderInContext(self->context);
@@ -87,6 +93,7 @@ void ast_codegen_init(self_t, Ast *ast) {
 
 void ast_codegen_free(self_t) {
     self->ast = NULL;
+    acg_scope_free(&self->root_scope);
     LLVMDisposeBuilder(self->builder);
     LLVMDisposeModule(self->module);
     LLVMContextDispose(self->context);
@@ -113,6 +120,25 @@ void ast_codegen_module(self_t, AstNode *node) {
         return; // Empty module
     }
 
+    // Add function prototypes to scope
+    for (AstIndex idx = node->data.lhs; idx <= node->data.rhs; idx++) {
+        AstNode *child = ast_codegen_node_from_extra_data(self, idx);
+        switch (child->tag) {
+            case AST_NAMED_FN: {
+                AstNode *proto_node = ast_codegen_node(self, child->data.lhs);
+                LLVMValueRef fn = ast_codegen_fn_proto(self, proto_node);
+                char *fn_name = ast_codegen_get_token_content(self, child->main_token + 1);
+                acg_scope_set(&self->root_scope, fn_name, fn);
+                free(fn_name);
+                break;
+            }
+            default:
+                printf("Error: Unexpected ast node in module: %s\n", ast_tag_to_string(child->tag));
+                assert(false);
+        }
+    }
+
+    // Generate functions
     for (AstIndex idx = node->data.lhs; idx <= node->data.rhs; idx++) {
         AstNode *child = ast_codegen_node_from_extra_data(self, idx);
         switch (child->tag) {
@@ -130,9 +156,8 @@ void ast_codegen_module(self_t, AstNode *node) {
 
 //region Module declarations
 
-void ast_codegen_named_fn(self_t, AstNode *node) {
-    AstNode *proto_node = ast_codegen_node(self, node->data.lhs);
-    AstFnProto proto = *((AstFnProto *) &self->ast->extra_data.data[proto_node->data.lhs]);
+LLVMValueRef ast_codegen_fn_proto(self_t, AstNode *node) {
+    AstFnProto proto = *((AstFnProto *) &self->ast->extra_data.data[node->data.lhs]);
 
     size_t param_count = 0;
     LLVMTypeRef *params = NULL;
@@ -149,27 +174,37 @@ void ast_codegen_named_fn(self_t, AstNode *node) {
         free(params);
     }
 
-    char *fn_name = ast_codegen_get_token_content(self, node->main_token + 1);
+    char *fn_name = ast_codegen_get_token_content(self, node->main_token);
     LLVMValueRef fn = LLVMAddFunction(self->module, fn_name, fn_type);
     free(fn_name);
 
+    return fn;
+}
+
+void ast_codegen_named_fn(self_t, AstNode *node) {
+    // Fn has already been defined in scope
+    char *fn_name = ast_codegen_get_token_content(self, node->main_token + 1);
+    LLVMValueRef *fn = acg_scope_get(&self->root_scope, fn_name);
+    assert(fn != NULL);
+    free(fn_name);
+
     // Create body scope
+    AstNode *proto_node = ast_codegen_node(self, node->data.lhs);
+    AstFnProto proto = *((AstFnProto *) &self->ast->extra_data.data[proto_node->data.lhs]);
     AcgScope body_scope;
-    acg_scope_init(&body_scope, NULL);
-    if (param_count != 0) {
-        for (int32_t i = 0; i < param_count; i++) {
+    acg_scope_init(&body_scope, &self->root_scope);
+    if (proto.param_start != ast_index_empty) {
+        for (int32_t i = 0; i < proto.param_end - proto.param_start + 1; i++) {
             AstNode *param = ast_codegen_node_from_extra_data(self, proto.param_start + i);
             char *param_name = ast_codegen_get_token_content(self, param->main_token);
-            acg_scope_set(&body_scope, param_name, LLVMGetParam(fn, i));
+            acg_scope_set(&body_scope, param_name, LLVMGetParam(*fn, i));
             free(param_name);
         }
     }
 
-
-
     // Generate function body
     AstNode *body = ast_codegen_node(self, node->data.rhs);
-    ast_codegen_block(self, body, fn, &body_scope);
+    ast_codegen_block(self, body, *fn, &body_scope);
 
     acg_scope_free(&body_scope);
 }
@@ -187,6 +222,8 @@ LLVMValueRef ast_codegen_expr(self_t, AstNode *node, LLVMValueRef fn, AcgScope *
     switch (node->tag) {
         case AST_INTEGER:
             return ast_codegen_const_int(self, node);
+        case AST_REF:
+            return ast_codegen_ref(self, node, scope);
         case AST_BINARY:
             return ast_codegen_binary_op(self, node, fn, scope);
         case AST_BLOCK: {
@@ -200,6 +237,8 @@ LLVMValueRef ast_codegen_expr(self_t, AstNode *node, LLVMValueRef fn, AcgScope *
         case AST_RETURN:
             ast_codegen_return(self, node, fn, scope);
             return NULL;
+        case AST_CALL:
+            return ast_codegen_call(self, node, fn, scope);
         default:
             printf("Error: Unexpected ast node in expr: %s\n", ast_tag_to_string(node->tag));
             assert(false);
@@ -211,6 +250,14 @@ LLVMValueRef ast_codegen_const_int(self_t, AstNode *node) {
     uint64_t value = atoll(str);
     free(str);
     return LLVMConstInt(llvm_int, value, false);
+}
+
+LLVMValueRef ast_codegen_ref(self_t, AstNode *node, AcgScope *scope) {
+    char *str = ast_codegen_get_token_content(self, node->main_token);
+    LLVMValueRef *value = acg_scope_get(scope, str);
+    free(str);
+    assert(value != NULL);
+    return *value;
 }
 
 LLVMValueRef ast_codegen_binary_op(self_t, AstNode *node, LLVMValueRef fn, AcgScope *scope) {
@@ -255,6 +302,34 @@ void ast_codegen_block(self_t, AstNode *node, LLVMValueRef fn, AcgScope *scope) 
 void ast_codegen_return(self_t, AstNode *node, LLVMValueRef fn, AcgScope *scope) {
     LLVMValueRef ret = ast_codegen_expr(self, ast_codegen_node(self, node->data.lhs), fn, scope);
     LLVMBuildRet(self->builder, ret);
+}
+
+LLVMValueRef ast_codegen_call(self_t, AstNode *node, LLVMValueRef fn, AcgScope *scope) {
+    AstNode *callee_node = ast_codegen_node(self, node->data.lhs);
+    LLVMValueRef fn_target = ast_codegen_expr(self, callee_node, fn, scope);
+    assert(LLVMIsAFunction(fn_target));
+
+    // Build args
+    AstCallData call_data = *((AstCallData *) &self->ast->extra_data.data[node->data.rhs]);
+    uint32_t arg_count = 0;
+    LLVMValueRef *args = NULL;
+    if (call_data.arg_start != ast_index_empty) {
+        arg_count = call_data.arg_end - call_data.arg_start + 1;
+
+        args = malloc(arg_count * sizeof(LLVMValueRef));
+        for (int i = 0; i < arg_count; i++) {
+            AstNode *arg_node = ast_codegen_node_from_extra_data(self, call_data.arg_start + i);
+            args[i] = ast_codegen_expr(self, arg_node, fn, scope);
+        }
+    }
+
+    // Make call (todo LLVMBuildCall is deprecated, use LLVMBuildCall2)
+    LLVMValueRef call = LLVMBuildCall(self->builder, fn_target, args, arg_count, "call_tmp");
+    if (args != NULL) {
+        free(args);
+    }
+
+    return call;
 }
 
 //endregion

@@ -33,6 +33,7 @@ LLVMValueRef *acg_scope_get(self_t, const char *name);
 // ast codegen
 typedef struct ast_codegen_s {
     Ast *ast;
+    AcgScope root_scope;
     LLVMContextRef context;
     LLVMModuleRef module;
     LLVMBuilderRef builder;
@@ -47,6 +48,7 @@ void ast_codegen_write(self_t, const char *filename);
 void ast_codegen_module(self_t, AstNode *node);
 
 // top level decl
+LLVMValueRef ast_codegen_fn_proto(self_t, AstNode *node);
 void ast_codegen_named_fn(self_t, AstNode *node);
 
 // statements
@@ -54,10 +56,12 @@ void ast_codegen_named_fn(self_t, AstNode *node);
 // expressions
 LLVMValueRef ast_codegen_expr(self_t, AstNode *node, LLVMValueRef fn, AcgScope *scope);
 LLVMValueRef ast_codegen_const_int(self_t, AstNode *node);
+LLVMValueRef ast_codegen_ref(self_t, AstNode *node, AcgScope *scope);
 LLVMValueRef ast_codegen_binary_op(self_t, AstNode *node, LLVMValueRef fn, AcgScope *scope);
 // Scope represents the scope for the block, which means the caller should create it.
 void ast_codegen_block(self_t, AstNode *node, LLVMValueRef fn, AcgScope *scope);
 void ast_codegen_return(self_t, AstNode *node, LLVMValueRef fn, AcgScope *scope);
+LLVMValueRef ast_codegen_call(self_t, AstNode *node, LLVMValueRef fn, AcgScope *scope);
 
 // Helpers
 AstNode *ast_codegen_node(self_t, AstIndex node_index);

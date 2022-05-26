@@ -34,9 +34,9 @@ static void run_file(const char *path) {
     printf("%s\n", str);
     free(str);
 
-//    printf("Generating LLVM IR\n");
+    printf("Generating LLVM IR\n");
 
-//    compile_ast_to_file(&ast, "/Users/matt/dev/c/acornc/samples/test.ll");
+    compile_ast_to_file(&ast, "/Users/matt/dev/c/acornc/samples/test.ll");
 }
 
 static uint8_t *read_file(const char *path) {
