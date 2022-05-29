@@ -31,6 +31,7 @@ void index_list_add_multi(self_t, void *data, size_t size);
 uint32_t *index_list_get(self_t, uint32_t i);
 
 #define index_list_add_sized(self, data) index_list_add_multi(self, &(data), sizeof(data) / sizeof(uint32_t))
+#define index_list_get_sized(self, Type, start_index) *((Type*) index_list_get(start_index);
 
 #undef self_t
 

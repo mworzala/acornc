@@ -12,3 +12,16 @@ uint32_t ref_to_index(Ref ref) {
         return 0;
     }
 }
+
+char *ref_to_string(Ref ref) {
+    switch (ref) {
+        case RefNone:
+            return "none";
+        case RefZero:
+            return "zero";
+        case RefOne:
+            return "one";
+        default:
+            return "unknown";
+    }
+}

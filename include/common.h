@@ -6,5 +6,6 @@
 #include <stdint.h>
 #include <assert.h>
 
+#include <stdio.h>
 
 #endif //ACORNC_COMMON_H

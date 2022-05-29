@@ -441,8 +441,6 @@ AstIndex fn_proto(self_t) {
     AstIndexPair param_data = int_parse_list(self, fn_param,
                                              TOK_LPAREN, TOK_RPAREN, TOK_COMMA);
 
-    printf("Parsed fn proto with params from %d to %d\n", param_data.first, param_data.second);
-
     // Parse type expression
     AstIndex type_expr = ast_index_empty;
     //todo

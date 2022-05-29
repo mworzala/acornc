@@ -56,7 +56,7 @@ typedef enum ast_tag_s {
     AST_UNARY,
 
     // main_token:  The token representing the '{'
-    // lhs..rhs:    First..last contained stmt
+    // lhs..rhs:    First..last contained stmt ptr in extra data
     //              Both empty if block is empty
     AST_BLOCK,
 

@@ -5,16 +5,39 @@
 #include "ir_common.h"
 #include "array_util.h"
 
-typedef uint32_t AirIndex;
+typedef uint32_t MirIndex;
+
+#define mir_index_empty (0)
 
 typedef enum mir_inst_tag_s {
-    MirInt,
+    MirReserved, // Does not represent any content, just for placeholding.
+    MirConstant,
+
+    // ty_pl pointing to Block
+    MirBlock,
+    // un_op, no instructions may follow within a block (todo implement that error)
+    MirRet,
+
+    __MIR_LAST,
 } MirInstTag;
+
+char *mir_tag_to_string(MirInstTag tag);
 
 // 8 bytes max
 typedef union mir_inst_data_s {
-
+    Ref un_op;
+    struct {
+        // Index in instructions, extra, or values
+        uint32_t payload;
+    } ty_pl;
 } MirInstData;
+
+// Data payloads
+
+// Followed by inst_count instructions inside the block
+typedef struct {
+    uint32_t inst_count;
+} Block;
 
 typedef struct mir_inst_s {
     MirInstTag tag;

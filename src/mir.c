@@ -2,6 +2,22 @@
 
 #include "array_util.h"
 
+
+char *mir_tag_to_string(MirInstTag tag) {
+    switch (tag) {
+        case MirReserved:
+            return "!reserved!";
+        case MirConstant:
+            return "constant";
+        case MirBlock:
+            return "block";
+        case MirRet:
+            return "ret";
+        default:
+            return "<?>";
+    }
+}
+
 #define self_t MirInstList *self
 
 void mir_inst_list_init(self_t) {
