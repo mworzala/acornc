@@ -13,14 +13,18 @@ typedef uint32_t DeclIndex;
 typedef struct decl_s {
     char *name;
 
+    AstIndex ast_index;
+
     // Only present after lowering
     Mir *mir;
 } Decl;
 
 #define self_t Decl *self
 
-void decl_init(self_t, char *name);
+void decl_init_from_ast(self_t, Ast *ast, AstIndex ast_index);
 void decl_free(self_t);
+
+Mir *decl_get_mir_in_module(self_t, Module *module);
 
 #undef self_t
 
@@ -64,7 +68,7 @@ bool module_parse(self_t);
 bool module_lower_main(self_t);
 bool module_emit_llvm(self_t);
 
-Decl *find_decl(self_t, char *name);
+Decl *module_find_decl(self_t, char *name);
 
 #undef self_t
 

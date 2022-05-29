@@ -2,11 +2,13 @@
 #define CONFIG_CODEGEN_H
 
 #include "common.h"
+#include "mir.h"
 #include "llvm-c/Core.h"
 
 // Codegen for a single module
 
 typedef struct module_s Module;
+typedef struct decl_s Decl;
 
 typedef struct codegen_s {
     Module *module;
@@ -14,6 +16,11 @@ typedef struct codegen_s {
     LLVMContextRef ll_context;
     LLVMModuleRef ll_module;
     LLVMBuilderRef ll_builder;
+
+    // Current MIR being generated
+    Mir *mir;
+    // Set to whatever function is currently being generated
+    LLVMValueRef *curr_fn;
 } Codegen;
 
 #define self_t Codegen *self
@@ -22,6 +29,15 @@ void codegen_init(self_t, Module *module);
 void codegen_free(self_t);
 
 bool codegen_write_to_file(self_t, char *path);
+
+void codegen_lower_decl(self_t, Decl *decl);
+LLVMTypeRef codegen_fn_proto(self_t, Decl *decl);
+
+LLVMValueRef codegen_expr(self_t, MirIndex index, LLVMBasicBlockRef ll_block);
+LLVMValueRef codegen_constant(self_t, MirInst *inst);
+void codegen_return(self_t, MirInst *inst, LLVMBasicBlockRef ll_block);
+void codegen_block_direct(self_t, MirIndex block_index, LLVMBasicBlockRef ll_block);
+
 
 #undef self_t
 

@@ -11,8 +11,17 @@
 
 #define self_t Decl *self
 
-void decl_init(self_t, char *name) {
+void decl_init_from_ast(self_t, Ast *ast, AstIndex ast_index) {
+    AstNode *node = ast_get_node_tagged(ast, ast_index, AST_NAMED_FN);
+    Token name_token = ast->tokens.data[node->main_token + 1];
+
+    size_t str_len = name_token.loc.end - name_token.loc.start;
+    char *name = malloc(str_len + 1);
+    memcpy(name, (const void *) name_token.loc.start, str_len);
+    name[str_len] = '\0';
+
     self->name = name;
+    self->ast_index = ast_index;
     self->mir = NULL;
 }
 
@@ -21,6 +30,19 @@ void decl_free(self_t) {
     self->name = NULL;
 //    mir_free(self->mir); //todo
     self->mir = NULL;
+}
+
+Mir *decl_get_mir_in_module(self_t, Module *module) {
+    if (self->mir == NULL) {
+        AstToMir lowering;
+        ast_to_mir_init(&lowering, module->ast);
+        Mir mir = lower_ast_fn(&lowering, self->ast_index);
+
+        self->mir = malloc(sizeof(Mir));
+        *self->mir = mir;
+    }
+
+    return self->mir;
 }
 
 #undef self_t
@@ -72,18 +94,21 @@ void module_init(self_t, char *path) {
 }
 
 void module_free(self_t) {
-    self->path = NULL;
-    self->name = NULL;
-
-    if (self->ast) {
-//        ast_free(self->ast); //todo
-        self->ast = NULL;
-    }
-    decl_list_free(&self->decls);
-    if (self->codegen) {
+    if (self->codegen != NULL) {
         codegen_free(self->codegen);
+        free(self->codegen);
         self->codegen = NULL;
     }
+    decl_list_free(&self->decls);
+    if (self->ast) {
+//        ast_free(self->ast); //todo
+        free(self->codegen);
+        self->ast = NULL;
+    }
+
+    self->name = NULL;
+    self->path = NULL;
+
 }
 
 
@@ -132,6 +157,7 @@ bool module_parse(self_t) {
     parser_init(&parser, source);
 
     // Parse
+    self->ast = malloc(sizeof(Ast));
     *self->ast = parser_parse(&parser);
     return true;
 }
@@ -139,7 +165,29 @@ bool module_parse(self_t) {
 bool module_lower_main(self_t) {
     assert(self->ast != NULL);
 
-    // Lower
+    // Extract declarations from module
+    AstNode *root_node = ast_get_node_tagged(self->ast, self->ast->root, AST_MODULE);
+    if (root_node->data.lhs == ast_index_empty) {
+        fprintf(stderr, "Module has no main function\n");
+        return false;
+    }
+
+    for (AstIndex index = root_node->data.lhs; index <= root_node->data.rhs; index++) {
+        AstIndex node_index = self->ast->extra_data.data[index];
+        Decl decl;
+        decl_init_from_ast(&decl, self->ast, node_index);
+        decl_list_add(&self->decls, decl);
+    }
+
+    // Initialize codegen
+    self->codegen = malloc(sizeof(Codegen));
+    codegen_init(self->codegen, self);
+
+    // Compile the "main" decl
+    Decl *main = module_find_decl(self, "main");
+    assert(main != NULL);
+    codegen_lower_decl(self->codegen, main);
+
     return true;
 }
 
@@ -151,6 +199,18 @@ bool module_emit_llvm(self_t) {
     strcat(llvm_path, ".ll");
 
     return codegen_write_to_file(self->codegen, llvm_path);
+}
+
+
+Decl *module_find_decl(self_t, char *name) {
+    for (DeclIndex index = 0; index < self->decls.size; index++) {
+        Decl *decl = decl_list_get(&self->decls, index);
+        if (strcmp(decl->name, name) == 0) {
+            return decl;
+        }
+    }
+
+    return NULL;
 }
 
 #undef self_t

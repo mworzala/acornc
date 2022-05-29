@@ -27,15 +27,15 @@ static void run_file(char *path) {
         exit(64);
     }
 
-    bool emitted = module_emit_llvm(&module);
-    if (!emitted) {
-        fprintf(stderr, "Could not emit LLVM for file: %s\n", path);
-        exit(64);
-    }
-
     bool lowered = module_lower_main(&module);
     if (!lowered) {
         fprintf(stderr, "Could not lower main for file: %s\n", path);
+        exit(64);
+    }
+
+    bool emitted = module_emit_llvm(&module);
+    if (!emitted) {
+        fprintf(stderr, "Could not emit LLVM for file: %s\n", path);
         exit(64);
     }
 
