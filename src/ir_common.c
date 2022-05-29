@@ -1,7 +1,7 @@
 #include "ir_common.h"
 
 Ref index_to_ref(uint32_t index) {
-    return index + __REF_LAST
+    return index + __REF_LAST;
 }
 
 uint32_t ref_to_index(Ref ref) {

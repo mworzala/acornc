@@ -32,3 +32,12 @@ MirInst *mir_inst_list_get(self_t, uint32_t index) {
 }
 
 #undef self_t
+
+
+#define self_t Mir *self
+
+void mir_add_inst(self_t, MirInstTag tag, MirInstData data) {
+    mir_inst_list_add(&self->instructions, (MirInst) {tag, data});
+}
+
+#undef self_t

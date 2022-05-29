@@ -13,6 +13,7 @@ typedef uint32_t AstIndex;
 
 #define ast_index_empty ((AstIndex) UINT32_MAX)
 
+//todo replace me with generic IndexList
 typedef struct ast_index_list_s {
     uint32_t size;
     uint32_t capacity;
@@ -187,5 +188,12 @@ typedef struct ast_s {
     AstIndexList extra_data;
     AstIndex root;
 } Ast;
+
+#define self_t Ast *self
+
+AstNode *ast_get_node(self_t, AstIndex index);
+AstNode *ast_get_node_tagged(self_t, AstIndex index, AstTag tag);
+
+#undef self_t
 
 #endif //ACORNC_AST_H

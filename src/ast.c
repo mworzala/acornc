@@ -124,3 +124,17 @@ void ast_node_list_add(self_t, AstNode node) {
 }
 
 #undef self_t
+
+#define self_t Ast *self
+
+AstNode *ast_get_node(self_t, AstIndex index) {
+    return &self->nodes.data[index];
+}
+
+AstNode *ast_get_node_tagged(self_t, AstIndex index, AstTag tag) {
+    AstNode *node = ast_get_node(self, index);
+    assert(tag == node->tag);
+    return node;
+}
+
+#undef self_t

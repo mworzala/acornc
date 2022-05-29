@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "ir_common.h"
+#include "array_util.h"
 
 typedef uint32_t AirIndex;
 
@@ -36,9 +37,16 @@ MirInst *mir_inst_list_get(self_t, uint32_t index);
 #undef self_t
 
 typedef struct mir_s {
-    // instructions inst list
+    MirInstList instructions;
+    IndexList extra;
     // extra u32 list todo refactor ast list to list util (they are all u32)
     // values value list todo value union
 } Mir;
+
+#define self_t Mir *self
+
+void mir_add_inst(self_t, MirInstTag tag, MirInstData data);
+
+#undef self_t
 
 #endif //CONFIG_MIR_H
