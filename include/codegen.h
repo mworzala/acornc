@@ -5,7 +5,8 @@
 #include "mir.h"
 #include "llvm-c/Core.h"
 
-// Codegen for a single module
+// SECTION: Codegen
+// LLVM IR generation for a single module and its declarations
 
 typedef struct module_s Module;
 typedef struct decl_s Decl;
@@ -19,6 +20,8 @@ typedef struct codegen_s {
 
     // Current MIR being generated
     Mir *mir;
+    // A mapping between MIR instructions and LLVM instructions
+    IndexPtrMap inst_map;
     // Set to whatever function is currently being generated
     LLVMValueRef *curr_fn;
 } Codegen;
@@ -29,12 +32,16 @@ void codegen_init(self_t, Module *module);
 void codegen_free(self_t);
 
 bool codegen_write_to_file(self_t, char *path);
+bool codegen_write_to_obj_file(self_t, char *path);
 
 void codegen_lower_decl(self_t, Decl *decl);
 LLVMTypeRef codegen_fn_proto(self_t, Decl *decl);
 
-LLVMValueRef codegen_expr(self_t, MirIndex index, LLVMBasicBlockRef ll_block);
+LLVMValueRef codegen_inst(self_t, MirIndex index, LLVMBasicBlockRef ll_block);
 LLVMValueRef codegen_constant(self_t, MirInst *inst);
+LLVMValueRef codegen_alloc(self_t, MirIndex index, LLVMBasicBlockRef ll_block);
+void codegen_store(self_t, MirIndex index, LLVMBasicBlockRef ll_block);
+LLVMValueRef codegen_load(self_t, MirIndex index, LLVMBasicBlockRef ll_block);
 void codegen_return(self_t, MirInst *inst, LLVMBasicBlockRef ll_block);
 void codegen_block_direct(self_t, MirIndex block_index, LLVMBasicBlockRef ll_block);
 

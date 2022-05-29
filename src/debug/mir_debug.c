@@ -2,9 +2,11 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "array_util.h"
 
 typedef struct {
     Mir *mir;
+    IndexList visited;
 
     char *buffer;
     size_t buffer_index;
@@ -40,44 +42,91 @@ static void print_ref(self_t, Ref ref) {
 
 
 
-static void print_expr(self_t, MirIndex expr_index, int indent);
+static void print_block_inst(self_t, MirIndex index, int indent);
 
-static void print_expr_ref(self_t, Ref ref, int indent) {
+static void print_block_inst_ref(self_t, Ref ref, int indent) {
     if (ref > __REF_LAST) {
-        print_expr(self, ref_to_index(ref), indent);
+        MirIndex index = ref_to_index(ref);
+
+        bool visited = index_list_contains(&self->visited, index);
+        if (visited) return;
+
+        print_block_inst(self, index, indent);
+        index_list_add(&self->visited, index);
     }
 }
 
-static void print_constant(self_t, MirIndex expr_index, int indent) {
-    MirInst *inst = get_inst_tagged(self, expr_index, MirConstant);
-    append_default_header(self, expr_index, indent);
+static void print_constant(self_t, MirIndex index, int indent) {
+    MirInst *inst = get_inst_tagged(self, index, MirConstant);
+    append_default_header(self, index, indent);
 
     print(self, "constant(i32, %d)", inst->data.ty_pl.payload);
 }
 
-static void print_ret(self_t, MirIndex expr_index, int indent) {
-    MirInst *inst = get_inst_tagged(self, expr_index, MirRet);
-    print_expr_ref(self, inst->data.un_op, indent);
+static void print_alloc(self_t, MirIndex index, int indent) {
+    MirInst *inst = get_inst_tagged(self, index, MirAlloc);
 
-    append_default_header(self, expr_index, indent);
+    append_default_header(self, index, indent);
+    print(self, "alloc(i32)") //todo types
+}
+
+static void print_store(self_t, MirIndex index, int indent) {
+    MirInst *inst = get_inst_tagged(self, index, MirStore);
+
+    print_block_inst_ref(self, inst->data.bin_op.lhs, indent);
+    print_block_inst_ref(self, inst->data.bin_op.rhs, indent);
+
+    append_default_header(self, index, indent);
+    print(self, "store(")
+    print_ref(self, inst->data.bin_op.lhs);
+    print(self, ", ")
+    print_ref(self, inst->data.bin_op.rhs);
+    print(self, ")")
+}
+
+static void print_load(self_t, MirIndex index, int indent) {
+    MirInst *inst = get_inst_tagged(self, index, MirLoad);
+
+    print_block_inst_ref(self, inst->data.un_op, indent);
+
+    append_default_header(self, index, indent);
+    print(self, "load(")
+    print_ref(self, inst->data.un_op);
+    print(self, ")")
+}
+
+static void print_ret(self_t, MirIndex index, int indent) {
+    MirInst *inst = get_inst_tagged(self, index, MirRet);
+    print_block_inst_ref(self, inst->data.un_op, indent);
+
+    append_default_header(self, index, indent);
     print(self, "ret(")
     print_ref(self, inst->data.un_op);
     print(self, ")");
 }
 
-static void print_expr(self_t, MirIndex expr_index, int indent) {
-    MirInst *inst = get_inst(self, expr_index);
+static void print_block_inst(self_t, MirIndex index, int indent) {
+    MirInst *inst = get_inst(self, index);
 
     switch (inst->tag) {
+        case MirConstant:
+            print_constant(self, index, indent);
+            break;
+        case MirAlloc:
+            print_alloc(self, index, indent);
+            break;
+        case MirStore:
+            print_store(self, index, indent);
+            break;
+        case MirLoad:
+            print_load(self, index, indent);
+            break;
+        case MirRet:
+            print_ret(self, index, indent);
+            break;
         case MirReserved:
             printf("Illegal reserved tag present in MIR\n");
             assert(false);
-        case MirConstant:
-            print_constant(self, expr_index, indent);
-            break;
-        case MirRet:
-            print_ret(self, expr_index, indent);
-            break;
         default:
             printf("Unhandled tag: %s\n", mir_tag_to_string(inst->tag));
             assert(false);
@@ -94,7 +143,7 @@ static void print_root_block(self_t) {
     uint32_t expr_count = get_extra(self, data_index);
 
     for (uint32_t i = data_index + 1; i <= data_index + expr_count; i++) {
-        print_expr(self, get_extra(self, i), 0);
+        print_block_inst(self, get_extra(self, i), 0);
     }
 
     print(self, "\n")
@@ -111,7 +160,11 @@ char *mir_debug_print(Mir *mir) {
         .buffer = buffer,
         .buffer_index = 0,
     };
+    index_list_init(&self.visited);
+
     print_root_block(&self);
+
+    index_list_free(&self.visited);
 
     return buffer;
 }

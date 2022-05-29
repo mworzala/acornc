@@ -11,12 +11,27 @@ typedef uint32_t MirIndex;
 
 typedef enum mir_inst_tag_s {
     MirReserved, // Does not represent any content, just for placeholding.
-    MirConstant,
 
-    // ty_pl pointing to Block
-    MirBlock,
+    // ty_pl where pl represents the 32 bit content of the int
+    // todo actual type, allow bigger ints.
+    MirConstant,
     // un_op, no instructions may follow within a block (todo implement that error)
     MirRet,
+
+    // Allocates an int on the stack
+    // data is noop
+    MirAlloc,
+    // Stores a value to the given location
+    // bin_op where lhs is pointer, rhs is value
+    MirStore,
+    // Loads a value from the given location
+    // un_op where payload is pointer
+    MirLoad,
+
+    // ty_pl pointing to Block
+    // Note: MirBlock is different from an AstBlock. AstBlocks are valid expressions,
+    //       however MirBlock may only be present where branches happen (eg if, while, etc)
+    MirBlock,
 
     __MIR_LAST,
 } MirInstTag;
@@ -25,7 +40,13 @@ char *mir_tag_to_string(MirInstTag tag);
 
 // 8 bytes max
 typedef union mir_inst_data_s {
+    uint8_t noop;
     Ref un_op;
+    struct {
+        Ref lhs;
+        Ref rhs;
+    } bin_op;
+    //todo ty
     struct {
         // Index in instructions, extra, or values
         uint32_t payload;

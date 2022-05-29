@@ -198,7 +198,20 @@ bool module_emit_llvm(self_t) {
     strcpy(llvm_path, self->path);
     strcat(llvm_path, ".ll");
 
-    return codegen_write_to_file(self->codegen, llvm_path);
+    bool result = codegen_write_to_file(self->codegen, llvm_path);
+    free(llvm_path);
+    if (!result) {
+        return false;
+    }
+
+    char *obj_path = malloc(strlen(self->path) + 2);
+    strcpy(obj_path, self->path);
+    strcat(obj_path, ".o");
+
+    result = codegen_write_to_obj_file(self->codegen, obj_path);
+    free(obj_path);
+
+    return result;
 }
 
 

@@ -9,6 +9,12 @@ char *mir_tag_to_string(MirInstTag tag) {
             return "!reserved!";
         case MirConstant:
             return "constant";
+        case MirAlloc:
+            return "alloc";
+        case MirStore:
+            return "store";
+        case MirLoad:
+            return "load";
         case MirBlock:
             return "block";
         case MirRet:

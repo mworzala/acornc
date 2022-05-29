@@ -40,3 +40,29 @@ enum Color {
 )#";
     EXPECT_MODULE(input, expected);
 }
+
+
+TEST(Parser, MissingReturn) {
+    auto input = R"#(
+fn foo() {
+    let a = 42;
+    return a;
+}
+)#";
+    auto expected = R"#(
+// module
+
+// @1
+%6 = fn(foo, proto = { params = _, ret = _ }, body = {
+  %5 = block(stmts = {
+    // @1
+    %1 = int(42)
+    %2 = let(a, type = _, init = %1)
+    // @2
+    %3 = ref(a)
+    %4 = ret(%3)
+  })
+}
+)#";
+    EXPECT_MODULE(input, expected);
+}
