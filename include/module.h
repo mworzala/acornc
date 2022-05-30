@@ -10,13 +10,23 @@
 
 typedef uint32_t DeclIndex;
 
+typedef enum decl_state_s {
+    DeclStateUnused,
+    DeclStateReferenced,
+    DeclStateGenerated,
+} DeclState;
+
 typedef struct decl_s {
     char *name;
+    DeclState state;
 
     AstIndex ast_index;
 
     // Only present after lowering
     Mir *mir;
+    // May be present before lowering
+    //todo not good to bring llvm into this struct, will eventually have a Map<decl index, LLVMValueRef>
+    LLVMValueRef llvm_value;
 } Decl;
 
 #define self_t Decl *self

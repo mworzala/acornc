@@ -24,6 +24,9 @@ typedef enum mir_inst_tag_s {
     MirBlock,
     // pl_op where pl is the expression being called, and op is Call
     MirCall,
+    //todo Very temporary. Need to find a better way to represent function pointers
+    // Uses fn_ptr data
+    MirFnPtr,
     // ty_pl where pl represents the 32 bit content of the int
     // todo actual type, allow bigger ints.
     MirConstant,
@@ -36,6 +39,8 @@ typedef enum mir_inst_tag_s {
     // Integer multiplication
     // bin_op
     MirMul,
+    // ty_pl where payload is the index of the argument
+    MirArg,
     // un_op, no instructions may follow within a block (todo implement that error)
     MirRet,
     // Stores a value to the given location
@@ -58,15 +63,16 @@ typedef union mir_inst_data_s {
         Ref lhs;
         Ref rhs;
     } bin_op;
-    //todo ty
     struct {
-        // Index in instructions, extra, or values
+        //todo ty
+        //Index in instructions, extra, or values
         uint32_t payload;
     } ty_pl;
     struct {
         uint32_t payload;
         Ref operand;
     } pl_op;
+    char *fn_ptr;
 } MirInstData;
 
 // Data payloads

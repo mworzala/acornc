@@ -7,11 +7,18 @@
 // SECTION: Scope (AtmScope = ast-to-mir scope)
 // A basic map tree from string name to MirIndex
 
+typedef enum atm_scope_item_type_s {
+    AtmScopeItemTypeVar,
+    AtmScopeItemTypeFn,
+    AtmScopeItemTypeArg,
+} AtmScopeItemType;
+
 typedef struct atm_scope_s {
     uint32_t size;
     uint32_t capacity;
     char **names;
     MirIndex *data;
+    AtmScopeItemType *types;
     struct atm_scope_s *parent;
 } AtmScope;
 
@@ -19,8 +26,9 @@ typedef struct atm_scope_s {
 
 void atm_scope_init(self_t, AtmScope *parent);
 void atm_scope_free(self_t);
-void atm_scope_set(self_t, const char *name, MirIndex value);
+void atm_scope_set(self_t, const char *name, MirIndex value, AtmScopeItemType type);
 MirIndex *atm_scope_get(self_t, const char *name);
+AtmScopeItemType *atm_scope_get_type(self_t, const char *name);
 
 #undef self_t
 
@@ -54,7 +62,8 @@ MirIndex mir_lower_int_const(self_t, AstIndex expr_index);
 MirIndex mir_lower_ref(self_t, AstIndex expr_index);
 MirIndex mir_lower_bin_op(self_t, AstIndex expr_index);
 MirIndex mir_lower_call(self_t, AstIndex expr_index);
-MirIndex mir_lower_block(self_t, AstIndex block_index);
+// If proto_data is not null, its args will be inserted into the function body
+MirIndex mir_lower_block(self_t, AstIndex block_index, AstFnProto *proto_data);
 MirIndex mir_lower_return(self_t, AstIndex ret_index);
 
 #undef self_t

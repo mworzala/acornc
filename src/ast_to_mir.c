@@ -12,32 +12,37 @@ void atm_scope_init(self_t, AtmScope *parent) {
     self->capacity = 0;
     self->names = NULL;
     self->data = NULL;
+    self->types = NULL;
     self->parent = parent;
 }
 
 void atm_scope_free(self_t) {
     //todo this does free the names array, but it leaves the allocations of each string.
     ARRAY_FREE(char *, self->names);
-    ARRAY_FREE(LLVMValueRef, self->data);
+    ARRAY_FREE(MirIndex, self->data);
+    ARRAY_FREE(AtmScopeItemType, self->types);
     atm_scope_init(self, self->parent);
 }
 
-void atm_scope_set(self_t, const char *name, MirIndex value) {
+void atm_scope_set(self_t, const char *name, MirIndex value, AtmScopeItemType type) {
     if (self->capacity < self->size + 1) {
         self->capacity = ARRAY_GROW_CAPCITY(self->capacity);
         self->names = ARRAY_GROW(char *, self->names, self->capacity);
         self->data = ARRAY_GROW(MirIndex, self->data, self->capacity);
+        self->types = ARRAY_GROW(AtmScopeItemType, self->types, self->capacity);
     }
 
     for (uint32_t i = 0; i < self->size; i++) {
         if (strcmp(self->names[i], name) == 0) {
             self->data[i] = value;
+            self->types[i] = type;
             return;
         }
     }
 
     self->names[self->size] = strdup(name);
     self->data[self->size] = value;
+    self->types[self->size] = type;
     self->size++;
 }
 
@@ -50,6 +55,20 @@ MirIndex *atm_scope_get(self_t, const char *name) {
 
     if (self->parent != NULL) {
         return atm_scope_get(self->parent, name);
+    }
+
+    return NULL;
+}
+
+AtmScopeItemType *atm_scope_get_type(self_t, const char *name) {
+    for (uint32_t i = 0; i < self->size; i++) {
+        if (strcmp(self->names[i], name) == 0) {
+            return &self->types[i];
+        }
+    }
+
+    if (self->parent != NULL) {
+        return atm_scope_get_type(self->parent, name);
     }
 
     return NULL;
@@ -109,6 +128,24 @@ static void pop_scope(self_t) {
     free(scope);
 }
 
+static AstIndex find_named_fn(self_t, const char *name) {
+    AstNode *module = ast_get_node_tagged(self->ast, self->ast->root, AST_MODULE);
+
+    for (AstIndex i = module->data.lhs; i <= module->data.rhs; i++) {
+        AstNode *decl = ast_get_node(self->ast, self->ast->extra_data.data[i]);
+        if (decl->tag != AST_NAMED_FN)
+            continue;
+
+        char *fn_name = get_token_content(self, decl->main_token + 1);
+        bool same = strcmp(fn_name, name) == 0;
+        free(fn_name);
+
+        if (same) return i;
+    }
+
+    return ast_index_empty;
+}
+
 // Public API
 void ast_to_mir_init(self_t, Ast *ast) {
     self->ast = ast;
@@ -133,9 +170,10 @@ Mir lower_ast_fn(self_t, AstIndex fn_index) {
 
     // New scope with params
     push_scope(self);
-    //todo insert a `param(#)` instruction for each param.
+    AstNode *proto = ast_get_node_tagged(self->ast, node->data.lhs, AST_FN_PROTO);
+    AstFnProto *proto_data = ((AstFnProto *) &self->ast->extra_data.data[proto->data.lhs]);
 
-    MirIndex root_index = mir_lower_block(self, node->data.rhs);
+    MirIndex root_index = mir_lower_block(self, node->data.rhs, proto_data);
     assert(root_index == 0);
 
     // Cleanup
@@ -171,7 +209,7 @@ MirIndex mir_lower_let(self_t, AstIndex stmt_index) {
     MirIndex alloc_index = add_inst(self, MirAlloc, (MirInstData) {});
     // Insert the pointer to the scope
     char *name = get_token_content(self, node->main_token + 1);
-    atm_scope_set(self->scope, name, alloc_index);
+    atm_scope_set(self->scope, name, alloc_index, AtmScopeItemTypeVar);
     free(name);
 
     // Initializer (must be present for now)
@@ -203,8 +241,8 @@ MirIndex mir_lower_expr(self_t, AstIndex expr_index) {
             return mir_lower_bin_op(self, expr_index);
         case AST_CALL:
             return mir_lower_call(self, expr_index);
-        case AST_BLOCK: //todo this should flatten the block while also entering a new scope (eg do not generate an MirBlock inst)
-            return mir_lower_block(self, expr_index);
+//        case AST_BLOCK: //todo this should flatten the block while also entering a new scope (eg do not generate an MirBlock inst)
+//            return mir_lower_block(self, expr_index);
         case AST_RETURN:
             return mir_lower_return(self, expr_index);
         default: {
@@ -237,16 +275,45 @@ MirIndex mir_lower_ref(self_t, AstIndex expr_index) {
     MirIndex *index = atm_scope_get(self->scope, name);
 
     if (index == NULL) {
+        // Not found in scope, check if it is a named function
+        AstIndex fn_index = find_named_fn(self, name);
+        if (fn_index != ast_index_empty) {
+            //todo adding the name here is really hacky and a memory leak currently.
+            // Should reference the decl index in the module or something.
+            return add_inst(self, MirFnPtr, (MirInstData) {
+                .fn_ptr = name,
+            });
+        }
+
+        // Not a named function, not sure what it is
         printf("Undefined reference %s!\n", name);
+        free(name);
         assert(false);
     }
 
-    free(name);
-
-    // Wrap in a load
-    return add_inst(self, MirLoad, (MirInstData) {
-        .un_op = index_to_ref(*index)
-    });
+    // There is an element, generate item based on the type
+    AtmScopeItemType type = *atm_scope_get_type(self->scope, name);
+    switch (type) {
+        case AtmScopeItemTypeVar: {
+            free(name);
+            return add_inst(self, MirLoad, (MirInstData) {
+                .un_op = index_to_ref(*index)
+            });
+        }
+        case AtmScopeItemTypeArg: {
+            free(name);
+            return *index;
+//            return index_to_ref(*index);
+//            return add_inst(self, MirLoad, (MirInstData) {
+//                .un_op = index_to_ref(*index)
+//            });
+        }
+        default: {
+            //todo error is misleading
+            printf("Cannot lower %s as ref!\n", ast_tag_to_string(node->tag));
+            assert(false);
+        }
+    }
 }
 
 MirIndex mir_lower_bin_op(self_t, AstIndex expr_index) {
@@ -299,7 +366,7 @@ MirIndex mir_lower_call(self_t, AstIndex expr_index) {
 
     if (call_data.arg_start != ast_index_empty) {
         for (AstIndex arg_index = call_data.arg_start; arg_index <= call_data.arg_end; arg_index++) {
-            MirIndex lowered_arg = mir_lower_expr(self, self->ast->extra_data.data[arg_index]);
+            Ref lowered_arg = index_to_ref(mir_lower_expr(self, self->ast->extra_data.data[arg_index]));
             index_list_add(&arg_indices, lowered_arg);
         }
     }
@@ -319,7 +386,7 @@ MirIndex mir_lower_call(self_t, AstIndex expr_index) {
     });
 }
 
-MirIndex mir_lower_block(self_t, AstIndex block_index) {
+MirIndex mir_lower_block(self_t, AstIndex block_index, AstFnProto *proto_data) {
     AstNode *block = ast_get_node_tagged(self->ast, block_index, AST_BLOCK);
 
     if (block->data.lhs == ast_index_empty) {
@@ -331,12 +398,33 @@ MirIndex mir_lower_block(self_t, AstIndex block_index) {
 
     // Enter block scope
     // There is a slight duplication here in that we enter a new scope for a function and then again for its block.
+    //todo if params are added here then we do not need a new scope at the function level
     push_scope(self);
     MirIndex out_index = reserve_inst(self);
 
     IndexList insts;
     index_list_init(&insts);
 
+    // Append function parameters if present
+    if (proto_data != NULL) {
+        if (proto_data->param_start != ast_index_empty) {
+            for (AstIndex i = proto_data->param_start; i <= proto_data->param_end; i++) {
+                AstNode *param = ast_get_node_tagged(self->ast, self->ast->extra_data.data[i], AST_FN_PARAM);
+
+                // Create the `arg` node.
+                AstIndex arg_index = add_inst(self, MirArg, (MirInstData) {
+                    .ty_pl = { .payload = i - proto_data->param_start }
+                });
+
+                char *param_name = get_token_content(self, param->main_token);
+                //todo why am i not inserting as a ref?
+                atm_scope_set(self->scope, param_name, arg_index, AtmScopeItemTypeArg);
+                free(param_name);
+            }
+        }
+    }
+
+    // Append block instructions
     for (uint32_t index = block->data.lhs; index <= block->data.rhs; index++) {
         AstIndex ast_index = self->ast->extra_data.data[index];
         MirIndex inst_index = mir_lower_stmt(self, ast_index);
@@ -344,6 +432,7 @@ MirIndex mir_lower_block(self_t, AstIndex block_index) {
         index_list_add(&insts, inst_index);
     }
 
+    // Copy instructions to extra data
     MirIndex data_index = add_extra(self, insts.size);
     for (uint32_t i = 0; i < insts.size; i++) {
         add_extra(self, *index_list_get(&insts, i));

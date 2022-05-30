@@ -99,11 +99,20 @@ bool codegen_write_to_obj_file(self_t, char *path) {
     return true;
 }
 
+static LLVMValueRef codegen_get_decl_ll_value(self_t, Decl *decl) {
+    if (decl->llvm_value == NULL) {
+        LLVMTypeRef fn_type = codegen_fn_proto(self, decl);
+        decl->llvm_value = LLVMAddFunction(self->ll_module, decl->name, fn_type);
+        decl->state = DeclStateReferenced;
+    }
+
+    return decl->llvm_value;
+}
+
 void codegen_lower_decl(self_t, Decl *decl) {
     assert(decl != NULL);
 
-    LLVMTypeRef fn_type = codegen_fn_proto(self, decl);
-    LLVMValueRef fn = LLVMAddFunction(self->ll_module, decl->name, fn_type);
+    LLVMValueRef fn = codegen_get_decl_ll_value(self, decl);
     self->curr_fn = &fn;
 
     Mir *mir = decl_get_mir_in_module(decl, self->module);
@@ -114,6 +123,8 @@ void codegen_lower_decl(self_t, Decl *decl) {
     LLVMPositionBuilderAtEnd(self->ll_builder, entry_block);
 
     codegen_block_direct(self, 0, entry_block);
+
+    decl->state = DeclStateGenerated;
 
     index_ptr_map_free(&self->inst_map);
     self->mir = NULL;
@@ -172,6 +183,18 @@ LLVMValueRef codegen_inst(self_t, MirIndex index, LLVMBasicBlockRef ll_block) {
             return NULL;
         case MirLoad: {
             ll_value = codegen_load(self, index, ll_block);
+            break;
+        }
+        case MirCall: {
+            ll_value = codegen_call(self, index, ll_block);
+            break;
+        }
+        case MirArg: {
+            ll_value = codegen_arg(self, index, ll_block);
+            break;
+        }
+        case MirFnPtr: {
+            ll_value = codegen_fn_ptr(self, index);
             break;
         }
         case MirRet: {
@@ -238,6 +261,58 @@ LLVMValueRef codegen_load(self_t, MirIndex index, LLVMBasicBlockRef ll_block) {
     LLVMValueRef ptr = codegen_inst(self, ref_to_index(inst->data.un_op), ll_block);
 
     return LLVMBuildLoad(self->ll_builder, ptr, "load");
+}
+
+LLVMValueRef codegen_call(self_t, MirIndex index, LLVMBasicBlockRef ll_block) {
+    MirInst *inst = mir_get_inst_tagged(self->mir, index, MirCall);
+
+    // Get operand ir value
+    LLVMValueRef fn_ptr = codegen_inst(self, ref_to_index(inst->data.pl_op.operand), ll_block);
+    bool is_a_fn = LLVMIsAFunction(fn_ptr);
+    if (!is_a_fn) {
+        char *value_str = LLVMPrintValueToString(fn_ptr);
+        fprintf(stderr, "Expected function pointer, got %s\n", value_str);
+        LLVMDisposeMessage(value_str);
+        assert(false);
+    }
+
+    // Construct arg list
+    MirIndex extra_index = inst->data.pl_op.payload;
+
+    uint32_t arg_count = mir_get_extra(self->mir, extra_index);
+    LLVMValueRef *args = NULL;
+    if (arg_count != 0) {
+        args = malloc(sizeof(LLVMValueRef) * arg_count);
+        for (uint32_t i = 0; i < arg_count; i++) {
+            args[i] = codegen_inst(self, ref_to_index(mir_get_extra(self->mir, extra_index + i + 1)), ll_block);
+        }
+    }
+
+    // Build the call instruction
+    LLVMValueRef call_ir = LLVMBuildCall(self->ll_builder, fn_ptr, args, arg_count, "call");
+
+    if (args != NULL)
+        free(args);
+    return call_ir;
+}
+
+LLVMValueRef codegen_arg(self_t, MirIndex index, LLVMBasicBlockRef ll_block) {
+    MirInst *inst = mir_get_inst_tagged(self->mir, index, MirArg);
+
+    return LLVMGetParam(*self->curr_fn, inst->data.ty_pl.payload);
+}
+
+LLVMValueRef codegen_fn_ptr(self_t, MirIndex index) {
+    MirInst *inst = mir_get_inst_tagged(self->mir, index, MirFnPtr);
+
+    char *fn_name = inst->data.fn_ptr;
+    Decl *decl = module_find_decl(self->module, fn_name);
+    if (decl == NULL) {
+        fprintf(stderr, "Could not find function %s\n", fn_name);
+        assert(false);
+    }
+
+    return codegen_get_decl_ll_value(self, decl);
 }
 
 void codegen_return(self_t, MirInst *inst, LLVMBasicBlockRef ll_block) {

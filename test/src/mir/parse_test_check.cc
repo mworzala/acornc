@@ -15,14 +15,47 @@ testing::AssertionResult parse_check_mir(bool extended, const char *expr, const 
     //todo make this smarter / output all mir
     AstNode *ast_module = ast_get_node_tagged(&ast, ast.root, AST_MODULE);
     assert(ast_module->data.lhs != ast_index_empty); // Ensure there is at least one function
-    //todo print all function airs
-    AstIndex idx = ast.extra_data.data[ast_module->data.lhs];
 
-    AstToMir lower;
-    ast_to_mir_init(&lower, &ast);
-    Mir mir = lower_ast_fn(&lower, idx);
 
-    char *actual = mir_debug_print(&mir);
+    char *actual = static_cast<char *>(malloc(1024 * 16));
+    memset(actual, 0, 1024 * 16);
+
+    if (!extended) {
+        AstIndex idx = ast.extra_data.data[ast_module->data.lhs];
+
+        AstToMir lower;
+        ast_to_mir_init(&lower, &ast);
+        Mir mir = lower_ast_fn(&lower, idx);
+
+        char *mir_str = mir_debug_print(&mir);
+        sprintf(actual + strlen(actual), "%s", mir_str);
+        free(mir_str);
+    } else {
+        for (AstIndex index = ast_module->data.lhs; index <= ast_module->data.rhs; index++) {
+            AstIndex idx = ast.extra_data.data[index];
+
+            AstNode *fn_node = ast_get_node(&ast, idx);
+            Token main_token = ast.tokens.data[fn_node->main_token + 1];
+            size_t str_len = main_token.loc.end - main_token.loc.start;
+            char *str = static_cast<char *>(malloc(str_len + 1));
+            memcpy(str, (const void *) main_token.loc.start, str_len);
+            str[str_len] = '\0';
+
+            sprintf(actual + strlen(actual), "// begin fn %s\n", str);
+
+            AstToMir lower;
+            ast_to_mir_init(&lower, &ast);
+            Mir mir = lower_ast_fn(&lower, idx);
+
+            char *mir_str = mir_debug_print(&mir);
+            sprintf(actual + strlen(actual), "%s", mir_str);
+            free(mir_str);
+
+            sprintf(actual + strlen(actual) - 1, "// end fn %s\n\n", str);
+            free(str);
+        }
+    }
+
     size_t actual_len = strlen(actual);
     // If there are two newlines at the end, remove one of them.
     // Module does this at the moment, should fix it inside module then this is not necessary.
@@ -35,11 +68,10 @@ testing::AssertionResult parse_check_mir(bool extended, const char *expr, const 
     if (!result) {
         printf("Expected:\n%s\n", expected);
         printf("Actual:\n%s\n", actual);
+        free(actual);
         return testing::AssertionFailure() << "Expected: " << expected << "\nActual: " << actual;
     }
 
     free(actual);
-
-
     return testing::AssertionSuccess();
 }

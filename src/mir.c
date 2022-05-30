@@ -9,10 +9,14 @@ char *mir_tag_to_string(MirInstTag tag) {
             return "add";
         case MirAlloc:
             return "alloc";
+        case MirArg:
+            return "arg";
         case MirBlock:
             return "block";
         case MirCall:
             return "call";
+        case MirFnPtr:
+            return "fn_ptr";
         case MirConstant:
             return "constant";
         case MirDiv:

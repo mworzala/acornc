@@ -119,6 +119,50 @@ static void print_ret(self_t, MirIndex index, int indent) {
     print(self, ")");
 }
 
+static void print_arg(self_t, MirIndex index, int indent) {
+    MirInst *inst = get_inst_tagged(self, index, MirArg);
+
+    append_default_header(self, index, indent);
+    print(self, "arg(i32, %d)", inst->data.ty_pl.payload);
+}
+
+static void print_call(self_t, MirIndex index, int indent) {
+    MirInst *inst = get_inst_tagged(self, index, MirCall);
+
+    // Print operand
+    print_block_inst_ref(self, inst->data.pl_op.operand, indent);
+
+    // Print arguments above
+    MirIndex extra_index = inst->data.pl_op.payload;
+    uint32_t arg_count = get_extra(self, extra_index);
+    for (MirIndex i = extra_index + 1; i <= extra_index + arg_count; i++) {
+        print_block_inst_ref(self, get_extra(self, i), indent);
+    }
+
+    // Print call line
+    append_default_header(self, index, indent);
+    print(self, "call(")
+    print_ref(self, inst->data.pl_op.operand);
+    print(self, ", args=")
+    if (arg_count == 0) {
+        print(self, "_")
+    } else {
+        for (MirIndex i = extra_index + 1; i <= extra_index + arg_count; i++) {
+            print_ref(self, get_extra(self, i));
+            if (i != extra_index + arg_count)
+                print(self, ", ")
+        }
+    }
+    print(self, ")")
+}
+
+static void print_fn_ptr(self_t, MirIndex index, int indent) {
+    MirInst *inst = get_inst_tagged(self, index, MirFnPtr);
+
+    append_default_header(self, index, indent);
+    print(self, "fn_ptr(%s)", inst->data.fn_ptr)
+}
+
 static void print_block_inst(self_t, MirIndex index, int indent) {
     MirInst *inst = get_inst(self, index);
 
@@ -126,7 +170,7 @@ static void print_block_inst(self_t, MirIndex index, int indent) {
         case MirAdd:
         case MirSub:
         case MirMul:
-        case MirDiv:
+    case MirDiv:
             print_binary_generic(self, index, inst->tag, indent);
             break;
         case MirConstant:
@@ -140,6 +184,15 @@ static void print_block_inst(self_t, MirIndex index, int indent) {
             break;
         case MirLoad:
             print_load(self, index, indent);
+            break;
+        case MirCall:
+            print_call(self, index, indent);
+            break;
+        case MirArg:
+            print_arg(self, index, indent);
+            break;
+        case MirFnPtr:
+            print_fn_ptr(self, index, indent);
             break;
         case MirRet:
             print_ret(self, index, indent);

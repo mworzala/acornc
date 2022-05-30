@@ -21,8 +21,10 @@ void decl_init_from_ast(self_t, Ast *ast, AstIndex ast_index) {
     name[str_len] = '\0';
 
     self->name = name;
+    self->state = DeclStateUnused;
     self->ast_index = ast_index;
     self->mir = NULL;
+    self->llvm_value = NULL;
 }
 
 void decl_free(self_t) {
@@ -187,6 +189,15 @@ bool module_lower_main(self_t) {
     Decl *main = module_find_decl(self, "main");
     assert(main != NULL);
     codegen_lower_decl(self->codegen, main);
+
+    // Lower all other decls that have been referenced
+    //todo this only does one pass, need to replace this with a stack of decls pending generation.
+    for (DeclIndex i = 0; i < self->decls.size; i++) {
+        Decl *decl = decl_list_get(&self->decls, i);
+
+        if (decl->state == DeclStateReferenced)
+            codegen_lower_decl(self->codegen, decl);
+    }
 
     return true;
 }
