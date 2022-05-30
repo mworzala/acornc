@@ -3,6 +3,9 @@
 
 #include "common.h"
 
+// Represents an index into the token array for the contained file.
+typedef uint32_t TokenIndex;
+
 typedef enum token_type_s {
     // Symbols
     TOK_LPAREN, TOK_RPAREN,

@@ -3,35 +3,13 @@
 
 #include "common.h"
 #include "lexer.h"
-
-// Represents an index into the token array for the contained file.
-//todo maybe move me to lexer file
-typedef uint32_t TokenIndex;
+#include "array_util.h"
 
 // Represents an index into the ast node list (of an AstNode)
 typedef uint32_t AstIndex;
 
 #define ast_index_empty ((AstIndex) UINT32_MAX)
 
-//todo replace me with generic IndexList
-typedef struct ast_index_list_s {
-    uint32_t size;
-    uint32_t capacity;
-    AstIndex *data;
-} AstIndexList;
-
-#define self_t AstIndexList *self
-
-void ast_index_list_init(self_t);
-void ast_index_list_free(self_t);
-void ast_index_list_add(self_t, AstIndex index);
-void ast_index_list_add_multi(self_t, void *data, size_t size);
-
-#define ast_index_list_add_sized(self, data) ast_index_list_add_multi(self, &data, sizeof(data) / sizeof(AstIndex))
-
-#undef self_t
-
-//todo tests to verify that all required changes have been made when updating this list (tag to string, ast_debug)
 typedef enum ast_tag_s {
 
     // Expressions
@@ -132,7 +110,7 @@ typedef enum ast_tag_s {
     // All values always empty value.
     AST_EMPTY,
 
-    __AST_LAST, //todo test case to ensure each one is stringified
+    __AST_LAST,
 } AstTag;
 
 typedef struct ast_fn_proto_s {
@@ -185,7 +163,7 @@ typedef struct ast_s {
     TokenList tokens;
 
     AstNodeList nodes;
-    AstIndexList extra_data;
+    IndexList extra_data;
     AstIndex root;
 } Ast;
 

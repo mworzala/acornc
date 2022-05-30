@@ -73,13 +73,13 @@ TokenIndex parse_assert(self_t, TokenType type) {
 AstIndex int_module(self_t) {
     // See int_parse_list, it is a better documented, similar version of this logic.
 
-    AstIndexList inner_indices;
-    ast_index_list_init(&inner_indices);
+    IndexList inner_indices;
+    index_list_init(&inner_indices);
 
     // Parse inner expressions
     while (!parse_match(self, TOK_EOF)) {
         AstIndex idx = int_top_level_decl(self);
-        ast_index_list_add(&inner_indices, idx);
+        index_list_add(&inner_indices, idx);
 
         if (idx == ast_index_empty) {
             assert(false);
@@ -96,15 +96,15 @@ AstIndex int_module(self_t) {
 
         // Copy inner_indices to extra_data
         for (size_t i = 0; i < inner_indices.size; i++) {
-            ast_index_list_add(&self->extra_data, inner_indices.data[i]);
+            index_list_add(&self->extra_data, inner_indices.data[i]);
         }
     }
-    ast_index_list_free(&inner_indices);
+    index_list_free(&inner_indices);
 
     ast_node_list_add(&self->nodes, (AstNode) {
         .tag = AST_MODULE,
         .main_token = UINT32_MAX,
-        .data = { start, end },
+        .data = {start, end},
     });
     return self->nodes.size - 1;
 }
@@ -405,7 +405,7 @@ AstIndex expr_if(self_t) {
 
     AstIfData data = {then, else_};
     AstIndex data_idx = self->extra_data.size;
-    ast_index_list_add_sized(&self->extra_data, data);
+    index_list_add_sized(&self->extra_data, data);
 
     ast_node_list_add(&self->nodes, (AstNode) {
         .tag = AST_IF,
@@ -450,8 +450,8 @@ AstIndex fn_proto(self_t) {
         .param_start = param_data.first,
         .param_end = param_data.second,
     };
-    ast_index_list_add_sized(&self->extra_data, proto_data);
-//    ast_index_list_add_multi(&self->extra_data, &proto_data, sizeof(proto_data) / sizeof(AstIndex));
+    index_list_add_sized(&self->extra_data, proto_data);
+//    index_list_add_multi(&self->extra_data, &proto_data, sizeof(proto_data) / sizeof(AstIndex));
 
     ast_node_list_add(&self->nodes, (AstNode) {
         .tag = AST_FN_PROTO,
@@ -512,7 +512,7 @@ AstIndex call_data(self_t) {
         .arg_start = param_data.first,
         .arg_end = param_data.second,
     };
-    ast_index_list_add_sized(&self->extra_data, call_data);
+    index_list_add_sized(&self->extra_data, call_data);
 
     return call_data_idx;
 }
@@ -527,13 +527,13 @@ int_parse_list(self_t, AstIndex (*parse_fn)(self_t), TokenType open, TokenType c
 
     // Need to store the inner indices so that they can all be added at once to ensure
     //  they are continuous inside extra_data. Consider the case of {{x}}.
-    AstIndexList inner_indices;
-    ast_index_list_init(&inner_indices);
+    IndexList inner_indices;
+    index_list_init(&inner_indices);
 
     // Parse inner expressions
     while (parse_peek_curr(self).type != close) {
         AstIndex idx = parse_fn(self);
-        ast_index_list_add(&inner_indices, idx);
+        index_list_add(&inner_indices, idx);
 
         if (idx == ast_index_empty) {
             assert(false);
@@ -560,11 +560,11 @@ int_parse_list(self_t, AstIndex (*parse_fn)(self_t), TokenType open, TokenType c
 
         // Copy inner_indices to extra_data
         for (size_t i = 0; i < inner_indices.size; i++) {
-            ast_index_list_add(&self->extra_data, inner_indices.data[i]);
+            index_list_add(&self->extra_data, inner_indices.data[i]);
         }
     }
 
-    ast_index_list_free(&inner_indices);
+    index_list_free(&inner_indices);
     return (AstIndexPair) {start, end};
 }
 

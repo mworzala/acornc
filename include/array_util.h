@@ -18,7 +18,7 @@
 
 void *reallocate(void *pointer, size_t new_size);
 
-// Index List
+// SECTION: Index List
 // Stores a list of indices in order.
 
 typedef struct index_list_s {
@@ -41,7 +41,7 @@ bool index_list_contains(self_t, uint32_t index);
 
 #undef self_t
 
-// Index Map
+// SECTION: Index Map
 // Stores a mapping between two sets of indices.
 
 typedef struct index_map_s {
@@ -58,7 +58,7 @@ uint32_t *index_map_get(self_t, uint32_t key);
 
 #undef self_t
 
-// Index-Pointer Map
+// SECTION: Index-Pointer Map
 // Stores a mapping between two sets of indices.
 
 typedef struct index_ptr_map_s {

@@ -1,7 +1,7 @@
 
-foreign fn printf(fmt: *i8, ...) -> u32;
+foreign fn puts(str: *i8) -> i32;
 
 fn main() i32 {
-    printf("Hello, %s!\n", "world");
+    puts("Hello, world!");
     return 0;
 }

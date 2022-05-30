@@ -21,7 +21,7 @@ void parser_init(self_t, uint8_t *source) {
     token_list_insert(&self->tokens, tok);
 
     ast_node_list_init(&self->nodes);
-    ast_index_list_init(&self->extra_data);
+    index_list_init(&self->extra_data);
 }
 
 Ast parser_parse(self_t) {

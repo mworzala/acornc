@@ -4,6 +4,7 @@
 #include "common.h"
 #include "lexer.h"
 #include "ast.h"
+#include "array_util.h"
 
 typedef struct parser_s {
     uint8_t *source;
@@ -13,7 +14,7 @@ typedef struct parser_s {
 
     //todo errors
     AstNodeList nodes;
-    AstIndexList extra_data;
+    IndexList extra_data;
 } Parser;
 
 #define self_t Parser *self
