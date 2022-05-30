@@ -190,7 +190,9 @@ AstIndex stmt_let(self_t) {
 
     // Parse the type expression, if present
     AstIndex type_expr = ast_index_empty;
-    //todo
+    if (parse_match_advance(self, TOK_COLON)) {
+        type_expr = type_expr_constant(self);
+    }
 
     // Parse the initializer, if present
     AstIndex init_expr = ast_index_empty;
@@ -421,6 +423,21 @@ AstIndex expr_while(self_t) {
         .tag = AST_WHILE,
         .main_token = main_token,
         .data = {cond, body},
+    });
+    return self->nodes.size - 1;
+}
+
+//endregion
+
+//region Type expressions
+
+AstIndex type_expr_constant(self_t) {
+    TokenIndex main_token = parse_assert(self, TOK_IDENT);
+
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_TYPE,
+        .main_token = main_token,
+        .data = {ast_index_empty, ast_index_empty},
     });
     return self->nodes.size - 1;
 }

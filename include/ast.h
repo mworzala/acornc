@@ -81,6 +81,13 @@ typedef enum ast_tag_s {
     // lhs..rhs  :  The variant cases
     AST_ENUM,
 
+    // Types
+    // Currently all types are hardcoded and you may only specify those ones.
+    // main_token: The token representing the type name, eg `i32`, `bool`, `_`
+    // lhs..rhs  : Empty for now
+    //todo introduce arbitrary types
+    AST_TYPE,
+
     // Special
 
     // main_token:  The token representing the function name

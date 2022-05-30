@@ -1,4 +1,3 @@
-#include <string.h>
 #include <assert.h>
 #include "ast.h"
 
@@ -39,6 +38,9 @@ const char *ast_tag_to_string(AstTag tag) {
             return "struct";
         case AST_ENUM:
             return "enum";
+
+        case AST_TYPE:
+            return "type";
 
         case AST_FN_PROTO:
             return "fn_proto";

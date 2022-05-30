@@ -41,6 +41,7 @@ AstIndex tl_fn_decl(self_t);
 AstIndex tl_struct_decl(self_t);
 AstIndex tl_enum_decl(self_t);
 
+
 // Statements
 AstIndex int_stmt(self_t);
 AstIndex stmt_let(self_t);
@@ -55,6 +56,10 @@ AstIndex expr_block(self_t);
 AstIndex expr_return(self_t);
 AstIndex expr_if(self_t);
 AstIndex expr_while(self_t);
+
+
+// Type expressions
+AstIndex type_expr_constant(self_t);
 
 
 // Special

@@ -16,7 +16,7 @@ typedef enum token_type_s {
     TOK_LT, TOK_LTEQ,
     TOK_GT, TOK_GTEQ,
     TOK_AMPAMP, TOK_BARBAR,
-    TOK_SEMI, TOK_COMMA, TOK_DOT,
+    TOK_SEMI, TOK_COLON, TOK_COMMA, TOK_DOT,
 
     // Keywords
     TOK_ELSE, TOK_ENUM, TOK_FN,

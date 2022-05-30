@@ -79,6 +79,7 @@ const char *token_type_to_string(TokenType type) {
         case TOK_AMPAMP:    return "AMPAMP";
         case TOK_BARBAR:    return "BARBAR";
         case TOK_SEMI:      return "SEMI";
+        case TOK_COLON:     return "COLON";
         case TOK_COMMA:     return "COMMA";
         case TOK_DOT:       return "DOT";
 
