@@ -5,20 +5,29 @@
 
 char *mir_tag_to_string(MirInstTag tag) {
     switch (tag) {
-        case MirReserved:
-            return "!reserved!";
-        case MirConstant:
-            return "constant";
+        case MirAdd:
+            return "add";
         case MirAlloc:
             return "alloc";
-        case MirStore:
-            return "store";
-        case MirLoad:
-            return "load";
         case MirBlock:
             return "block";
+        case MirConstant:
+            return "constant";
+        case MirDiv:
+            return "div";
+        case MirLoad:
+            return "load";
+        case MirMul:
+            return "mul";
         case MirRet:
             return "ret";
+        case MirStore:
+            return "store";
+        case MirSub:
+            return "sub";
+
+        case MirReserved:
+            return "!reserved!";
         default:
             return "<?>";
     }

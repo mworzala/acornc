@@ -157,6 +157,12 @@ LLVMValueRef codegen_inst(self_t, MirIndex index, LLVMBasicBlockRef ll_block) {
             ll_value = codegen_constant(self, inst);
             break;
         }
+        case MirAdd:
+        case MirSub:
+        case MirMul:
+        case MirDiv:
+            ll_value = codegen_binary_op(self, index, ll_block);
+            break;
         case MirAlloc: {
             ll_value = codegen_alloc(self, index, ll_block);
             break;
@@ -189,6 +195,26 @@ LLVMValueRef codegen_inst(self_t, MirIndex index, LLVMBasicBlockRef ll_block) {
 
 LLVMValueRef codegen_constant(self_t, MirInst *inst) {
     return LLVMConstInt(llvm_int, inst->data.ty_pl.payload, false);
+}
+
+LLVMValueRef codegen_binary_op(self_t, MirIndex index, LLVMBasicBlockRef ll_block) {
+    MirInst *inst = mir_get_inst(self->mir, index);
+
+    LLVMValueRef lhs = codegen_inst(self, ref_to_index(inst->data.bin_op.lhs), ll_block);
+    LLVMValueRef rhs = codegen_inst(self, ref_to_index(inst->data.bin_op.rhs), ll_block);
+
+    if (inst->tag == MirAdd) {
+        return LLVMBuildAdd(self->ll_builder, lhs, rhs, "add");
+    } else if (inst->tag == MirSub) {
+        return LLVMBuildSub(self->ll_builder, lhs, rhs, "sub");
+    } else if (inst->tag == MirMul) {
+        return LLVMBuildMul(self->ll_builder, lhs, rhs, "mul");
+    } else if (inst->tag == MirDiv) {
+        return LLVMBuildSDiv(self->ll_builder, lhs, rhs, "div");
+    } else {
+        fprintf(stderr, "Unhandled binary op: %s\n", mir_tag_to_string(inst->tag));
+        assert(false);
+    }
 }
 
 LLVMValueRef codegen_alloc(self_t, MirIndex index, LLVMBasicBlockRef ll_block) {

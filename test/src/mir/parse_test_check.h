@@ -8,9 +8,12 @@ extern "C" {
 }
 
 #define EXPECT_MIR(expr, expected) \
-    EXPECT_PRED2(parse_check_mir, expr, (expected) + 1)
+    EXPECT_PRED3(parse_check_mir, false, expr, (expected) + 1)
+
+#define EXPECT_MIR_EXT(expr, expected) \
+    EXPECT_PRED3(parse_check_mir, true, expr, (expected) + 1)
 
 
-testing::AssertionResult parse_check_mir(const char *expr, const char *expected);
+testing::AssertionResult parse_check_mir(bool extended, const char *expr, const char *expected);
 
 #endif //ACORNC_PARSE_TEST_CHECK_H

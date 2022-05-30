@@ -1,0 +1,7 @@
+
+foreign fn printf(fmt: *i8, ...) -> u32;
+
+fn main() i32 {
+    printf("Hello, %s!\n", "world");
+    return 0;
+}

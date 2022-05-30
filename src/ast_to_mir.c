@@ -199,7 +199,9 @@ MirIndex mir_lower_expr(self_t, AstIndex expr_index) {
             return mir_lower_int_const(self, expr_index);
         case AST_REF:
             return mir_lower_ref(self, expr_index);
-        case AST_BLOCK:
+        case AST_BINARY:
+            return mir_lower_bin_op(self, expr_index);
+        case AST_BLOCK: //todo this should flatten the block while also entering a new scope (eg do not generate an MirBlock inst)
             return mir_lower_block(self, expr_index);
         case AST_RETURN:
             return mir_lower_return(self, expr_index);
@@ -245,6 +247,45 @@ MirIndex mir_lower_ref(self_t, AstIndex expr_index) {
     });
 }
 
+MirIndex mir_lower_bin_op(self_t, AstIndex expr_index) {
+    AstNode *node = ast_get_node_tagged(self->ast, expr_index, AST_BINARY);
+
+    // Lower lhs/rhs
+    Ref lhs = index_to_ref(mir_lower_expr(self, node->data.lhs));
+    Ref rhs = index_to_ref(mir_lower_expr(self, node->data.rhs));
+
+    char *op_str = get_token_content(self, node->main_token);
+    MirIndex out_index;
+    if (strcmp(op_str, "+") == 0) {
+        out_index = add_inst(self, MirAdd, (MirInstData) {
+            .bin_op = { lhs, rhs }
+        });
+    } else if (strcmp(op_str, "-") == 0) {
+        out_index = add_inst(self, MirSub, (MirInstData) {
+            .bin_op = { lhs, rhs }
+        });
+    } else if (strcmp(op_str, "*") == 0) {
+        out_index = add_inst(self, MirMul, (MirInstData) {
+            .bin_op = { lhs, rhs }
+        });
+    } else if (strcmp(op_str, "/") == 0) {
+        out_index = add_inst(self, MirDiv, (MirInstData) {
+            .bin_op = { lhs, rhs }
+        });
+    } else {
+        printf("Unsupported binary op %s!\n", op_str);
+        assert(false);
+    }
+
+    free(op_str);
+
+    return out_index;
+}
+
+MirIndex mir_lower_call(self_t, AstIndex expr_index) {
+
+}
+
 MirIndex mir_lower_block(self_t, AstIndex block_index) {
     AstNode *block = ast_get_node_tagged(self->ast, block_index, AST_BLOCK);
 
@@ -268,8 +309,6 @@ MirIndex mir_lower_block(self_t, AstIndex block_index) {
         MirIndex inst_index = mir_lower_stmt(self, ast_index);
 
         index_list_add(&insts, inst_index);
-
-//        AstNode *node = ast_get_node(self->ast, index);
     }
 
     MirIndex data_index = add_extra(self, insts.size);

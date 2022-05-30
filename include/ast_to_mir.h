@@ -52,6 +52,8 @@ MirIndex mir_lower_let(self_t, AstIndex stmt_index);
 MirIndex mir_lower_expr(self_t, AstIndex expr_index);
 MirIndex mir_lower_int_const(self_t, AstIndex expr_index);
 MirIndex mir_lower_ref(self_t, AstIndex expr_index);
+MirIndex mir_lower_bin_op(self_t, AstIndex expr_index);
+MirIndex mir_lower_call(self_t, AstIndex expr_index);
 MirIndex mir_lower_block(self_t, AstIndex block_index);
 MirIndex mir_lower_return(self_t, AstIndex ret_index);
 

@@ -1,6 +1,10 @@
 
 
 fn main() {
-    let a = 42;
-    return a;
+    let a = 21;
+    return add(a, a);
+}
+
+fn add(a, b) {
+    return a + b;
 }

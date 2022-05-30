@@ -6,8 +6,7 @@ extern "C" {
 #include "debug/mir_debug.h"
 }
 
-testing::AssertionResult parse_check_mir(const char *expr, const char *expected) {
-
+testing::AssertionResult parse_check_mir(bool extended, const char *expr, const char *expected) {
     Parser parser;
     parser_init(&parser, (uint8_t *) expr);
 
@@ -16,6 +15,7 @@ testing::AssertionResult parse_check_mir(const char *expr, const char *expected)
     //todo make this smarter / output all mir
     AstNode *ast_module = ast_get_node_tagged(&ast, ast.root, AST_MODULE);
     assert(ast_module->data.lhs != ast_index_empty); // Ensure there is at least one function
+    //todo print all function airs
     AstIndex idx = ast.extra_data.data[ast_module->data.lhs];
 
     AstToMir lower;

@@ -39,6 +39,7 @@ LLVMTypeRef codegen_fn_proto(self_t, Decl *decl);
 
 LLVMValueRef codegen_inst(self_t, MirIndex index, LLVMBasicBlockRef ll_block);
 LLVMValueRef codegen_constant(self_t, MirInst *inst);
+LLVMValueRef codegen_binary_op(self_t, MirIndex index, LLVMBasicBlockRef ll_block);
 LLVMValueRef codegen_alloc(self_t, MirIndex index, LLVMBasicBlockRef ll_block);
 void codegen_store(self_t, MirIndex index, LLVMBasicBlockRef ll_block);
 LLVMValueRef codegen_load(self_t, MirIndex index, LLVMBasicBlockRef ll_block);

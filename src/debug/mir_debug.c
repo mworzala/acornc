@@ -63,6 +63,20 @@ static void print_constant(self_t, MirIndex index, int indent) {
     print(self, "constant(i32, %d)", inst->data.ty_pl.payload);
 }
 
+static void print_binary_generic(self_t, MirIndex index, MirInstTag tag, int indent) {
+    MirInst *inst = get_inst_tagged(self, index, tag);
+
+    print_block_inst_ref(self, inst->data.bin_op.lhs, indent);
+    print_block_inst_ref(self, inst->data.bin_op.rhs, indent);
+
+    append_default_header(self, index, indent);
+    print(self, "%s(", mir_tag_to_string(tag))
+    print_ref(self, inst->data.bin_op.lhs);
+    print(self, ", ")
+    print_ref(self, inst->data.bin_op.rhs);
+    print(self, ")")
+}
+
 static void print_alloc(self_t, MirIndex index, int indent) {
     MirInst *inst = get_inst_tagged(self, index, MirAlloc);
 
@@ -109,6 +123,12 @@ static void print_block_inst(self_t, MirIndex index, int indent) {
     MirInst *inst = get_inst(self, index);
 
     switch (inst->tag) {
+        case MirAdd:
+        case MirSub:
+        case MirMul:
+        case MirDiv:
+            print_binary_generic(self, index, inst->tag, indent);
+            break;
         case MirConstant:
             print_constant(self, index, indent);
             break;
