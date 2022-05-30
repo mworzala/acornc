@@ -201,6 +201,8 @@ MirIndex mir_lower_expr(self_t, AstIndex expr_index) {
             return mir_lower_ref(self, expr_index);
         case AST_BINARY:
             return mir_lower_bin_op(self, expr_index);
+        case AST_CALL:
+            return mir_lower_call(self, expr_index);
         case AST_BLOCK: //todo this should flatten the block while also entering a new scope (eg do not generate an MirBlock inst)
             return mir_lower_block(self, expr_index);
         case AST_RETURN:
@@ -283,7 +285,38 @@ MirIndex mir_lower_bin_op(self_t, AstIndex expr_index) {
 }
 
 MirIndex mir_lower_call(self_t, AstIndex expr_index) {
+    AstNode *node = ast_get_node_tagged(self->ast, expr_index, AST_CALL);
 
+    // Lower the operand
+    Ref operand = index_to_ref(mir_lower_expr(self, node->data.lhs));
+    //todo type checking here. How to ensure ref resolves to a function pointer?
+
+    // Lower params
+    AstCallData call_data = *((AstCallData *) &self->ast->extra_data.data[node->data.rhs]);
+
+    IndexList arg_indices;
+    index_list_init(&arg_indices);
+
+    if (call_data.arg_start != ast_index_empty) {
+        for (AstIndex arg_index = call_data.arg_start; arg_index <= call_data.arg_end; arg_index++) {
+            MirIndex lowered_arg = mir_lower_expr(self, self->ast->extra_data.data[arg_index]);
+            index_list_add(&arg_indices, lowered_arg);
+        }
+    }
+
+    // Add arg instruction pointers
+    MirIndex data_index = add_extra(self, arg_indices.size);
+    for (uint32_t i = 0; i < arg_indices.size; i++) {
+        add_extra(self, *index_list_get(&arg_indices, i));
+    }
+
+    // Insert call
+    return add_inst(self, MirCall, (MirInstData) {
+        .pl_op = {
+            .payload = data_index,
+            .operand = operand,
+        }
+    });
 }
 
 MirIndex mir_lower_block(self_t, AstIndex block_index) {

@@ -11,6 +11,8 @@ char *mir_tag_to_string(MirInstTag tag) {
             return "alloc";
         case MirBlock:
             return "block";
+        case MirCall:
+            return "call";
         case MirConstant:
             return "constant";
         case MirDiv:

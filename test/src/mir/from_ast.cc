@@ -87,17 +87,18 @@ fn add(a, b) {
 %1 = alloc(i32)
 %2 = constant(i32, 21)
 %3 = store(%1, %2)
-%4 = ref(a)
-%5 = ref(a)
+%4 = fnptr(add)
+%4 = load(%1)
+%5 = load(%1)
 %6 = call(add, args = [%4, %5])
 %7 = ret(%6)
 // end fn main
 
 // begin fn add
-%8 = param(0)
-%9 = param(1)
-%10 = add(%8, %9)
-%11 = ret(%10)
+%1 = arg(0)
+%2 = arg(1)
+%3 = add(%1, %2)
+%4 = ret(%3)
 //end fn add
 )#";
     EXPECT_MIR_EXT(input, expected);

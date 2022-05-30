@@ -22,6 +22,8 @@ typedef enum mir_inst_tag_s {
     // Note: MirBlock is different from an AstBlock. AstBlocks are valid expressions,
     //       however MirBlock may only be present where branches happen (eg if, while, etc)
     MirBlock,
+    // pl_op where pl is the expression being called, and op is Call
+    MirCall,
     // ty_pl where pl represents the 32 bit content of the int
     // todo actual type, allow bigger ints.
     MirConstant,
@@ -61,6 +63,10 @@ typedef union mir_inst_data_s {
         // Index in instructions, extra, or values
         uint32_t payload;
     } ty_pl;
+    struct {
+        uint32_t payload;
+        Ref operand;
+    } pl_op;
 } MirInstData;
 
 // Data payloads
@@ -68,7 +74,12 @@ typedef union mir_inst_data_s {
 // Followed by inst_count instructions inside the block
 typedef struct {
     uint32_t inst_count;
-} Block;
+} MirBlockData;
+
+// Followed by arg_count instructions for each arg (in order)
+typedef struct {
+    uint32_t arg_count;
+} MirCallData;
 
 typedef struct mir_inst_s {
     MirInstTag tag;
