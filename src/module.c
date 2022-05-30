@@ -168,7 +168,7 @@ bool module_lower_main(self_t) {
     assert(self->ast != NULL);
 
     // Extract declarations from module
-    AstNode *root_node = ast_get_node_tagged(self->ast, self->ast->root, AST_MODULE);
+    AstNode *root_node = ast_get_node_tagged(self->ast, ast_index_root, AST_MODULE);
     if (root_node->data.lhs == ast_index_empty) {
         fprintf(stderr, "Module has no main function\n");
         return false;

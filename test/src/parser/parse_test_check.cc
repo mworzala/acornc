@@ -14,9 +14,8 @@ testing::AssertionResult parse_check_generic(ParseFn parse, const char *expr, co
         .tokens = parser.tokens,
         .nodes = parser.nodes,
         .extra_data = parser.extra_data,
-        .root = root,
     };
-    char *actual = ast_debug_print(&ast);
+    char *actual = ast_debug_print(&ast, root);
     size_t actual_len = strlen(actual);
     // If there are two newlines at the end, remove one of them.
     // Module does this at the moment, should fix it inside module then this is not necessary.

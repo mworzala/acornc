@@ -25,14 +25,13 @@ void parser_init(self_t, uint8_t *source) {
 }
 
 Ast parser_parse(self_t) {
-    AstIndex root = int_module(self);
+    int_module(self);
 
     return (Ast) {
         .source = self->source,
         .tokens = self->tokens,
         .nodes = self->nodes,
         .extra_data = self->extra_data,
-        .root = root,
     };
 }
 

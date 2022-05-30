@@ -16,7 +16,7 @@ struct foo {}
 // module
 
 // @1
-%0 = struct(foo, fields = _)
+%1 = struct(foo, fields = _)
 )#";
     EXPECT_MODULE(input, expected);
 }
@@ -30,10 +30,10 @@ struct bar {}
 // module
 
 // @1
-%0 = struct(foo, fields = _)
+%1 = struct(foo, fields = _)
 
 // @2
-%1 = struct(bar, fields = _)
+%2 = struct(bar, fields = _)
 )#";
     EXPECT_MODULE(input, expected);
 }

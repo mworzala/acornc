@@ -413,15 +413,11 @@ AstDebugFn ast_debug_fns[__AST_LAST] = {
     ast_debug_empty,            // empty
 };
 
-char *ast_debug_print(Ast *ast) {
-    if (ast->root == ast_index_empty) {
-        return "EMPTY AST\n";
-    }
-
+char *ast_debug_print(Ast *ast, AstIndex root) {
     char *buffer = malloc(4096);
     memset(buffer, 0, 4096);
 
-    ast_debug_print_node(buffer, ast, ast->root, 0);
+    ast_debug_print_node(buffer, ast, root, 0);
 
     return buffer;
 }

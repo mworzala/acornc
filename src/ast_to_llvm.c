@@ -68,7 +68,7 @@ void compile_ast_to_file(Ast *ast, const char *filename) {
     AstCodeGen codegen;
     ast_codegen_init(&codegen, ast);
 
-    AstNode *root = &ast->nodes.data[ast->root];
+    AstNode *root = &ast->nodes.data[ast_index_root];
     if (root->tag == AST_MODULE) {
         ast_codegen_module(&codegen, root);
         ast_codegen_write(&codegen, filename);

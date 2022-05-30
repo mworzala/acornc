@@ -9,6 +9,7 @@
 typedef uint32_t AstIndex;
 
 #define ast_index_empty ((AstIndex) UINT32_MAX)
+#define ast_index_root ((AstIndex) 0)
 
 typedef enum ast_tag_s {
 
@@ -52,7 +53,7 @@ typedef enum ast_tag_s {
 
     // main_token:  The token representing the '.'
     // lhs/rhs   :  LHS expr/RHS expr (identifier)
-    AST_DOT, //todo what is this usually called? access?
+    AST_DOT,
 
     // main_token:  The token representing '('
     // lhs/rhs   :  The expr being called/AstCallData (see below)
@@ -141,9 +142,10 @@ typedef struct ast_node_s {
     AstData data;
 } AstNode;
 
-//todo Zig uses node position zero to represent the root, which cannot be referenced by another node,
-//     meaning that index value zero can be used to represent null.
-//     Could also get rid of "root" in Ast.
+
+// SECTION: Node List
+// Contains a list of nodes owned by the list.
+
 typedef struct ast_node_list_s {
     uint32_t size;
     uint32_t capacity;
@@ -162,9 +164,9 @@ typedef struct ast_s {
     uint8_t *source;
     TokenList tokens;
 
+    // Index zero contains the root node (which is present no matter what)
     AstNodeList nodes;
     IndexList extra_data;
-    AstIndex root;
 } Ast;
 
 #define self_t Ast *self

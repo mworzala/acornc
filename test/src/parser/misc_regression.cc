@@ -29,10 +29,10 @@ enum Color {
 // module
 
 // @1
-%0 = struct(Person, fields = _)
+%1 = struct(Person, fields = _)
 
 // @2
-%4 = enum(Color, cases = [
+%5 = enum(Color, cases = [
   case(red),
   case(green),
   case(blue),
@@ -53,14 +53,14 @@ fn foo() {
 // module
 
 // @1
-%6 = fn(foo, proto = { params = _, ret = _ }, body = {
-  %5 = block(stmts = {
+%7 = fn(foo, proto = { params = _, ret = _ }, body = {
+  %6 = block(stmts = {
     // @1
-    %1 = int(42)
-    %2 = let(a, type = _, init = %1)
+    %2 = int(42)
+    %3 = let(a, type = _, init = %2)
     // @2
-    %3 = ref(a)
-    %4 = ret(%3)
+    %4 = ref(a)
+    %5 = ret(%4)
   })
 }
 )#";

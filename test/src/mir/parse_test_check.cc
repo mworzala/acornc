@@ -13,7 +13,7 @@ testing::AssertionResult parse_check_mir(bool extended, const char *expr, const 
     Ast ast = parser_parse(&parser);
     // Extract first function index
     //todo make this smarter / output all mir
-    AstNode *ast_module = ast_get_node_tagged(&ast, ast.root, AST_MODULE);
+    AstNode *ast_module = ast_get_node_tagged(&ast, ast_index_root, AST_MODULE);
     assert(ast_module->data.lhs != ast_index_empty); // Ensure there is at least one function
 
 

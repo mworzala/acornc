@@ -129,7 +129,7 @@ static void pop_scope(self_t) {
 }
 
 static AstIndex find_named_fn(self_t, const char *name) {
-    AstNode *module = ast_get_node_tagged(self->ast, self->ast->root, AST_MODULE);
+    AstNode *module = ast_get_node_tagged(self->ast, ast_index_root, AST_MODULE);
 
     for (AstIndex i = module->data.lhs; i <= module->data.rhs; i++) {
         AstNode *decl = ast_get_node(self->ast, self->ast->extra_data.data[i]);

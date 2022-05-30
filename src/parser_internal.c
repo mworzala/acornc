@@ -6,23 +6,9 @@
 #include "parser.h"
 #include "array_util.h"
 
-// Empty values
-
-static const AstNode ast_node_empty = {
-    .tag = AST_EMPTY,
-    .main_token = UINT32_MAX,
-    .data = {
-        .lhs = ast_index_empty,
-        .rhs = ast_index_empty,
-    },
-};
-
-static const AstData ast_data_empty = {
-    .lhs = ast_index_empty,
-    .rhs = ast_index_empty,
-};
-
 #define self_t Parser *self
+
+// SECTION: Parsing utilities
 
 Token parse_peek_last(self_t) {
     assert(self->tok_index > 0);
@@ -68,11 +54,22 @@ TokenIndex parse_assert(self_t, TokenType type) {
 }
 
 
+// SECTION: Parsing implementation
+
 //region Top level declarations
 
 AstIndex int_module(self_t) {
     // See int_parse_list, it is a better documented, similar version of this logic.
 
+    // Allocate an empty ast node immediately so that the module node can fill it at index zero
+    assert(self->nodes.size == 0);
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_MODULE,
+        .main_token = UINT32_MAX,
+        .data = {ast_index_empty, ast_index_empty},
+    });
+
+    // Parse the module
     IndexList inner_indices;
     index_list_init(&inner_indices);
 
@@ -101,12 +98,10 @@ AstIndex int_module(self_t) {
     }
     index_list_free(&inner_indices);
 
-    ast_node_list_add(&self->nodes, (AstNode) {
-        .tag = AST_MODULE,
-        .main_token = UINT32_MAX,
-        .data = {start, end},
-    });
-    return self->nodes.size - 1;
+    // Update the module node
+    AstNode *module_node = &self->nodes.data[0];
+    module_node->data = (AstData) {start, end};
+    return ast_index_root;
 }
 
 AstIndex int_top_level_decl(self_t) {
@@ -332,7 +327,7 @@ AstIndex expr_literal(self_t) {
         ast_node_list_add(&self->nodes, (AstNode) {
             .tag = AST_INTEGER,
             .main_token = self->tok_index - 1,
-            .data = ast_data_empty,
+            .data = {ast_index_empty, ast_index_empty},
         });
         return self->nodes.size - 1;
     } else if (next.type == TOK_TRUE || next.type == TOK_FALSE) {
@@ -340,7 +335,7 @@ AstIndex expr_literal(self_t) {
         ast_node_list_add(&self->nodes, (AstNode) {
             .tag = AST_BOOL,
             .main_token = self->tok_index - 1,
-            .data = ast_data_empty,
+            .data = {ast_index_empty, ast_index_empty},
         });
         return self->nodes.size - 1;
     } else if (next.type == TOK_IDENT) {
@@ -348,7 +343,7 @@ AstIndex expr_literal(self_t) {
         ast_node_list_add(&self->nodes, (AstNode) {
             .tag = AST_REF,
             .main_token = self->tok_index - 1,
-            .data = ast_data_empty,
+            .data = {ast_index_empty, ast_index_empty},
         });
         return self->nodes.size - 1;
     }
