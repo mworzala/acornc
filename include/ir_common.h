@@ -2,6 +2,7 @@
 #define CONFIG_IR_COMMON_H
 
 #include "common.h"
+#include "type.h"
 
 // Incomplete enum representing the known ref values, or any index into an instruction list
 // Conversion can be done using the appropriate methods below

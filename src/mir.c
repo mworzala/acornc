@@ -15,16 +15,28 @@ char *mir_tag_to_string(MirInstTag tag) {
             return "block";
         case MirCall:
             return "call";
+        case MirEq:
+            return "eq";
         case MirFnPtr:
             return "fn_ptr";
+        case MirGt:
+            return "gt";
+        case MirGtEq:
+            return "gt_eq";
         case MirConstant:
             return "constant";
         case MirDiv:
             return "div";
         case MirLoad:
             return "load";
+        case MirLt:
+            return "lt";
+        case MirLtEq:
+            return "lt_eq";
         case MirMul:
             return "mul";
+        case MirNEq:
+            return "n_eq";
         case MirRet:
             return "ret";
         case MirStore:

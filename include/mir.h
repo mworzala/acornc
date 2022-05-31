@@ -16,17 +16,25 @@ typedef enum mir_inst_tag_s {
     // bin_op
     MirAdd,
     // Allocates an int on the stack
-    // data is noop
+    // ty containing the type to allocate
     MirAlloc,
+    // ty_pl where payload is the index of the argument
+    MirArg,
     // ty_pl pointing to Block
     // Note: MirBlock is different from an AstBlock. AstBlocks are valid expressions,
     //       however MirBlock may only be present where branches happen (eg if, while, etc)
     MirBlock,
     // pl_op where pl is the expression being called, and op is Call
     MirCall,
+    // bin_op
+    MirEq,
     //todo Very temporary. Need to find a better way to represent function pointers
     // Uses fn_ptr data
     MirFnPtr,
+    // bin_op
+    MirGt,
+    // bin_op
+    MirGtEq,
     // ty_pl where pl represents the 32 bit content of the int
     // todo actual type, allow bigger ints.
     MirConstant,
@@ -36,11 +44,15 @@ typedef enum mir_inst_tag_s {
     // Loads a value from the given location
     // un_op where payload is pointer
     MirLoad,
+    // bin_op
+    MirLt,
+    // bin_op
+    MirLtEq,
     // Integer multiplication
     // bin_op
     MirMul,
-    // ty_pl where payload is the index of the argument
-    MirArg,
+    // bin_op
+    MirNEq,
     // un_op, no instructions may follow within a block (todo implement that error)
     MirRet,
     // Stores a value to the given location
@@ -58,6 +70,7 @@ char *mir_tag_to_string(MirInstTag tag);
 // 8 bytes max
 typedef union mir_inst_data_s {
     uint8_t noop;
+    Type ty;
     Ref un_op;
     struct {
         Ref lhs;

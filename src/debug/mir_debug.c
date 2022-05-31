@@ -56,6 +56,12 @@ static void print_block_inst_ref(self_t, Ref ref, int indent) {
     }
 }
 
+static void print_type(self_t, Type ty) {
+    TypeTag tag = type_tag(ty);
+    print(self, "%s", type_tag_to_string(tag))
+}
+
+
 static void print_constant(self_t, MirIndex index, int indent) {
     MirInst *inst = get_inst_tagged(self, index, MirConstant);
     append_default_header(self, index, indent);
@@ -79,9 +85,12 @@ static void print_binary_generic(self_t, MirIndex index, MirInstTag tag, int ind
 
 static void print_alloc(self_t, MirIndex index, int indent) {
     MirInst *inst = get_inst_tagged(self, index, MirAlloc);
+    Type ty = inst->data.ty;
 
     append_default_header(self, index, indent);
-    print(self, "alloc(i32)") //todo types
+    print(self, "alloc(")
+    print_type(self, ty);
+    print(self, ")")
 }
 
 static void print_store(self_t, MirIndex index, int indent) {
@@ -170,7 +179,13 @@ static void print_block_inst(self_t, MirIndex index, int indent) {
         case MirAdd:
         case MirSub:
         case MirMul:
-    case MirDiv:
+        case MirDiv:
+        case MirEq:
+        case MirNEq:
+        case MirGt:
+        case MirGtEq:
+        case MirLt:
+        case MirLtEq:
             print_binary_generic(self, index, inst->tag, indent);
             break;
         case MirConstant:

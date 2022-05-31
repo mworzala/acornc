@@ -7,7 +7,8 @@
 #define self_t AtmScope *self
 
 void atm_scope_init(self_t, AtmScope *parent) {
-    assert(self != parent); // Basic check to ensure that we dont create a cycle, but needs to check the whole tree upwards in reality.
+    assert(self !=
+           parent); // Basic check to ensure that we dont create a cycle, but needs to check the whole tree upwards in reality.
     self->size = 0;
     self->capacity = 0;
     self->names = NULL;
@@ -202,11 +203,21 @@ MirIndex mir_lower_stmt(self_t, AstIndex stmt_index) {
 MirIndex mir_lower_let(self_t, AstIndex stmt_index) {
     AstNode *node = ast_get_node_tagged(self->ast, stmt_index, AST_LET);
 
-    // Type todo
-    assert(node->data.lhs == ast_index_empty);
+    // Type
+    Type type = {TypeI64};
+    if (node->data.lhs != ast_index_empty) {
+        // Type annotation has been provided, use it.
+        AstNode *type_node = ast_get_node_tagged(self->ast, node->data.lhs, AST_TYPE);
+
+        char *type_name = get_token_content(self, type_node->main_token);
+        type = type_from_name(type_name);
+        free(type_name);
+    }
 
     // Alloc
-    MirIndex alloc_index = add_inst(self, MirAlloc, (MirInstData) {});
+    MirIndex alloc_index = add_inst(self, MirAlloc, (MirInstData) {
+        .ty = type
+    });
     // Insert the pointer to the scope
     char *name = get_token_content(self, node->main_token + 1);
     atm_scope_set(self->scope, name, alloc_index, AtmScopeItemTypeVar);
@@ -324,23 +335,27 @@ MirIndex mir_lower_bin_op(self_t, AstIndex expr_index) {
     Ref rhs = index_to_ref(mir_lower_expr(self, node->data.rhs));
 
     char *op_str = get_token_content(self, node->main_token);
-    MirIndex out_index;
+    MirInstTag op_tag;
     if (strcmp(op_str, "+") == 0) {
-        out_index = add_inst(self, MirAdd, (MirInstData) {
-            .bin_op = { lhs, rhs }
-        });
+        op_tag = MirAdd;
     } else if (strcmp(op_str, "-") == 0) {
-        out_index = add_inst(self, MirSub, (MirInstData) {
-            .bin_op = { lhs, rhs }
-        });
+        op_tag = MirSub;
     } else if (strcmp(op_str, "*") == 0) {
-        out_index = add_inst(self, MirMul, (MirInstData) {
-            .bin_op = { lhs, rhs }
-        });
+        op_tag = MirMul;
     } else if (strcmp(op_str, "/") == 0) {
-        out_index = add_inst(self, MirDiv, (MirInstData) {
-            .bin_op = { lhs, rhs }
-        });
+        op_tag = MirDiv;
+    } else if (strcmp(op_str, "==") == 0) {
+        op_tag = MirEq;
+    } else if (strcmp(op_str, "!=") == 0) {
+        op_tag = MirNEq;
+    } else if (strcmp(op_str, ">") == 0) {
+        op_tag = MirGt;
+    } else if (strcmp(op_str, ">=") == 0) {
+        op_tag = MirGtEq;
+    } else if (strcmp(op_str, "<") == 0) {
+        op_tag = MirLt;
+    } else if (strcmp(op_str, "<=") == 0) {
+        op_tag = MirLtEq;
     } else {
         printf("Unsupported binary op %s!\n", op_str);
         assert(false);
@@ -348,7 +363,9 @@ MirIndex mir_lower_bin_op(self_t, AstIndex expr_index) {
 
     free(op_str);
 
-    return out_index;
+    return add_inst(self, op_tag, (MirInstData) {
+        .bin_op = {lhs, rhs}
+    });
 }
 
 MirIndex mir_lower_call(self_t, AstIndex expr_index) {
@@ -413,7 +430,7 @@ MirIndex mir_lower_block(self_t, AstIndex block_index, AstFnProto *proto_data) {
 
                 // Create the `arg` node.
                 AstIndex arg_index = add_inst(self, MirArg, (MirInstData) {
-                    .ty_pl = { .payload = i - proto_data->param_start }
+                    .ty_pl = {.payload = i - proto_data->param_start}
                 });
 
                 char *param_name = get_token_content(self, param->main_token);

@@ -172,6 +172,12 @@ LLVMValueRef codegen_inst(self_t, MirIndex index, LLVMBasicBlockRef ll_block) {
         case MirSub:
         case MirMul:
         case MirDiv:
+        case MirEq:
+        case MirNEq:
+        case MirGt:
+        case MirGtEq:
+        case MirLt:
+        case MirLtEq:
             ll_value = codegen_binary_op(self, index, ll_block);
             break;
         case MirAlloc: {

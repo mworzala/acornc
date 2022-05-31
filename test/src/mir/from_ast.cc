@@ -32,7 +32,7 @@ fn foo() {
 }
 )#";
     auto expected = R"#(
-%1 = alloc(i32)
+%1 = alloc(i64)
 %2 = constant(i32, 42)
 %3 = store(%1, %2)
 )#";
@@ -47,7 +47,7 @@ fn foo() {
 }
 )#";
     auto expected = R"#(
-%1 = alloc(i32)
+%1 = alloc(i64)
 %2 = constant(i32, 42)
 %3 = store(%1, %2)
 %4 = load(%1)
@@ -71,6 +71,21 @@ fn foo() {
     EXPECT_MIR(input, expected);
 }
 
+TEST(AstToMir, BasicComparison) {
+    auto input = R"#(
+fn foo() {
+    return 2 < 3;
+}
+)#";
+    auto expected = R"#(
+%1 = constant(i32, 2)
+%2 = constant(i32, 3)
+%3 = lt(%1, %2)
+%4 = ret(%3)
+)#";
+    EXPECT_MIR(input, expected);
+}
+
 TEST(AstToMir, BasicCall) {
     auto input = R"#(
 fn main() {
@@ -84,7 +99,7 @@ fn add(a, b) {
 )#";
     auto expected = R"#(
 // begin fn main
-%1 = alloc(i32)
+%1 = alloc(i64)
 %2 = constant(i32, 21)
 %3 = store(%1, %2)
 %4 = fn_ptr(add)
@@ -103,6 +118,29 @@ fn add(a, b) {
 )#";
     EXPECT_MIR_EXT(input, expected);
 }
+
+//todo first case where a type can be specified
+TEST(AstToMir, LetWithExplicitType) {
+    auto input = R"#(
+fn foo() {
+    let a: i32 = 21;
+    return a;
+}
+)#";
+    auto expected = R"#(
+%1 = alloc(i32)
+%2 = constant(i32, 21)
+%3 = store(%1, %2)
+%4 = load(%1)
+%5 = ret(%4)
+)#";
+    EXPECT_MIR(input, expected);
+}
+
+
+
+
+
 
 //TEST(AstToMir, SingleIntReplacedWithRef) {
 //    auto input = R"#(
