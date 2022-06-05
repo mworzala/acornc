@@ -4,6 +4,9 @@
 #include "common.h"
 
 typedef enum type_tag_s {
+    // Placeholder type, may not be present in any MIR node.
+    TypeUnknown,
+
     // This section does not have an ExtendedType
 
     TypeU8,

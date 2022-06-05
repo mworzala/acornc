@@ -4,6 +4,8 @@
 
 char *type_tag_to_string(TypeTag tag) {
     switch (tag) {
+        case TypeUnknown:
+            return "!!!";
         case TypeU8:
             return "u8";
         case TypeI8:

@@ -203,29 +203,54 @@ MirIndex mir_lower_stmt(self_t, AstIndex stmt_index) {
 MirIndex mir_lower_let(self_t, AstIndex stmt_index) {
     AstNode *node = ast_get_node_tagged(self->ast, stmt_index, AST_LET);
 
+
+
+
     // Type
-    Type type = {TypeI64};
+    Type type_annotation = {TypeUnknown};
     if (node->data.lhs != ast_index_empty) {
         // Type annotation has been provided, use it.
         AstNode *type_node = ast_get_node_tagged(self->ast, node->data.lhs, AST_TYPE);
 
         char *type_name = get_token_content(self, type_node->main_token);
-        type = type_from_name(type_name);
+        type_annotation = type_from_name(type_name);
         free(type_name);
     }
 
-    // Alloc
-    MirIndex alloc_index = add_inst(self, MirAlloc, (MirInstData) {
-        .ty = type
+    // Placeholder for alloc instruction
+    MirIndex alloc_index = reserve_inst(self);
+
+    // Initializer (must be present for now)
+    assert(node->data.rhs != ast_index_empty);
+    Type init_type = {TypeUnknown};
+    //todo
+    MirIndex init_index = mir_lower_expr(self, node->data.rhs);
+
+    // Type rule as follows for now:
+    // Annotation takes precedence and must be able to coerce init_type to annotated type.
+    // If no annotation, init_type is used.
+    // If no init, error.
+    // Annotation .. Initializer .. Error
+    Type var_type;
+    if (type_annotation.tag != TypeUnknown) {
+        var_type = type_annotation;
+
+        //todo type coercion from init_type
+    } else if (init_type.tag != TypeUnknown) {
+        var_type = init_type;
+    } else {
+        assert(false); // Current unreachable since an initializer is required for now.
+    }
+
+    // Fill the alloc instruction now that type is determined.
+    fill_inst(self, alloc_index, MirAlloc, (MirInstData) {
+        .ty = var_type
     });
+
     // Insert the pointer to the scope
     char *name = get_token_content(self, node->main_token + 1);
     atm_scope_set(self->scope, name, alloc_index, AtmScopeItemTypeVar);
     free(name);
-
-    // Initializer (must be present for now)
-    assert(node->data.rhs != ast_index_empty);
-    MirIndex init_index = mir_lower_expr(self, node->data.rhs);
 
     // Store
     MirIndex store_index = add_inst(self, MirStore, (MirInstData) {

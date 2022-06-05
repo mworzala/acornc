@@ -119,7 +119,6 @@ fn add(a, b) {
     EXPECT_MIR_EXT(input, expected);
 }
 
-//todo first case where a type can be specified
 TEST(AstToMir, LetWithExplicitType) {
     auto input = R"#(
 fn foo() {
@@ -129,7 +128,7 @@ fn foo() {
 )#";
     auto expected = R"#(
 %1 = alloc(i32)
-%2 = constant(i32, 21)
+%2 = constant(i8, 21)
 %3 = store(%1, %2)
 %4 = load(%1)
 %5 = ret(%4)
