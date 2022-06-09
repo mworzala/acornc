@@ -1,5 +1,5 @@
 
-foreign fn puts(str: *i8) -> i32;
+foreign fn puts(str: *i8) i32;
 
 fn main() i32 {
     puts("Hello, world!");
