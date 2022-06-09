@@ -45,6 +45,7 @@ typedef struct ast_to_mir_s {
 
     // Intermediate state
     AtmScope *scope; // Starts as global scope
+    IndexPtrMap type_cache;
 } AstToMir;
 
 #define self_t AstToMir *self
@@ -65,6 +66,12 @@ MirIndex mir_lower_call(self_t, AstIndex expr_index);
 // If proto_data is not null, its args will be inserted into the function body
 MirIndex mir_lower_block(self_t, AstIndex block_index, AstFnProto *proto_data);
 MirIndex mir_lower_return(self_t, AstIndex ret_index);
+
+// SECTION: Type checking
+// Cached type checking for expressions and statements
+
+Type type_check_expr(self_t, AstIndex expr_index);
+Type type_check_int_const(self_t, AstIndex expr_index);
 
 #undef self_t
 

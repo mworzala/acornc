@@ -157,9 +157,14 @@ void ast_to_mir_init(self_t, Ast *ast) {
     // Create global scope
     self->scope = malloc(sizeof(AtmScope));
     atm_scope_init(self->scope, NULL);
+
+    // Create type cache
+    index_ptr_map_init(&self->type_cache);
 }
 
 void ast_to_mir_free(self_t) {
+    index_ptr_map_free(&self->type_cache);
+
     atm_scope_free(self->scope);
     free(self->scope);
 
@@ -203,9 +208,6 @@ MirIndex mir_lower_stmt(self_t, AstIndex stmt_index) {
 MirIndex mir_lower_let(self_t, AstIndex stmt_index) {
     AstNode *node = ast_get_node_tagged(self->ast, stmt_index, AST_LET);
 
-
-
-
     // Type
     Type type_annotation = {TypeUnknown};
     if (node->data.lhs != ast_index_empty) {
@@ -222,8 +224,7 @@ MirIndex mir_lower_let(self_t, AstIndex stmt_index) {
 
     // Initializer (must be present for now)
     assert(node->data.rhs != ast_index_empty);
-    Type init_type = {TypeUnknown};
-    //todo
+    Type init_type = type_check_expr(self, node->data.rhs);
     MirIndex init_index = mir_lower_expr(self, node->data.rhs);
 
     // Type rule as follows for now:
@@ -504,6 +505,41 @@ MirIndex mir_lower_return(self_t, AstIndex ret_index) {
     return add_inst(self, MirRet, (MirInstData) {
         .un_op = index_to_ref(expr_index),
     });
+}
+
+
+// SECTION: Type checking
+
+Type type_check_expr(self_t, AstIndex expr_index) {
+    // If type is cached, return that version
+    Type *cached_type = (Type *) index_ptr_map_get(&self->type_cache, expr_index);
+    if (cached_type != NULL)
+        return *cached_type;
+
+    // Otherwise proceed to determine type
+    Type result_type;
+    AstNode *node = ast_get_node(self->ast, expr_index);
+    switch (node->tag) {
+        case AST_INTEGER: {
+            result_type = type_check_int_const(self, expr_index);
+            break;
+        }
+        default:
+            printf("Unsupported type check for node %s!\n", mir_tag_to_string(node->tag));
+            assert(false);
+    }
+
+    // Cache the type
+    // The conversion here is a little cursed. We take the `extended` variant no matter what
+    // the value is because the compiler is OK with casting it to `size_t`
+    index_ptr_map_put(&self->type_cache, expr_index, (size_t) result_type.extended);
+    return result_type;
+}
+
+Type type_check_int_const(self_t, AstIndex expr_index) {
+    return (Type) {
+        .tag = TypeI64,
+    };
 }
 
 #undef self_t

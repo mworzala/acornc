@@ -1,4 +1,4 @@
-project(acornc_test CXX)
+project(acorn_test CXX)
 
 set(CMAKE_CXX_STANDARD 11)
 
@@ -15,9 +15,9 @@ enable_testing()
 
 # Create test executable
 file(GLOB_RECURSE TEST_SOURCES src/**.cc)
-add_executable(acornc_test_run ${TEST_SOURCES})
-target_link_libraries(acornc_test_run gtest gtest_main)
-target_link_libraries(acornc_test_run acornc_lib)
+add_executable(acorn_test_run ${TEST_SOURCES})
+target_link_libraries(acorn_test_run gtest gtest_main)
+target_link_libraries(acorn_test_run acorn_lib)
 
 include(GoogleTest)
-gtest_discover_tests(acornc_test_run)
+gtest_discover_tests(acorn_test_run)
