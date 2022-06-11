@@ -159,3 +159,17 @@ TEST(Parser, ComplexBinaryExpr) {
 )#";
     EXPECT_EXPR(input, expected);
 }
+
+// Error cases
+
+TEST(Parser, BinaryMissingRHS) {
+    auto input = "1+";
+    auto expected = R"#(
+%0 = int(1)
+%1 = int(2)
+%2 = int(3)
+%3 = mul(%1, %2)
+%4 = add(%0, %3)
+)#";
+    EXPECT_EXPR(input, expected);
+}

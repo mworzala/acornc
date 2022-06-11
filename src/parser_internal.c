@@ -63,11 +63,11 @@ AstIndex int_module(self_t) {
 
     // Allocate an empty ast node immediately so that the module node can fill it at index zero
     assert(self->nodes.size == 0);
-    ast_node_list_add(&self->nodes, (AstNode){
-                                        .tag = AST_MODULE,
-                                        .main_token = UINT32_MAX,
-                                        .data = {ast_index_empty, ast_index_empty},
-                                    });
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_MODULE,
+        .main_token = UINT32_MAX,
+        .data = {ast_index_empty, ast_index_empty},
+    });
 
     // Parse the module
     IndexList inner_indices;
@@ -100,7 +100,7 @@ AstIndex int_module(self_t) {
 
     // Update the module node
     AstNode *module_node = &self->nodes.data[0];
-    module_node->data = (AstData){start, end};
+    module_node->data = (AstData) {start, end};
     return ast_index_root;
 }
 
@@ -133,13 +133,13 @@ AstIndex tl_fn_decl(self_t) {
     }
 
     // Construct node
-    ast_node_list_add(&self->nodes, (AstNode){
-                                        .tag = AST_NAMED_FN,
-                                        .main_token = main_token,
-                                        .data = {
-                                            .lhs = prototype,
-                                            .rhs = body_block,
-                                        }});
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_NAMED_FN,
+        .main_token = main_token,
+        .data = {
+            .lhs = prototype,
+            .rhs = body_block,
+        }});
     return self->nodes.size - 1;
 }
 
@@ -151,10 +151,10 @@ AstIndex tl_struct_decl(self_t) {
     AstIndexPair entry_data = int_parse_list(self, struct_field,
                                              TOK_LBRACE, TOK_RBRACE, TOK_SEMI);
 
-    ast_node_list_add(&self->nodes, (AstNode){
-                                        .tag = AST_STRUCT,
-                                        .main_token = main_token,
-                                        .data = {entry_data.first, entry_data.second}});
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_STRUCT,
+        .main_token = main_token,
+        .data = {entry_data.first, entry_data.second}});
     return self->nodes.size - 1;
 }
 
@@ -166,10 +166,10 @@ AstIndex tl_enum_decl(self_t) {
     AstIndexPair entry_data = int_parse_list(self, enum_case,
                                              TOK_LBRACE, TOK_RBRACE, TOK_COMMA);
 
-    ast_node_list_add(&self->nodes, (AstNode){
-                                        .tag = AST_ENUM,
-                                        .main_token = main_token,
-                                        .data = {entry_data.first, entry_data.second}});
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_ENUM,
+        .main_token = main_token,
+        .data = {entry_data.first, entry_data.second}});
     return self->nodes.size - 1;
 }
 
@@ -205,14 +205,14 @@ AstIndex stmt_let(self_t) {
     }
 
     // Generate the AST node itself.
-    ast_node_list_add(&self->nodes, (AstNode){
-                                        .tag = AST_LET,
-                                        .main_token = main_token,
-                                        .data = {
-                                            .lhs = type_expr,
-                                            .rhs = init_expr,
-                                        },
-                                    });
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_LET,
+        .main_token = main_token,
+        .data = {
+            .lhs = type_expr,
+            .rhs = init_expr,
+        },
+    });
     return self->nodes.size - 1;
 }
 
@@ -250,7 +250,8 @@ AstIndex int_expr_bp(self_t) {
         BindingPower bp = token_bp(token, top.lhs == UINT32_MAX);
 
         bool is_not_op =
-            bp.lhs == 0;                     // We return 0, 0 if it was not a valid operator, and none of them return 0 for LHS.
+            bp.lhs ==
+            0;                     // We return 0, 0 if it was not a valid operator, and none of them return 0 for LHS.
         bool is_low_bp = bp.lhs < top.min_bp;// Too low of binding power (precedence) to continue.
         if (is_not_op || is_low_bp) {
             ParseFrame res = top;
@@ -292,11 +293,11 @@ AstIndex int_expr_bp(self_t) {
             }
 
             // Write the node to the node array.
-            ast_node_list_add(&self->nodes, (AstNode){
-                                                .tag = tag,
-                                                .main_token = res.op_idx,
-                                                .data = {lhs, rhs},
-                                            });
+            ast_node_list_add(&self->nodes, (AstNode) {
+                .tag = tag,
+                .main_token = res.op_idx,
+                .data = {lhs, rhs},
+            });
             top.lhs = self->nodes.size - 1;
             continue;
         }
@@ -318,7 +319,7 @@ AstIndex int_expr_bp(self_t) {
         if (rhs == ast_index_empty)
             rhs = expr_literal(self);
         parse_frame_stack_push(&stack, top);
-        top = (ParseFrame){
+        top = (ParseFrame) {
             .min_bp = bp.rhs,
             .lhs = rhs,
             .op_idx = op_idx,
@@ -330,35 +331,35 @@ AstIndex expr_literal(self_t) {
     Token next = parse_peek_curr(self);
     if (next.type == TOK_NUMBER) {
         parse_advance(self);
-        ast_node_list_add(&self->nodes, (AstNode){
-                                            .tag = AST_INTEGER,
-                                            .main_token = self->tok_index - 1,
-                                            .data = {ast_index_empty, ast_index_empty},
-                                        });
+        ast_node_list_add(&self->nodes, (AstNode) {
+            .tag = AST_INTEGER,
+            .main_token = self->tok_index - 1,
+            .data = {ast_index_empty, ast_index_empty},
+        });
         return self->nodes.size - 1;
     } else if (next.type == TOK_STRING) {
         parse_advance(self);
-        ast_node_list_add(&self->nodes, (AstNode){
-                                            .tag = AST_STRING,
-                                            .main_token = self->tok_index - 1,
-                                            .data = {ast_index_empty, ast_index_empty},
-                                        });
+        ast_node_list_add(&self->nodes, (AstNode) {
+            .tag = AST_STRING,
+            .main_token = self->tok_index - 1,
+            .data = {ast_index_empty, ast_index_empty},
+        });
         return self->nodes.size - 1;
     } else if (next.type == TOK_TRUE || next.type == TOK_FALSE) {
         parse_advance(self);
-        ast_node_list_add(&self->nodes, (AstNode){
-                                            .tag = AST_BOOL,
-                                            .main_token = self->tok_index - 1,
-                                            .data = {ast_index_empty, ast_index_empty},
-                                        });
+        ast_node_list_add(&self->nodes, (AstNode) {
+            .tag = AST_BOOL,
+            .main_token = self->tok_index - 1,
+            .data = {ast_index_empty, ast_index_empty},
+        });
         return self->nodes.size - 1;
     } else if (next.type == TOK_IDENT) {
         parse_advance(self);
-        ast_node_list_add(&self->nodes, (AstNode){
-                                            .tag = AST_REF,
-                                            .main_token = self->tok_index - 1,
-                                            .data = {ast_index_empty, ast_index_empty},
-                                        });
+        ast_node_list_add(&self->nodes, (AstNode) {
+            .tag = AST_REF,
+            .main_token = self->tok_index - 1,
+            .data = {ast_index_empty, ast_index_empty},
+        });
         return self->nodes.size - 1;
     }
 
@@ -373,11 +374,11 @@ AstIndex expr_block(self_t) {
                                        TOK_LBRACE, TOK_RBRACE, TOK_SEMI);
 
     // Create the block node
-    ast_node_list_add(&self->nodes, (AstNode){
-                                        .tag = AST_BLOCK,
-                                        .main_token = main_token,
-                                        .data = {data.first, data.second},
-                                    });
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_BLOCK,
+        .main_token = main_token,
+        .data = {data.first, data.second},
+    });
     return self->nodes.size - 1;
 }
 
@@ -391,11 +392,11 @@ AstIndex expr_return(self_t) {
         expr = int_expr(self);
     }
 
-    ast_node_list_add(&self->nodes, (AstNode){
-                                        .tag = AST_RETURN,
-                                        .main_token = main_token,
-                                        .data = {expr, ast_index_empty},
-                                    });
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_RETURN,
+        .main_token = main_token,
+        .data = {expr, ast_index_empty},
+    });
     return self->nodes.size - 1;
 }
 
@@ -415,11 +416,11 @@ AstIndex expr_if(self_t) {
     AstIndex data_idx = self->extra_data.size;
     index_list_add_sized(&self->extra_data, data);
 
-    ast_node_list_add(&self->nodes, (AstNode){
-                                        .tag = AST_IF,
-                                        .main_token = main_token,
-                                        .data = {cond, data_idx},
-                                    });
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_IF,
+        .main_token = main_token,
+        .data = {cond, data_idx},
+    });
     return self->nodes.size - 1;
 }
 
@@ -430,11 +431,11 @@ AstIndex expr_while(self_t) {
 
     AstIndex body = expr_block(self);
 
-    ast_node_list_add(&self->nodes, (AstNode){
-                                        .tag = AST_WHILE,
-                                        .main_token = main_token,
-                                        .data = {cond, body},
-                                    });
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_WHILE,
+        .main_token = main_token,
+        .data = {cond, body},
+    });
     return self->nodes.size - 1;
 }
 
@@ -449,20 +450,20 @@ AstIndex type_expr_constant(self_t) {
 
         AstIndex inner_type = type_expr_constant(self);
 
-        ast_node_list_add(&self->nodes, (AstNode){
-                                            .tag = AST_TYPE,
-                                            .main_token = main_token,
-                                            .data = {inner_type, ast_index_empty},
-                                        });
+        ast_node_list_add(&self->nodes, (AstNode) {
+            .tag = AST_TYPE,
+            .main_token = main_token,
+            .data = {inner_type, ast_index_empty},
+        });
         return self->nodes.size - 1;
     } else {
         TokenIndex main_token = parse_assert(self, TOK_IDENT);
 
-        ast_node_list_add(&self->nodes, (AstNode){
-                                            .tag = AST_TYPE,
-                                            .main_token = main_token,
-                                            .data = {ast_index_empty, ast_index_empty},
-                                        });
+        ast_node_list_add(&self->nodes, (AstNode) {
+            .tag = AST_TYPE,
+            .main_token = main_token,
+            .data = {ast_index_empty, ast_index_empty},
+        });
         return self->nodes.size - 1;
     }
 }
@@ -495,11 +496,11 @@ AstIndex fn_proto(self_t, bool foreign) {
     };
     index_list_add_sized(&self->extra_data, proto_data);
 
-    ast_node_list_add(&self->nodes, (AstNode){
-                                        .tag = AST_FN_PROTO,
-                                        .main_token = main_token,
-                                        .data = {proto_data_idx, type_expr},
-                                    });
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_FN_PROTO,
+        .main_token = main_token,
+        .data = {proto_data_idx, type_expr},
+    });
     return self->nodes.size - 1;
 }
 
@@ -512,11 +513,11 @@ AstIndex fn_param(self_t) {
         type_expr = type_expr_constant(self);
     }
 
-    ast_node_list_add(&self->nodes, (AstNode){
-                                        .tag = AST_FN_PARAM,
-                                        .main_token = main_token,
-                                        .data = {ast_index_empty, type_expr},
-                                    });
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_FN_PARAM,
+        .main_token = main_token,
+        .data = {ast_index_empty, type_expr},
+    });
     return self->nodes.size - 1;
 }
 
@@ -527,22 +528,22 @@ AstIndex struct_field(self_t) {
     AstIndex type_expr = ast_index_empty;
     //todo
 
-    ast_node_list_add(&self->nodes, (AstNode){
-                                        .tag = AST_FIELD,
-                                        .main_token = main_token,
-                                        .data = {ast_index_empty, type_expr},
-                                    });
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_FIELD,
+        .main_token = main_token,
+        .data = {ast_index_empty, type_expr},
+    });
     return self->nodes.size - 1;
 }
 
 AstIndex enum_case(self_t) {
     TokenIndex main_token = parse_assert(self, TOK_IDENT);
 
-    ast_node_list_add(&self->nodes, (AstNode){
-                                        .tag = AST_ENUM_CASE,
-                                        .main_token = main_token,
-                                        .data = {ast_index_empty, ast_index_empty},
-                                    });
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_ENUM_CASE,
+        .main_token = main_token,
+        .data = {ast_index_empty, ast_index_empty},
+    });
     return self->nodes.size - 1;
 }
 
@@ -609,7 +610,7 @@ int_parse_list(self_t, AstIndex (*parse_fn)(self_t), TokenType open, TokenType c
     }
 
     index_list_free(&inner_indices);
-    return (AstIndexPair){start, end};
+    return (AstIndexPair) {start, end};
 }
 
 
@@ -619,28 +620,28 @@ BindingPower token_bp(Token token, bool is_prefix) {
     switch (token.type) {
         case TOK_AMPAMP:
         case TOK_BARBAR:
-            return (BindingPower){3, 4};
+            return (BindingPower) {3, 4};
         case TOK_EQEQ:
         case TOK_BANGEQ:
         case TOK_GT:
         case TOK_GTEQ:
         case TOK_LT:
         case TOK_LTEQ:
-            return (BindingPower){5, 6};
+            return (BindingPower) {5, 6};
         case TOK_PLUS:
         case TOK_MINUS:
-            return !is_prefix ? (BindingPower){15, 16} : (BindingPower){99, 19};
+            return !is_prefix ? (BindingPower) {15, 16} : (BindingPower) {99, 19};
         case TOK_STAR:
         case TOK_SLASH:
-            return (BindingPower){17, 18};
+            return (BindingPower) {17, 18};
         case TOK_BANG://todo unused postfix, remove me.
-            return (BindingPower){21, 100};
+            return (BindingPower) {21, 100};
         case TOK_DOT:
-            return (BindingPower){41, 42};
+            return (BindingPower) {41, 42};
         case TOK_LPAREN:
-            return is_prefix ? (BindingPower){99, 0} : (BindingPower){19, 100};
+            return is_prefix ? (BindingPower) {99, 0} : (BindingPower) {19, 100};
         default:
-            return (BindingPower){0, 0};
+            return (BindingPower) {0, 0};
     }
 }
 
