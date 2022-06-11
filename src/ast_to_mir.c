@@ -181,10 +181,13 @@ Mir lower_ast_fn(self_t, AstIndex fn_index) {
     AstFnProto *proto_data = ((AstFnProto *) &self->ast->extra_data.data[proto->data.lhs]);
 
     // Setup expected type from return type
-    AstNode *ret_type_expr = ast_get_node_tagged(self->ast, proto->data.rhs, AST_TYPE);
-    char *ret_type_name = get_token_content(self, ret_type_expr->main_token);
-    Type ret_type = type_from_name(ret_type_name);
-    free(ret_type_name);
+    Type ret_type = {.tag = TY_VOID};
+    if (proto->data.rhs != ast_index_empty) {
+        AstNode *ret_type_expr = ast_get_node_tagged(self->ast, proto->data.rhs, AST_TYPE);
+        char *ret_type_name = get_token_content(self, ret_type_expr->main_token);
+        ret_type = type_from_name(ret_type_name);
+        free(ret_type_name);
+    }
 
     assert(self->exp_type == NULL);
     self->exp_type = &ret_type;

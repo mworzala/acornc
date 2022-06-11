@@ -14,7 +14,7 @@ fn foo() {
 
 TEST(AstToMir, SimpleReturn) {
     auto input = R"#(
-fn foo() {
+fn foo() i32 {
     return 42;
 }
 )#";
@@ -28,11 +28,11 @@ fn foo() {
 TEST(AstToMir, LetStmt) {
     auto input = R"#(
 fn foo() {
-    let a = 42;
+    let a: i32 = 42;
 }
 )#";
     auto expected = R"#(
-%1 = alloc(i64)
+%1 = alloc(i32)
 %2 = constant(i32, 42)
 %3 = store(%1, %2)
 )#";
@@ -41,13 +41,13 @@ fn foo() {
 
 TEST(AstToMir, BasicReference) {
     auto input = R"#(
-fn foo() {
-    let a = 42;
+fn foo() i32 {
+    let a: i32 = 42;
     return a;
 }
 )#";
     auto expected = R"#(
-%1 = alloc(i64)
+%1 = alloc(i32)
 %2 = constant(i32, 42)
 %3 = store(%1, %2)
 %4 = load(%1)
@@ -58,7 +58,7 @@ fn foo() {
 
 TEST(AstToMir, BasicAdd) {
     auto input = R"#(
-fn foo() {
+fn foo() i32 {
     return 2 + 3;
 }
 )#";
@@ -73,13 +73,13 @@ fn foo() {
 
 TEST(AstToMir, BasicComparison) {
     auto input = R"#(
-fn foo() {
+fn foo() bool {
     return 2 < 3;
 }
 )#";
     auto expected = R"#(
-%1 = constant(i32, 2)
-%2 = constant(i32, 3)
+%1 = constant(i64, 2)
+%2 = constant(i64, 3)
 %3 = lt(%1, %2)
 %4 = ret(%3)
 )#";
@@ -88,18 +88,18 @@ fn foo() {
 
 TEST(AstToMir, BasicCall) {
     auto input = R"#(
-fn main() {
-    let a = 21;
+fn main() i32 {
+    let a: i32 = 21;
     return add(a, a);
 }
 
-fn add(a, b) {
+fn add(a: i32, b: i32) i32 {
     return a + b;
 }
 )#";
     auto expected = R"#(
 // begin fn main
-%1 = alloc(i64)
+%1 = alloc(i32)
 %2 = constant(i32, 21)
 %3 = store(%1, %2)
 %4 = fn_ptr(add)
@@ -119,23 +119,6 @@ fn add(a, b) {
     EXPECT_MIR_EXT(input, expected);
 }
 
-TEST(AstToMir, LetWithExplicitType) {
-    auto input = R"#(
-fn foo() {
-    let a: i32 = 21;
-    return a;
-}
-)#";
-    auto expected = R"#(
-%1 = alloc(i32)
-%2 = constant(i32, 21)
-%3 = store(%1, %2)
-%4 = load(%1)
-%5 = ret(%4)
-)#";
-    EXPECT_MIR(input, expected);
-}
-
 TEST(AstToMir, LetBoolFromCmpLt) {
     auto input = R"#(
 fn foo() {
@@ -150,6 +133,23 @@ fn foo() {
 %5 = store(%1, %4)
 )#";
     EXPECT_MIR(input, expected);
+}
+
+TEST(AstToMir, ShouldFailOnIncorrectRetTy) {
+    auto input = R"#(
+fn foo() i32 {
+    return 2 < 3;
+}
+)#";
+    auto expected = R"#(
+%1 = constant(i64, 2)
+%2 = constant(i64, 3)
+%3 = lt(%1, %2)
+%4 = ret(%3)
+)#";
+    ASSERT_DEATH({
+        EXPECT_MIR(input, expected);
+    }, "Assertion failed: \\(ret_ty == TypeBool\\), function mir_lower_bin_op, file ast_to_mir\\.c");
 }
 
 

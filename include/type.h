@@ -9,6 +9,8 @@ typedef enum type_tag_s {
 
     // This section does not have an ExtendedType
 
+    TY_VOID,
+
 //    TypeU8,
     TypeI8,
 //    TypeU16,
@@ -62,7 +64,7 @@ typedef struct extended_type_s {
     TypeTag tag;
     union {
         // Type pointed to by a reference
-        Type *inner_type;
+        Type inner_type;
         // Number of bits in an integer type
         uint16_t bits;
     } data;
