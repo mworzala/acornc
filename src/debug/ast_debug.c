@@ -5,6 +5,7 @@
 #include "debug/ast_debug.h"
 
 void ast_debug_append_default_header(char *buffer, AstIndex index, int indent) {
+    if (indent == 1000) return;
     sprintf(buffer + strlen(buffer), "%*s", indent, "");
     sprintf(buffer + strlen(buffer), "%%%d = ", index);
 }
@@ -331,8 +332,7 @@ void ast_debug_fn_proto(char *buffer, Ast *ast, AstIndex index, AstNode *node, T
     if (node->data.rhs == ast_index_empty) {
         sprintf(buffer + strlen(buffer), "_");
     } else {
-        //todo
-        assert(false);
+        ast_debug_print_node_raw(buffer, ast, node->data.rhs, 1000);
     }
 
     sprintf(buffer + strlen(buffer), " }");
@@ -348,8 +348,7 @@ void ast_debug_fn_param(char *buffer, Ast *ast, AstIndex index, AstNode *node, T
     if (node->data.rhs == ast_index_empty) {
         sprintf(buffer + strlen(buffer), "_");
     } else {
-        //todo
-        assert(false);
+        ast_debug_print_node_raw(buffer, ast, node->data.rhs, 1000);
     }
     sprintf(buffer + strlen(buffer), "),");
 }

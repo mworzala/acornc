@@ -131,6 +131,17 @@ void codegen_lower_decl(self_t, Decl *decl) {
     self->curr_fn = NULL;
 }
 
+// Returns a string containing the content of the token at the given index.
+// The caller owns the string memory.
+static char *codegen_get_ast_token_content(self_t, TokenIndex token) {
+    Token main_token = self->module->ast->tokens.data[token];
+    size_t str_len = main_token.loc.end - main_token.loc.start;
+    char *str = malloc(str_len + 1);
+    memcpy(str, (const void *) main_token.loc.start, str_len);
+    str[str_len] = '\0';
+    return str;
+}
+
 LLVMTypeRef codegen_fn_proto(self_t, Decl *decl) {
     AstNode *fn_ast = ast_get_node_tagged(self->module->ast, decl->ast_index, AST_NAMED_FN);
     AstNode *proto_ast = ast_get_node_tagged(self->module->ast, fn_ast->data.lhs, AST_FN_PROTO);
@@ -141,17 +152,51 @@ LLVMTypeRef codegen_fn_proto(self_t, Decl *decl) {
     if (proto.param_start != ast_index_empty) {
         param_count = proto.param_end - proto.param_start + 1;
         params = malloc(sizeof(LLVMTypeRef) * param_count);
-        for (int32_t i = 0; i < param_count; i++)
-            params[i] = llvm_int;
+        for (int32_t i = 0; i < param_count; i++) {
+            AstNode *param_node = ast_get_node_tagged(self->module->ast, self->module->ast->extra_data.data[proto.param_start + i], AST_FN_PARAM);
+            AstNode *type_expr = ast_get_node_tagged(
+                self->module->ast, param_node->data.rhs, AST_TYPE);
+            char *type_str = codegen_get_ast_token_content(self, type_expr->main_token);
+            LLVMTypeRef param_type = codegen_type_to_llvm(self, type_from_name(type_str));
+            free(type_str);
+
+            params[i] = param_type;
+        }
     }
 
-    LLVMTypeRef fn_type = LLVMFunctionType(llvm_int, params, param_count, false);
+    // Get return type
+    AstNode *ret_ast = ast_get_node_tagged(self->module->ast, proto_ast->data.rhs, AST_TYPE);
+    char *type_str = codegen_get_ast_token_content(self, ret_ast->main_token);
+    LLVMTypeRef ret_type = codegen_type_to_llvm(self, type_from_name(type_str));
+    free(type_str);
 
+    // Create LLVM type
+    LLVMTypeRef fn_type = LLVMFunctionType(ret_type, params, param_count, false);
+
+    // Cleanup
     if (params != NULL) {
         free(params);
     }
 
     return fn_type;
+}
+
+
+LLVMTypeRef codegen_type_to_llvm(self_t, Type type) {
+    switch (type_tag(type)) {
+        case TypeI8:
+            return LLVMInt8TypeInContext(self->ll_context);
+        case TypeI16:
+            return LLVMInt16TypeInContext(self->ll_context);
+        case TypeI32:
+            return LLVMInt32TypeInContext(self->ll_context);
+        case TypeI64:
+            return LLVMInt64TypeInContext(self->ll_context);
+        case TypeI128:
+            return LLVMInt128TypeInContext(self->ll_context);
+        default:
+            assert(false);
+    }
 }
 
 
@@ -223,7 +268,8 @@ LLVMValueRef codegen_inst(self_t, MirIndex index, LLVMBasicBlockRef ll_block) {
 }
 
 LLVMValueRef codegen_constant(self_t, MirInst *inst) {
-    return LLVMConstInt(llvm_int, inst->data.ty_pl.payload, false);
+    LLVMTypeRef ll_type = codegen_type_to_llvm(self, inst->data.ty_pl.ty);
+    return LLVMConstInt(ll_type, inst->data.ty_pl.payload, false);
 }
 
 LLVMValueRef codegen_binary_op(self_t, MirIndex index, LLVMBasicBlockRef ll_block) {
@@ -249,7 +295,9 @@ LLVMValueRef codegen_binary_op(self_t, MirIndex index, LLVMBasicBlockRef ll_bloc
 LLVMValueRef codegen_alloc(self_t, MirIndex index, LLVMBasicBlockRef ll_block) {
     MirInst *inst = mir_get_inst_tagged(self->mir, index, MirAlloc);
 
-    return LLVMBuildAlloca(self->ll_builder, llvm_int, "alloc"); //todo preserve name somehow
+    LLVMTypeRef type = codegen_type_to_llvm(self, inst->data.ty);
+
+    return LLVMBuildAlloca(self->ll_builder, type, "alloc"); //todo preserve name somehow
 }
 
 void codegen_store(self_t, MirIndex index, LLVMBasicBlockRef ll_block) {

@@ -455,7 +455,9 @@ AstIndex fn_proto(self_t) {
 
     // Parse type expression
     AstIndex type_expr = ast_index_empty;
-    //todo
+    if (parse_peek_curr(self).type != TOK_LBRACE) {
+        type_expr = type_expr_constant(self);
+    }
 
     AstIndex proto_data_idx = self->extra_data.size;
     AstFnProto proto_data = {
@@ -463,7 +465,6 @@ AstIndex fn_proto(self_t) {
         .param_end = param_data.second,
     };
     index_list_add_sized(&self->extra_data, proto_data);
-//    index_list_add_multi(&self->extra_data, &proto_data, sizeof(proto_data) / sizeof(AstIndex));
 
     ast_node_list_add(&self->nodes, (AstNode) {
         .tag = AST_FN_PROTO,
@@ -478,7 +479,9 @@ AstIndex fn_param(self_t) {
 
     // Parse type expression
     AstIndex type_expr = ast_index_empty;
-    //todo
+    if (parse_match_advance(self, TOK_COLON)) {
+        type_expr = type_expr_constant(self);
+    }
 
     ast_node_list_add(&self->nodes, (AstNode) {
         .tag = AST_FN_PARAM,

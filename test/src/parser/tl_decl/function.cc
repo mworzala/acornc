@@ -41,3 +41,30 @@ fn foo(bar, baz) {}
     EXPECT_TL_DECL(input, expected);
 }
 
+TEST(Parser, FnDeclMultiParamWithTypes) {
+    auto input = R"#(
+fn foo(bar: i32, baz: i32) {}
+)#";
+    auto expected = R"#(
+%6 = fn(foo, proto = { params = [
+  param(bar, type = type(i32)),
+  param(baz, type = type(i32)),
+], ret = _ }, body = {
+  %5 = block(stmts = _)
+}
+)#";
+    EXPECT_TL_DECL(input, expected);
+}
+
+TEST(Parser, FnDeclWithReturnType) {
+    auto input = R"#(
+fn foo() i32 {}
+)#";
+    auto expected = R"#(
+%3 = fn(foo, proto = { params = _, ret = type(i32) }, body = {
+  %2 = block(stmts = _)
+}
+)#";
+    EXPECT_TL_DECL(input, expected);
+}
+

@@ -9,17 +9,17 @@ typedef enum type_tag_s {
 
     // This section does not have an ExtendedType
 
-    TypeU8,
+//    TypeU8,
     TypeI8,
-    TypeU16,
+//    TypeU16,
     TypeI16,
-    TypeU32,
+//    TypeU32,
     TypeI32,
-    TypeU64,
+//    TypeU64,
     TypeI64,
-    TypeU128,
+//    TypeU128,
     TypeI128,
-    TypeUSize,
+//    TypeUSize,
     TypeISize,
     TypeF32,
     TypeF64,
@@ -52,6 +52,8 @@ typedef union type_s {
 
 bool type_is_extended(Type type);
 TypeTag type_tag(Type type);
+
+bool type_is_integer(Type type);
 
 // Limited function to get a type from a name. Will panic if the name is not known.
 Type type_from_name(char *type_name);

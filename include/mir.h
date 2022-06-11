@@ -4,6 +4,7 @@
 #include "common.h"
 #include "ir_common.h"
 #include "array_util.h"
+#include "type.h"
 
 typedef uint32_t MirIndex;
 
@@ -77,7 +78,7 @@ typedef union mir_inst_data_s {
         Ref rhs;
     } bin_op;
     struct {
-        //todo ty
+        Type ty;
         //Index in instructions, extra, or values
         uint32_t payload;
     } ty_pl;

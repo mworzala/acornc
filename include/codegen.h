@@ -37,6 +37,8 @@ bool codegen_write_to_obj_file(self_t, char *path);
 void codegen_lower_decl(self_t, Decl *decl);
 LLVMTypeRef codegen_fn_proto(self_t, Decl *decl);
 
+LLVMTypeRef codegen_type_to_llvm(self_t, Type type);
+
 LLVMValueRef codegen_inst(self_t, MirIndex index, LLVMBasicBlockRef ll_block);
 LLVMValueRef codegen_constant(self_t, MirInst *inst);
 LLVMValueRef codegen_binary_op(self_t, MirIndex index, LLVMBasicBlockRef ll_block);
@@ -48,6 +50,25 @@ LLVMValueRef codegen_arg(self_t, MirIndex index, LLVMBasicBlockRef ll_block);
 LLVMValueRef codegen_fn_ptr(self_t, MirIndex index);
 void codegen_return(self_t, MirInst *inst, LLVMBasicBlockRef ll_block);
 void codegen_block_direct(self_t, MirIndex block_index, LLVMBasicBlockRef ll_block);
+
+//todo some yoinked stack overflow code for string literals
+//LLVMValueRef defineStringLiteral( const char *sourceString, size_t size ) {
+//    LLVMTypeRef strType = LLVMArrayType( LLVMInt8Type(), size );
+//    LLVMValueRef str = LLVMAddGlobal(module->getLLVMModule(), strType, "");
+//    LLVMSetInitializer(str, LLVMConstString( sourceString, size, true ));
+//    LLVMSetGlobalConstant(str, true);
+//    LLVMSetLinkage(str, LLVMPrivateLinkage);
+//    LLVMSetUnnamedAddress(str, LLVMGlobalUnnamedAddr);
+//    LLVMSetAlignment(str, 1);
+//
+//
+//    LLVMValueRef zeroIndex = LLVMConstInt( LLVMInt64Type(), 0, true );
+//    LLVMValueRef indexes[2] = { zeroIndex, zeroIndex };
+//
+//    LLVMValueRef gep = LLVMBuildInBoundsGEP2(builder, strType, str, indexes, 2, "");
+//
+//    return gep;
+//}
 
 
 #undef self_t

@@ -44,8 +44,9 @@ typedef struct ast_to_mir_s {
     IndexList extra;
 
     // Intermediate state
-    AtmScope *scope; // Starts as global scope
+    AtmScope *scope;        // Starts as global scope
     IndexPtrMap type_cache;
+    Type *exp_type;         // The type which should result from the current expression
 } AstToMir;
 
 #define self_t AstToMir *self

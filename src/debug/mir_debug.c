@@ -66,7 +66,9 @@ static void print_constant(self_t, MirIndex index, int indent) {
     MirInst *inst = get_inst_tagged(self, index, MirConstant);
     append_default_header(self, index, indent);
 
-    print(self, "constant(i32, %d)", inst->data.ty_pl.payload);
+    print(self, "constant(");
+    print_type(self, inst->data.ty_pl.ty);
+    print(self, ", %d)", inst->data.ty_pl.payload);
 }
 
 static void print_binary_generic(self_t, MirIndex index, MirInstTag tag, int indent) {
@@ -132,7 +134,9 @@ static void print_arg(self_t, MirIndex index, int indent) {
     MirInst *inst = get_inst_tagged(self, index, MirArg);
 
     append_default_header(self, index, indent);
-    print(self, "arg(i32, %d)", inst->data.ty_pl.payload);
+    print(self, "arg(");
+    print_type(self, inst->data.ty_pl.ty);
+    print(self, ", %d)", inst->data.ty_pl.payload);
 }
 
 static void print_call(self_t, MirIndex index, int indent) {

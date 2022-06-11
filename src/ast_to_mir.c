@@ -160,6 +160,7 @@ void ast_to_mir_init(self_t, Ast *ast) {
 
     // Create type cache
     index_ptr_map_init(&self->type_cache);
+    self->exp_type = NULL;
 }
 
 void ast_to_mir_free(self_t) {
@@ -179,8 +180,20 @@ Mir lower_ast_fn(self_t, AstIndex fn_index) {
     AstNode *proto = ast_get_node_tagged(self->ast, node->data.lhs, AST_FN_PROTO);
     AstFnProto *proto_data = ((AstFnProto *) &self->ast->extra_data.data[proto->data.lhs]);
 
+    // Setup expected type from return type
+    AstNode *ret_type_expr = ast_get_node_tagged(self->ast, proto->data.rhs, AST_TYPE);
+    char *ret_type_name = get_token_content(self, ret_type_expr->main_token);
+    Type ret_type = type_from_name(ret_type_name);
+    free(ret_type_name);
+
+    assert(self->exp_type == NULL);
+    self->exp_type = &ret_type;
+
+    // Lower function body
     MirIndex root_index = mir_lower_block(self, node->data.rhs, proto_data);
     assert(root_index == 0);
+
+    self->exp_type = NULL;
 
     // Cleanup
     pop_scope(self);
@@ -208,7 +221,7 @@ MirIndex mir_lower_stmt(self_t, AstIndex stmt_index) {
 MirIndex mir_lower_let(self_t, AstIndex stmt_index) {
     AstNode *node = ast_get_node_tagged(self->ast, stmt_index, AST_LET);
 
-    // Type
+    // Type annotation
     Type type_annotation = {TypeUnknown};
     if (node->data.lhs != ast_index_empty) {
         // Type annotation has been provided, use it.
@@ -217,31 +230,37 @@ MirIndex mir_lower_let(self_t, AstIndex stmt_index) {
         char *type_name = get_token_content(self, type_node->main_token);
         type_annotation = type_from_name(type_name);
         free(type_name);
+    } else {
+        // Type annotation is currently required
+        fprintf(stderr, "Type annotation required for let statement\n");
+        assert(false);
     }
+    assert(type_annotation.tag != TypeUnknown);
 
     // Placeholder for alloc instruction
     MirIndex alloc_index = reserve_inst(self);
 
     // Initializer (must be present for now)
     assert(node->data.rhs != ast_index_empty);
-    Type init_type = type_check_expr(self, node->data.rhs);
+    self->exp_type = &type_annotation;
     MirIndex init_index = mir_lower_expr(self, node->data.rhs);
+    self->exp_type = NULL;
 
     // Type rule as follows for now:
     // Annotation takes precedence and must be able to coerce init_type to annotated type.
     // If no annotation, init_type is used.
     // If no init, error.
     // Annotation .. Initializer .. Error
-    Type var_type;
-    if (type_annotation.tag != TypeUnknown) {
-        var_type = type_annotation;
-
-        //todo type coercion from init_type
-    } else if (init_type.tag != TypeUnknown) {
-        var_type = init_type;
-    } else {
-        assert(false); // Current unreachable since an initializer is required for now.
-    }
+    // todo for now all of this is ignored and type annotations are required.
+    Type var_type = type_annotation;
+//    if (type_annotation.tag != TypeUnknown) {
+//        var_type = type_annotation;
+//
+//    } else if (init_type.tag != TypeUnknown) {
+//        var_type = init_type;
+//    } else {
+//        assert(false); // Current unreachable since an initializer is required for now.
+//    }
 
     // Fill the alloc instruction now that type is determined.
     fill_inst(self, alloc_index, MirAlloc, (MirInstData) {
@@ -293,12 +312,19 @@ MirIndex mir_lower_int_const(self_t, AstIndex expr_index) {
     AstNode *node = ast_get_node_tagged(self->ast, expr_index, AST_INTEGER);
 
     // Parse u32
+    //todo string interning and then parse up to u64 for now
     char *str = get_token_content(self, node->main_token);
     uint32_t value = strtol(str, NULL, 10);
     free(str);
 
+    // Use expected type for the current expression
+    assert(self->exp_type != NULL);
+    assert(type_is_integer(*self->exp_type));
+    Type type = *self->exp_type;
+
     return add_inst(self, MirConstant, (MirInstData) {
         .ty_pl = {
+            .ty = type,
             .payload = value, //todo this needs to point into values list
         }
     });
@@ -356,10 +382,7 @@ MirIndex mir_lower_ref(self_t, AstIndex expr_index) {
 MirIndex mir_lower_bin_op(self_t, AstIndex expr_index) {
     AstNode *node = ast_get_node_tagged(self->ast, expr_index, AST_BINARY);
 
-    // Lower lhs/rhs
-    Ref lhs = index_to_ref(mir_lower_expr(self, node->data.lhs));
-    Ref rhs = index_to_ref(mir_lower_expr(self, node->data.rhs));
-
+    // Determine the operation
     char *op_str = get_token_content(self, node->main_token);
     MirInstTag op_tag;
     if (strcmp(op_str, "+") == 0) {
@@ -386,8 +409,38 @@ MirIndex mir_lower_bin_op(self_t, AstIndex expr_index) {
         printf("Unsupported binary op %s!\n", op_str);
         assert(false);
     }
-
     free(op_str);
+
+    // Ensure the expected type is valid given the operator
+    assert(self->exp_type != NULL);
+    TypeTag ret_ty = type_tag(*self->exp_type);
+    if (op_tag == MirAdd || op_tag == MirSub || op_tag == MirMul || op_tag == MirDiv) {
+        assert(type_is_integer(*self->exp_type));
+    } else if (op_tag == MirEq || op_tag == MirNEq || op_tag == MirGt || op_tag == MirGtEq || op_tag == MirLt || op_tag == MirLtEq) {
+        assert(ret_ty == TypeBool);
+    } else assert(false);
+
+    // Determine the type of the operands
+    Type operand_type;
+    if (op_tag == MirAdd || op_tag == MirSub || op_tag == MirMul || op_tag == MirDiv) {
+        operand_type = *self->exp_type;
+    } else if (op_tag == MirGt || op_tag == MirGtEq || op_tag == MirLt || op_tag == MirLtEq) {
+        operand_type = (Type) { .tag = TypeI64 }; // todo for now just the biggest type since its valid to compare across bit widths
+    } else if (op_tag == MirEq || op_tag == MirNEq) {
+        //todo unsupported for now, not sure the rule here (probably it depends on the type of LHS)
+        assert(false);
+    }
+
+    // Setup expected type
+    Type *old_exp_type = self->exp_type;
+    self->exp_type = &operand_type;
+
+    // Lower lhs/rhs
+    Ref lhs = index_to_ref(mir_lower_expr(self, node->data.lhs));
+    Ref rhs = index_to_ref(mir_lower_expr(self, node->data.rhs));
+
+    // Cleanup
+    self->exp_type = old_exp_type;
 
     return add_inst(self, op_tag, (MirInstData) {
         .bin_op = {lhs, rhs}
@@ -409,6 +462,7 @@ MirIndex mir_lower_call(self_t, AstIndex expr_index) {
 
     if (call_data.arg_start != ast_index_empty) {
         for (AstIndex arg_index = call_data.arg_start; arg_index <= call_data.arg_end; arg_index++) {
+            //todo setup expected types here
             Ref lowered_arg = index_to_ref(mir_lower_expr(self, self->ast->extra_data.data[arg_index]));
             index_list_add(&arg_indices, lowered_arg);
         }
@@ -454,9 +508,18 @@ MirIndex mir_lower_block(self_t, AstIndex block_index, AstFnProto *proto_data) {
             for (AstIndex i = proto_data->param_start; i <= proto_data->param_end; i++) {
                 AstNode *param = ast_get_node_tagged(self->ast, self->ast->extra_data.data[i], AST_FN_PARAM);
 
+                // Get type
+                AstNode *type_expr = ast_get_node_tagged(self->ast, param->data.rhs, AST_TYPE);
+                char *type_str = get_token_content(self, type_expr->main_token);
+                Type param_ty = type_from_name(type_str);
+                free(type_str);
+
                 // Create the `arg` node.
                 AstIndex arg_index = add_inst(self, MirArg, (MirInstData) {
-                    .ty_pl = {.payload = i - proto_data->param_start}
+                    .ty_pl = {
+                        .ty = param_ty,
+                        .payload = i - proto_data->param_start,
+                    }
                 });
 
                 char *param_name = get_token_content(self, param->main_token);

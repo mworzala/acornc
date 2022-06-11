@@ -128,10 +128,26 @@ fn foo() {
 )#";
     auto expected = R"#(
 %1 = alloc(i32)
-%2 = constant(i8, 21)
+%2 = constant(i32, 21)
 %3 = store(%1, %2)
 %4 = load(%1)
 %5 = ret(%4)
+)#";
+    EXPECT_MIR(input, expected);
+}
+
+TEST(AstToMir, LetBoolFromCmpLt) {
+    auto input = R"#(
+fn foo() {
+    let a: bool = 1 < 2;
+}
+)#";
+    auto expected = R"#(
+%1 = alloc(bool)
+%2 = constant(i64, 1)
+%3 = constant(i64, 2)
+%4 = lt(%2, %3)
+%5 = store(%1, %4)
 )#";
     EXPECT_MIR(input, expected);
 }
