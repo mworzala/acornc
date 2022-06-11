@@ -175,6 +175,7 @@ static TokenType check_keyword(self_t, int32_t start, int32_t length,
  *  num
  * false
  *  n
+ *  oreign
  * if
  * let
  * return
@@ -198,6 +199,7 @@ TokenType lex_ident_or_keyword(self_t) {
                 switch (self->start[1]) {
                     case 'a': return check_keyword(self, 2, 3, "lse", TOK_FALSE);
                     case 'n': return check_keyword(self, 2, 0, "", TOK_FN);
+                    case 'o': return check_keyword(self, 2, 5, "reign", TOK_FOREIGN);
                 }
             }
             break;

@@ -248,6 +248,8 @@ void ast_debug_fn_named(char *buffer, Ast *ast, AstIndex index, AstNode *node, T
         ast_debug_print_node(buffer, ast, node->data.rhs, indent + 2);
         sprintf(buffer + strlen(buffer), "%*s}", indent, "");
     }
+
+    sprintf(buffer + strlen(buffer), ")");
 }
 
 void ast_debug_struct(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token *main_token, int indent) {
@@ -297,17 +299,13 @@ void ast_debug_enum(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token
 //region Types
 
 void ast_debug_type(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token *main_token, int indent) {
-    bool has_inner = node->data.lhs != ast_index_empty;
-    if (has_inner)
-        ast_debug_print_node(buffer, ast, node->data.lhs, indent);
-
     ast_debug_append_default_header(buffer, index, indent);
 
     sprintf(buffer + strlen(buffer), "type(");
     ast_debug_append_token_content(buffer, ast, node->main_token);
-    if (has_inner) {
+    if (node->data.lhs != ast_index_empty) {
         sprintf(buffer + strlen(buffer), ", inner = ");
-        sprintf(buffer + strlen(buffer), "%%%d", node->data.lhs);
+        ast_debug_print_node_raw(buffer, ast, node->data.lhs, 1000);
     }
     sprintf(buffer + strlen(buffer), ")");
 }
@@ -321,6 +319,11 @@ void ast_debug_fn_proto(char *buffer, Ast *ast, AstIndex index, AstNode *node, T
     AstFnProto proto = *((AstFnProto*) &ast->extra_data.data[node->data.lhs]);
 
     sprintf(buffer + strlen(buffer), "{ ");
+
+    bool foreign = proto.flags & FN_PROTO_FOREIGN;
+    if (foreign) {
+        sprintf(buffer + strlen(buffer), "foreign, ");
+    }
 
     // Append params
     sprintf(buffer + strlen(buffer), "params = ");

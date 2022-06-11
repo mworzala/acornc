@@ -105,7 +105,7 @@ AstIndex int_module(self_t) {
 }
 
 AstIndex int_top_level_decl(self_t) {
-    if (parse_match(self, TOK_FN)) {
+    if (parse_match(self, TOK_FN) || parse_match(self, TOK_FOREIGN)) {
         return tl_fn_decl(self);
     } else if (parse_match(self, TOK_STRUCT)) {
         return tl_struct_decl(self);
@@ -117,13 +117,20 @@ AstIndex int_top_level_decl(self_t) {
 }
 
 AstIndex tl_fn_decl(self_t) {
+    bool foreign = parse_match_advance(self, TOK_FOREIGN);
+
     TokenIndex main_token = parse_assert(self, TOK_FN);
 
     // Parse prototype
-    AstIndex prototype = fn_proto(self);
+    AstIndex prototype = fn_proto(self, foreign);
 
     // Parse body
-    AstIndex body_block = expr_block(self);
+    AstIndex body_block = ast_index_empty;
+    if (foreign) {
+        parse_assert(self, TOK_SEMI);
+    } else {
+        body_block = expr_block(self);
+    }
 
     // Construct node
     ast_node_list_add(&self->nodes, (AstNode){
@@ -464,7 +471,7 @@ AstIndex type_expr_constant(self_t) {
 
 //region Special
 
-AstIndex fn_proto(self_t) {
+AstIndex fn_proto(self_t, bool foreign) {
     TokenIndex main_token = parse_assert(self, TOK_IDENT);
 
     // Parse parameters
@@ -477,8 +484,12 @@ AstIndex fn_proto(self_t) {
         type_expr = type_expr_constant(self);
     }
 
+    uint32_t flags = FN_PROTO_NONE;
+    if (foreign) flags |= FN_PROTO_FOREIGN;
+
     AstIndex proto_data_idx = self->extra_data.size;
     AstFnProto proto_data = {
+        .flags = flags,
         .param_start = param_data.first,
         .param_end = param_data.second,
     };

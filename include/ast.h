@@ -124,7 +124,11 @@ typedef enum ast_tag_s {
     __AST_LAST,
 } AstTag;
 
+#define FN_PROTO_NONE       0x0
+#define FN_PROTO_FOREIGN    0x1
+
 typedef struct ast_fn_proto_s {
+    uint32_t flags;
     AstIndex param_start;
     AstIndex param_end;
 } AstFnProto;

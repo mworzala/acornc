@@ -20,8 +20,8 @@ typedef enum token_type_s {
 
     // Keywords
     TOK_ELSE, TOK_ENUM, TOK_FN,
-    TOK_IF, TOK_LET, TOK_RETURN,
-    TOK_STRUCT, TOK_WHILE,
+    TOK_FOREIGN, TOK_IF, TOK_LET,
+    TOK_RETURN, TOK_STRUCT, TOK_WHILE,
 
     // Literals
     TOK_NUMBER, TOK_STRING, TOK_IDENT, TOK_TRUE, TOK_FALSE,

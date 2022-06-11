@@ -56,6 +56,7 @@ TEST(Lexer, SingleTokensKeywords) {
     EXPECT_PRED2(check, "else", TOK_ELSE);
     EXPECT_PRED2(check, "enum", TOK_ENUM);
     EXPECT_PRED2(check, "fn", TOK_FN);
+    EXPECT_PRED2(check, "foreign", TOK_FOREIGN);
     EXPECT_PRED2(check, "if", TOK_IF);
     EXPECT_PRED2(check, "let", TOK_LET);
     EXPECT_PRED2(check, "return", TOK_RETURN);

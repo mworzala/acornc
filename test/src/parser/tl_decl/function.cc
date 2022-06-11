@@ -7,7 +7,7 @@ fn foo() {}
     auto expected = R"#(
 %2 = fn(foo, proto = { params = _, ret = _ }, body = {
   %1 = block(stmts = _)
-}
+})
 )#";
     EXPECT_TL_DECL(input, expected);
 }
@@ -21,7 +21,7 @@ fn foo(bar) {}
   param(bar, type = _),
 ], ret = _ }, body = {
   %2 = block(stmts = _)
-}
+})
 )#";
     EXPECT_TL_DECL(input, expected);
 }
@@ -36,7 +36,7 @@ fn foo(bar, baz) {}
   param(baz, type = _),
 ], ret = _ }, body = {
   %3 = block(stmts = _)
-}
+})
 )#";
     EXPECT_TL_DECL(input, expected);
 }
@@ -51,7 +51,7 @@ fn foo(bar: i32, baz: i32) {}
   param(baz, type = type(i32)),
 ], ret = _ }, body = {
   %5 = block(stmts = _)
-}
+})
 )#";
     EXPECT_TL_DECL(input, expected);
 }
@@ -63,7 +63,7 @@ fn foo() i32 {}
     auto expected = R"#(
 %3 = fn(foo, proto = { params = _, ret = type(i32) }, body = {
   %2 = block(stmts = _)
-}
+})
 )#";
     EXPECT_TL_DECL(input, expected);
 }
@@ -73,9 +73,9 @@ TEST(Parser, ForeignFnDecl) {
 foreign fn puts(s: *i8) i32;
 )#";
     auto expected = R"#(
-%3 = fn(foo, proto = { params = _, ret = _ }, body = {
-  %2 = block(stmts = _)
-}
+%5 = fn(puts, proto = { foreign, params = [
+  param(s, type = type(*, inner = type(i8))),
+], ret = type(i32) }, body = _)
 )#";
     EXPECT_TL_DECL(input, expected);
 }

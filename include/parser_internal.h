@@ -63,7 +63,7 @@ AstIndex type_expr_constant(self_t);
 
 
 // Special
-AstIndex fn_proto(self_t);
+AstIndex fn_proto(self_t, bool foreign);
 AstIndex fn_param(self_t);
 AstIndex struct_field(self_t);
 AstIndex enum_case(self_t);
