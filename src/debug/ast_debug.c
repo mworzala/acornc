@@ -297,10 +297,18 @@ void ast_debug_enum(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token
 //region Types
 
 void ast_debug_type(char *buffer, Ast *ast, AstIndex index, AstNode *node, Token *main_token, int indent) {
+    bool has_inner = node->data.lhs != ast_index_empty;
+    if (has_inner)
+        ast_debug_print_node(buffer, ast, node->data.lhs, indent);
+
     ast_debug_append_default_header(buffer, index, indent);
 
     sprintf(buffer + strlen(buffer), "type(");
     ast_debug_append_token_content(buffer, ast, node->main_token);
+    if (has_inner) {
+        sprintf(buffer + strlen(buffer), ", inner = ");
+        sprintf(buffer + strlen(buffer), "%%%d", node->data.lhs);
+    }
     sprintf(buffer + strlen(buffer), ")");
 }
 
@@ -400,6 +408,7 @@ void ast_debug_empty(char *buffer, Ast *ast, AstIndex index, AstNode *node, Toke
 
 AstDebugFn ast_debug_fns[__AST_LAST] = {
     ast_debug_literal_generic,  // int
+    ast_debug_literal_generic,  // string
     ast_debug_literal_generic,  // bool
     ast_debug_literal_generic,  // ref
     ast_debug_binary,           // binary

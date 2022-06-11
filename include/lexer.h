@@ -24,7 +24,7 @@ typedef enum token_type_s {
     TOK_STRUCT, TOK_WHILE,
 
     // Literals
-    TOK_NUMBER, TOK_IDENT, TOK_TRUE, TOK_FALSE,
+    TOK_NUMBER, TOK_STRING, TOK_IDENT, TOK_TRUE, TOK_FALSE,
 
     // Special
     TOK_ERROR, TOK_EOF,

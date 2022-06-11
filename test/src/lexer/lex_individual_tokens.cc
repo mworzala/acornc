@@ -69,6 +69,12 @@ TEST(Lexer, SingleTokensLiteralNumber) {
     EXPECT_PRED2(check, "12.3", TOK_NUMBER);
 }
 
+TEST(Lexer, SingleTokensLiteralString) {
+    EXPECT_PRED2(check, "\"\"", TOK_STRING);
+    EXPECT_PRED2(check, "\"123\"", TOK_STRING);
+    EXPECT_PRED2(check, "\"Hello, World\"", TOK_STRING);
+}
+
 TEST(Lexer, SingleTokensLiteralIdent) {
     EXPECT_PRED2(check, "a", TOK_IDENT);
     EXPECT_PRED2(check, "aa", TOK_IDENT);

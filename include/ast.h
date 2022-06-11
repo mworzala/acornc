@@ -18,6 +18,9 @@ typedef enum ast_tag_s {
     // main_token:  The token representing the integer literal
     AST_INTEGER,
 
+    // main_token:  The string content, with quotes
+    AST_STRING,
+
     // main_token:  The token representing the bool literal
     AST_BOOL,
 
@@ -84,8 +87,8 @@ typedef enum ast_tag_s {
     // Types
     // Currently all types are hardcoded and you may only specify those ones.
     // main_token: The token representing the type name, eg `i32`, `bool`, `_`
-    // lhs..rhs  : Empty for now
-    //todo introduce arbitrary types
+    // lhs..rhs  : Depends on main_token/Empty
+    // If main_token is '*', then lhs is the type of the pointer.
     AST_TYPE,
 
     // Special

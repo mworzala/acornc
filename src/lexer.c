@@ -48,8 +48,8 @@ Token lexer_next(self_t) {
         return lex_ident(self);
     if (lex_is_digit(c))
         return lex_number(self);
-//    if (c == '"')
-//        return lex_string(self);
+    if (c == '"')
+        return lex_string(self);
 
     return lex_symbol(self, c);
 }
@@ -93,6 +93,7 @@ const char *token_type_to_string(TokenType type) {
         case TOK_WHILE:     return "WHILE";
 
         case TOK_NUMBER:    return "NUMBER";
+        case TOK_STRING:    return "STRING";
         case TOK_IDENT:     return "IDENT";
         case TOK_TRUE:
         case TOK_FALSE:     return "BOOLEAN";

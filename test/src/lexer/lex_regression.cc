@@ -41,4 +41,10 @@ TEST(Lexer, LexTwoDifferentWords) {
     CHECK("false let", "BOOLEAN~false LET~let");
 }
 
+TEST(Lexer, StringLiteralAcrossNewline) {
+    EXPECT_DEATH({
+        CHECK("\"Hello, \nWorld\"", "STRING~Hello, World");
+    }, "Assertion failed: \\(false\\), function lex_string, file lexer_internal\\.c");
+}
+
 

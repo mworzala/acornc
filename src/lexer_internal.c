@@ -119,6 +119,19 @@ Token lex_number(self_t) {
     return new_token(self, TOK_NUMBER);
 }
 
+Token lex_string(self_t) {
+    uint8_t next;
+    while ((next = lex_peek0(self)) != '"' && !lex_at_end(self)) {
+        if (next == '\n') assert(false);
+        lex_advance(self);
+    }
+
+    if (lex_at_end(self)) assert(false); // Unterminated string
+
+    lex_advance(self); // Eat the closing quote
+    return new_token(self, TOK_STRING);
+}
+
 Token lex_symbol(self_t, uint8_t c) {
     switch (c) {
         // @formatter:off

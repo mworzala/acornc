@@ -8,6 +8,8 @@ const char *ast_tag_to_string(AstTag tag) {
     switch (tag) {
         case AST_INTEGER:
             return "int";
+        case AST_STRING:
+            return "str";
         case AST_BOOL:
             return "bool";
         case AST_REF:

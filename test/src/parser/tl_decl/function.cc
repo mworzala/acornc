@@ -68,3 +68,15 @@ fn foo() i32 {}
     EXPECT_TL_DECL(input, expected);
 }
 
+TEST(Parser, ForeignFnDecl) {
+    auto input = R"#(
+foreign fn puts(s: *i8) i32;
+)#";
+    auto expected = R"#(
+%3 = fn(foo, proto = { params = _, ret = _ }, body = {
+  %2 = block(stmts = _)
+}
+)#";
+    EXPECT_TL_DECL(input, expected);
+}
+

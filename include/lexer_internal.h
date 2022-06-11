@@ -28,6 +28,7 @@ Token new_token_error(self_t, const char *message);
 void lex_skip_trivia(self_t);
 Token lex_ident(self_t);
 Token lex_number(self_t);
+Token lex_string(self_t);
 Token lex_symbol(self_t, uint8_t c);
 TokenType lex_ident_or_keyword(self_t);
 

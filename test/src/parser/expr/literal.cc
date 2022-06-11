@@ -48,6 +48,14 @@ TEST(Parser, NumberFollowedByComment) {
     EXPECT_EXPR(input, expected);
 }
 
+TEST(Parser, LiteralString) {
+    auto input = "\"Hello, World\"";
+    auto expected = R"#(
+%0 = str("Hello, World")
+)#";
+    EXPECT_EXPR(input, expected);
+}
+
 TEST(Parser, LiteralTrue) {
     auto input = "true";
     auto expected = R"#(
