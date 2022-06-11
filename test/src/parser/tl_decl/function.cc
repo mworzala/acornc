@@ -5,9 +5,9 @@ TEST(Parser, BasicFnDecl) {
 fn foo() {}
 )#";
     auto expected = R"#(
-%2 = fn(foo, proto = { params = _, ret = _ }, body = {
-  %1 = block(stmts = _)
-})
+named_fn "foo"
+  fn_proto
+  block
 )#";
     EXPECT_TL_DECL(input, expected);
 }
@@ -17,11 +17,10 @@ TEST(Parser, FnDeclSingleParam) {
 fn foo(bar) {}
 )#";
     auto expected = R"#(
-%3 = fn(foo, proto = { params = [
-  param(bar, type = _),
-], ret = _ }, body = {
-  %2 = block(stmts = _)
-})
+named_fn "foo"
+  fn_proto
+    fn_param "bar"
+  block
 )#";
     EXPECT_TL_DECL(input, expected);
 }
@@ -31,12 +30,11 @@ TEST(Parser, FnDeclMultiParam) {
 fn foo(bar, baz) {}
 )#";
     auto expected = R"#(
-%4 = fn(foo, proto = { params = [
-  param(bar, type = _),
-  param(baz, type = _),
-], ret = _ }, body = {
-  %3 = block(stmts = _)
-})
+named_fn "foo"
+  fn_proto
+    fn_param "bar"
+    fn_param "baz"
+  block
 )#";
     EXPECT_TL_DECL(input, expected);
 }
@@ -46,12 +44,13 @@ TEST(Parser, FnDeclMultiParamWithTypes) {
 fn foo(bar: i32, baz: i32) {}
 )#";
     auto expected = R"#(
-%6 = fn(foo, proto = { params = [
-  param(bar, type = type(i32)),
-  param(baz, type = type(i32)),
-], ret = _ }, body = {
-  %5 = block(stmts = _)
-})
+named_fn "foo"
+  fn_proto
+    fn_param "bar"
+      type "i32"
+    fn_param "baz"
+      type "i32"
+  block
 )#";
     EXPECT_TL_DECL(input, expected);
 }
@@ -61,9 +60,10 @@ TEST(Parser, FnDeclWithReturnType) {
 fn foo() i32 {}
 )#";
     auto expected = R"#(
-%3 = fn(foo, proto = { params = _, ret = type(i32) }, body = {
-  %2 = block(stmts = _)
-})
+named_fn "foo"
+  fn_proto
+    type "i32"
+  block
 )#";
     EXPECT_TL_DECL(input, expected);
 }
@@ -73,9 +73,13 @@ TEST(Parser, ForeignFnDecl) {
 foreign fn puts(s: *i8) i32;
 )#";
     auto expected = R"#(
-%5 = fn(puts, proto = { foreign, params = [
-  param(s, type = type(*, inner = type(i8))),
-], ret = type(i32) }, body = _)
+named_fn "puts"
+  fn_proto
+    flags foreign
+    fn_param "s"
+      type "*"
+        type "i8"
+    type "i32"
 )#";
     EXPECT_TL_DECL(input, expected);
 }

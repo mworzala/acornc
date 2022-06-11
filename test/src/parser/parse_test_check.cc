@@ -2,9 +2,10 @@
 
 extern "C" {
 #include "debug/ast_debug.h"
+#include "debug/ast_debug_tree.h"
 }
 
-testing::AssertionResult parse_check_generic(ParseFn parse, const char *expr, const char *expected) {
+testing::AssertionResult parse_check_generic(ParseFn parse, const char *expr, const char *expected, bool print_locs) {
     Parser parser;
     parser_init(&parser, (uint8_t *) expr);
 
@@ -15,7 +16,7 @@ testing::AssertionResult parse_check_generic(ParseFn parse, const char *expr, co
         .nodes = parser.nodes,
         .extra_data = parser.extra_data,
     };
-    char *actual = ast_debug_print(&ast, root);
+    char *actual = ast_debug_tree_print(&ast, root, print_locs);
     size_t actual_len = strlen(actual);
     // If there are two newlines at the end, remove one of them.
     // Module does this at the moment, should fix it inside module then this is not necessary.

@@ -38,7 +38,7 @@ StringKey string_set_add(self_t, char *string) {
     return string_set_add_new(self, string);
 }
 
-char *index_list_get(self_t, StringKey key) {
+char *string_set_get(self_t, StringKey key) {
     assert(key < self->size);
     return self->data[key];
 }

@@ -3,16 +3,16 @@
 TEST(Parser, BasicReturn) {
     auto input = "return";
     auto expected = R"#(
-%0 = ret
+ret
 )#";
-    EXPECT_EXPR(input, expected);
+    EXPECT_EXPR(input, expected, false);
 }
 
 TEST(Parser, ReturnExpr) {
     auto input = "return 1";
     auto expected = R"#(
-%0 = int(1)
-%1 = ret(%0)
+ret
+  int "1"
 )#";
-    EXPECT_EXPR(input, expected);
+    EXPECT_EXPR(input, expected, false);
 }

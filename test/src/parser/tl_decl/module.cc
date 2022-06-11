@@ -3,7 +3,7 @@
 TEST(Parser, BasicModule) {
     auto input = "";
     auto expected = R"#(
-// module
+module
 )#";
     EXPECT_MODULE(input, expected);
 }
@@ -13,10 +13,8 @@ TEST(Parser, SingleDeclModule) {
 struct foo {}
 )#";
     auto expected = R"#(
-// module
-
-// @1
-%1 = struct(foo, fields = _)
+module
+  struct "foo"
 )#";
     EXPECT_MODULE(input, expected);
 }
@@ -27,13 +25,9 @@ struct foo {}
 struct bar {}
 )#";
     auto expected = R"#(
-// module
-
-// @1
-%1 = struct(foo, fields = _)
-
-// @2
-%2 = struct(bar, fields = _)
+module
+  struct "foo"
+  struct "bar"
 )#";
     EXPECT_MODULE(input, expected);
 }

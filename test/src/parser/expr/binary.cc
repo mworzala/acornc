@@ -1,55 +1,65 @@
 #include "../parse_test_check.h"
 
+TEST(Parser, SimpleBinary) {
+    auto input = "1+2";
+    auto expected = R"#(
+binary "+"
+  int "1"
+  int "2"
+)#";
+    EXPECT_EXPR(input, expected, false);
+}
+
 TEST(Parser, SimpleAddMul) {
     auto input = "1+2*3";
     auto expected = R"#(
-%0 = int(1)
-%1 = int(2)
-%2 = int(3)
-%3 = mul(%1, %2)
-%4 = add(%0, %3)
+binary "+"
+  int "1"
+  binary "*"
+    int "2"
+    int "3"
 )#";
-    EXPECT_EXPR(input, expected);
+    EXPECT_EXPR(input, expected, false);
 }
 
 TEST(Parser, BasicOperators) {
     auto input = "1+2*3/4-1";
     auto expected = R"#(
-%0 = int(1)
-%1 = int(2)
-%2 = int(3)
-%3 = mul(%1, %2)
-%4 = int(4)
-%5 = div(%3, %4)
-%6 = add(%0, %5)
-%7 = int(1)
-%8 = sub(%6, %7)
+binary "-"
+  binary "+"
+    int "1"
+    binary "/"
+      binary "*"
+        int "2"
+        int "3"
+      int "4"
+  int "1"
 )#";
-    EXPECT_EXPR(input, expected);
+    EXPECT_EXPR(input, expected, false);
 }
 
 TEST(Parser, BinaryExprWithWhitespace) {
     auto input = " 10 +   2* 3 ";
     auto expected = R"#(
-%0 = int(10)
-%1 = int(2)
-%2 = int(3)
-%3 = mul(%1, %2)
-%4 = add(%0, %3)
+binary "+"
+  int "10"
+  binary "*"
+    int "2"
+    int "3"
 )#";
-    EXPECT_EXPR(input, expected);
+    EXPECT_EXPR(input, expected, false);
 }
 
 TEST(Parser, BinaryExprWithComments) {
     auto input = "1\n  + 1 // Add one\n+ 10 // Add ten";
     auto expected = R"#(
-%0 = int(1)
-%1 = int(1)
-%2 = add(%0, %1)
-%3 = int(10)
-%4 = add(%2, %3)
+binary "+"
+  binary "+"
+    int "1"
+    int "1"
+  int "10"
 )#";
-    EXPECT_EXPR(input, expected);
+    EXPECT_EXPR(input, expected, false);
 }
 
 TEST(Parser, BasicComparison) {
@@ -57,21 +67,21 @@ TEST(Parser, BasicComparison) {
     // however it is syntactically just binary expressions.
     auto input = "1 < 2 <= 3 > 4 >= 5 == 6 != 7";
     auto expected = R"#(
-%0 = int(1)
-%1 = int(2)
-%2 = cmp_lt(%0, %1)
-%3 = int(3)
-%4 = cmp_le(%2, %3)
-%5 = int(4)
-%6 = cmp_gt(%4, %5)
-%7 = int(5)
-%8 = cmp_ge(%6, %7)
-%9 = int(6)
-%10 = cmp_eq(%8, %9)
-%11 = int(7)
-%12 = cmp_ne(%10, %11)
+binary "!="
+  binary "=="
+    binary ">="
+      binary ">"
+        binary "<="
+          binary "<"
+            int "1"
+            int "2"
+          int "3"
+        int "4"
+      int "5"
+    int "6"
+  int "7"
 )#";
-    EXPECT_EXPR(input, expected);
+    EXPECT_EXPR(input, expected, false);
 }
 
 TEST(Parser, ComparisonHigherThanArithmetic) {
@@ -79,15 +89,15 @@ TEST(Parser, ComparisonHigherThanArithmetic) {
     // however it is syntactically just binary expressions.
     auto input = "1 + 2 < 3 + 4";
     auto expected = R"#(
-%0 = int(1)
-%1 = int(2)
-%2 = add(%0, %1)
-%3 = int(3)
-%4 = int(4)
-%5 = add(%3, %4)
-%6 = cmp_lt(%2, %5)
+binary "<"
+  binary "+"
+    int "1"
+    int "2"
+  binary "+"
+    int "3"
+    int "4"
 )#";
-    EXPECT_EXPR(input, expected);
+    EXPECT_EXPR(input, expected, false);
 }
 
 TEST(Parser, BasicLogical) {
@@ -95,13 +105,13 @@ TEST(Parser, BasicLogical) {
     // however it is syntactically just binary expressions.
     auto input = "true && false || true";
     auto expected = R"#(
-%0 = bool(true)
-%1 = bool(false)
-%2 = log_and(%0, %1)
-%3 = bool(true)
-%4 = log_or(%2, %3)
+binary "||"
+  binary "&&"
+    bool "true"
+    bool "false"
+  bool "true"
 )#";
-    EXPECT_EXPR(input, expected);
+    EXPECT_EXPR(input, expected, false);
 }
 
 TEST(Parser, LogicalHigherThanArithmetic) {
@@ -109,15 +119,15 @@ TEST(Parser, LogicalHigherThanArithmetic) {
     // however it is syntactically just binary expressions.
     auto input = "1 + 2 || 3 + 4";
     auto expected = R"#(
-%0 = int(1)
-%1 = int(2)
-%2 = add(%0, %1)
-%3 = int(3)
-%4 = int(4)
-%5 = add(%3, %4)
-%6 = log_or(%2, %5)
+binary "||"
+  binary "+"
+    int "1"
+    int "2"
+  binary "+"
+    int "3"
+    int "4"
 )#";
-    EXPECT_EXPR(input, expected);
+    EXPECT_EXPR(input, expected, false);
 }
 
 TEST(Parser, LogicalHigherThanComparison) {
@@ -125,15 +135,15 @@ TEST(Parser, LogicalHigherThanComparison) {
     // however it is syntactically just binary expressions.
     auto input = "1 < 2 && 3 > 4";
     auto expected = R"#(
-%0 = int(1)
-%1 = int(2)
-%2 = cmp_lt(%0, %1)
-%3 = int(3)
-%4 = int(4)
-%5 = cmp_gt(%3, %4)
-%6 = log_and(%2, %5)
+binary "&&"
+  binary "<"
+    int "1"
+    int "2"
+  binary ">"
+    int "3"
+    int "4"
 )#";
-    EXPECT_EXPR(input, expected);
+    EXPECT_EXPR(input, expected, false);
 }
 
 TEST(Parser, ComplexBinaryExpr) {
@@ -141,35 +151,35 @@ TEST(Parser, ComplexBinaryExpr) {
     // however it is syntactically just binary expressions.
     auto input = "1 + 2 < 3 + 4 && 5 + 6 > 7 + 8";
     auto expected = R"#(
-%0 = int(1)
-%1 = int(2)
-%2 = add(%0, %1)
-%3 = int(3)
-%4 = int(4)
-%5 = add(%3, %4)
-%6 = cmp_lt(%2, %5)
-%7 = int(5)
-%8 = int(6)
-%9 = add(%7, %8)
-%10 = int(7)
-%11 = int(8)
-%12 = add(%10, %11)
-%13 = cmp_gt(%9, %12)
-%14 = log_and(%6, %13)
+binary "&&"
+  binary "<"
+    binary "+"
+      int "1"
+      int "2"
+    binary "+"
+      int "3"
+      int "4"
+  binary ">"
+    binary "+"
+      int "5"
+      int "6"
+    binary "+"
+      int "7"
+      int "8"
 )#";
-    EXPECT_EXPR(input, expected);
+    EXPECT_EXPR(input, expected, false);
 }
 
 // Error cases
 
-TEST(Parser, BinaryMissingRHS) {
-    auto input = "1+";
-    auto expected = R"#(
-%0 = int(1)
-%1 = int(2)
-%2 = int(3)
-%3 = mul(%1, %2)
-%4 = add(%0, %3)
-)#";
-    EXPECT_EXPR(input, expected);
-}
+//TEST(Parser, BinaryMissingRHS) {
+//    auto input = "1+";
+//    auto expected = R"#(
+//%0 = int(1)
+//%1 = int(2)
+//%2 = int(3)
+//%3 = mul(%1, %2)
+//%4 = add(%0, %3)
+//)#";
+//    EXPECT_EXPR(input, expected, false);
+//}

@@ -7,12 +7,11 @@ TEST(Parser, WrongBlockEntryOrdering) {
 }
 )#";
     auto expected = R"#(
-%2 = block(stmts = {
-  %0 = ref(bar)
-  %1 = let(a, type = _, init = %0)
-})
+block
+  let "a"
+    ref "bar"
 )#";
-    EXPECT_EXPR(input, expected);
+    EXPECT_EXPR(input, expected, false);
 }
 
 
@@ -26,17 +25,12 @@ enum Color {
 }
 )#";
     auto expected = R"#(
-// module
-
-// @1
-%1 = struct(Person, fields = _)
-
-// @2
-%5 = enum(Color, cases = [
-  case(red),
-  case(green),
-  case(blue),
-])
+module
+  struct "Person"
+  enum "Color"
+    enum_case "red"
+    enum_case "green"
+    enum_case "blue"
 )#";
     EXPECT_MODULE(input, expected);
 }
@@ -50,19 +44,14 @@ fn foo() {
 }
 )#";
     auto expected = R"#(
-// module
-
-// @1
-%7 = fn(foo, proto = { params = _, ret = _ }, body = {
-  %6 = block(stmts = {
-    // @1
-    %2 = int(42)
-    %3 = let(a, type = _, init = %2)
-    // @2
-    %4 = ref(a)
-    %5 = ret(%4)
-  })
-})
+module
+  named_fn "foo"
+    fn_proto
+    block
+      let "a"
+        int "42"
+      ret
+        ref "a"
 )#";
     EXPECT_MODULE(input, expected);
 }

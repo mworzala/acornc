@@ -3,9 +3,9 @@
 TEST(Parser, BasicWhile) {
     auto input = "while true { }";
     auto expected = R"#(
-%0 = bool(true)
-%1 = block(stmts = _)
-%2 = while(%0, body = %1)
+while
+  bool "true"
+  block
 )#";
-    EXPECT_EXPR(input, expected);
+    EXPECT_EXPR(input, expected, false);
 }
