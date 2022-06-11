@@ -135,6 +135,34 @@ fn foo() {
     EXPECT_MIR(input, expected);
 }
 
+TEST(AstToMir, LetPtrType) {
+    auto input = R"#(
+fn foo() {
+    let a: *i32 = 1;
+}
+)#";
+    auto expected = R"#(
+%1 = alloc(*i32)
+%2 = constant(i64, 1)
+%3 = store(%1, %2)
+)#";
+    EXPECT_MIR(input, expected);
+}
+
+TEST(AstToMir, LetPtrPtrType) {
+    auto input = R"#(
+fn foo() {
+    let a: **i32 = 1;
+}
+)#";
+    auto expected = R"#(
+%1 = alloc(**i32)
+%2 = constant(i64, 1)
+%3 = store(%1, %2)
+)#";
+    EXPECT_MIR(input, expected);
+}
+
 TEST(AstToMir, ShouldFailOnIncorrectRetTy) {
     auto input = R"#(
 fn foo() i32 {

@@ -1,10 +1,7 @@
 
+foreign fn puts(s: *i8) i32;
 
-fn main() i8 {
-    let a: i8 = 20;
-    return add(a, a);
-}
-
-fn add(a: i32, b: i32) i32 {
-    return a + b + 250;
+fn main() i32 {
+    let string: *i8 = "Hello, world!";
+    return puts(string);
 }

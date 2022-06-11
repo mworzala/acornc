@@ -35,6 +35,7 @@ typedef enum type_tag_s {
 
     // Uses inner_type to represent the type being referenced
     TypeRef,
+    TY_PTR,
 
     __TYPE_LAST,
 } TypeTag;
@@ -51,6 +52,10 @@ typedef union type_s {
 } Type;
 
 #define type(tag) ({.tag = tag})
+
+// Returns a string containing the type name.
+// Memory is owned by the caller.
+char *type_to_string(Type tag);
 
 bool type_is_extended(Type type);
 TypeTag type_tag(Type type);

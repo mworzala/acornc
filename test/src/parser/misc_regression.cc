@@ -62,7 +62,7 @@ fn foo() {
     %4 = ref(a)
     %5 = ret(%4)
   })
-}
+})
 )#";
     EXPECT_MODULE(input, expected);
 }

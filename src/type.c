@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "type.h"
 
 #include "string.h"
@@ -46,10 +47,29 @@ char *type_tag_to_string(TypeTag tag) {
 
         case TypeRef:
             return "&";
+        case TY_PTR:
+            return "*";
 
         default:
             return "<?>";
     }
+}
+
+char *type_to_string(Type type) {
+    TypeTag tag = type_tag(type);
+    char *tag_str = type_tag_to_string(tag);
+    if (!type_is_extended(type))
+        return strdup(tag_str);
+
+    if (tag == TY_PTR) {
+        char *ext_str = type_to_string(type.extended->data.inner_type);
+        char *str = malloc(strlen(tag_str) + strlen(ext_str) + 1);
+        sprintf(str, "%s%s", tag_str, ext_str);
+        free(ext_str);
+        return str;
+    }
+
+    assert(false);
 }
 
 bool type_is_extended(Type type) {
@@ -65,8 +85,10 @@ TypeTag type_tag(Type type) {
 }
 
 bool type_is_integer(Type type) {
-    //todo support arbitrary sized ints
-    return type.tag >= TypeI8 && type.tag <= TypeISize;
+    TypeTag tag = type_tag(type);
+    return (tag >= TypeI8 && tag <= TypeISize) ||
+           (tag >= TypeIntUnsigned && tag <= TypeIntSigned) ||
+            tag == TY_PTR;
 }
 
 Type type_from_name(char *type_name) {

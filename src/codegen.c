@@ -88,7 +88,7 @@ bool codegen_write_to_obj_file(self_t, char *path) {
         *dot_acorn = '\0';
     }
 
-    int exit_code = execl("/usr/bin/cc", "cc", path, "-o", path2, NULL);
+    int exit_code = execl("/usr/bin/cc", "cc", path, "-lc", "-o", path2, NULL);
     free(path2);
 
     if (exit_code != 0) {
@@ -115,14 +115,16 @@ void codegen_lower_decl(self_t, Decl *decl) {
     LLVMValueRef fn = codegen_get_decl_ll_value(self, decl);
     self->curr_fn = &fn;
 
-    Mir *mir = decl_get_mir_in_module(decl, self->module);
-    self->mir = mir;
-    index_ptr_map_init(&self->inst_map);
+    if (strcmp(decl->name, "puts") != 0) {
+        Mir *mir = decl_get_mir_in_module(decl, self->module);
+        self->mir = mir;
+        index_ptr_map_init(&self->inst_map);
 
-    LLVMBasicBlockRef entry_block = LLVMAppendBasicBlock(fn, "entry");
-    LLVMPositionBuilderAtEnd(self->ll_builder, entry_block);
+        LLVMBasicBlockRef entry_block = LLVMAppendBasicBlock(fn, "entry");
+        LLVMPositionBuilderAtEnd(self->ll_builder, entry_block);
 
-    codegen_block_direct(self, 0, entry_block);
+        codegen_block_direct(self, 0, entry_block);
+    }
 
     decl->state = DeclStateGenerated;
 
@@ -142,6 +144,29 @@ static char *codegen_get_ast_token_content(self_t, TokenIndex token) {
     return str;
 }
 
+static Type codegen_get_type_from_ast(self_t, AstIndex index) {
+    AstNode *node = ast_get_node_tagged(self->module->ast, index, AST_TYPE);
+
+    char *name = codegen_get_ast_token_content(self, node->main_token);
+    if (strcmp(name, "*") == 0) {
+        free(name);
+
+        // Pointer type
+        Type ptr_type = codegen_get_type_from_ast(self, node->data.lhs);
+
+        //todo memory leak, this is never freed. Need to allocate these in an arena probably
+        ExtendedType *extended = malloc(sizeof(ExtendedType));
+        extended->tag = TY_PTR;
+        extended->data.inner_type = ptr_type;
+
+        return (Type) {.extended = extended};
+    }
+
+    Type ty = type_from_name(name);
+    free(name);
+    return ty;
+}
+
 LLVMTypeRef codegen_fn_proto(self_t, Decl *decl) {
     AstNode *fn_ast = ast_get_node_tagged(self->module->ast, decl->ast_index, AST_NAMED_FN);
     AstNode *proto_ast = ast_get_node_tagged(self->module->ast, fn_ast->data.lhs, AST_FN_PROTO);
@@ -154,11 +179,8 @@ LLVMTypeRef codegen_fn_proto(self_t, Decl *decl) {
         params = malloc(sizeof(LLVMTypeRef) * param_count);
         for (int32_t i = 0; i < param_count; i++) {
             AstNode *param_node = ast_get_node_tagged(self->module->ast, self->module->ast->extra_data.data[proto.param_start + i], AST_FN_PARAM);
-            AstNode *type_expr = ast_get_node_tagged(
-                self->module->ast, param_node->data.rhs, AST_TYPE);
-            char *type_str = codegen_get_ast_token_content(self, type_expr->main_token);
-            LLVMTypeRef param_type = codegen_type_to_llvm(self, type_from_name(type_str));
-            free(type_str);
+            Type ty = codegen_get_type_from_ast(self, param_node->data.rhs);
+            LLVMTypeRef param_type = codegen_type_to_llvm(self, ty);
 
             params[i] = param_type;
         }
@@ -194,6 +216,8 @@ LLVMTypeRef codegen_type_to_llvm(self_t, Type type) {
             return LLVMInt64TypeInContext(self->ll_context);
         case TypeI128:
             return LLVMInt128TypeInContext(self->ll_context);
+        case TY_PTR:
+            return LLVMPointerType(codegen_type_to_llvm(self, type.extended->data.inner_type), 0);
         default:
             assert(false);
     }
@@ -210,7 +234,7 @@ LLVMValueRef codegen_inst(self_t, MirIndex index, LLVMBasicBlockRef ll_block) {
     LLVMValueRef ll_value;
     switch (inst->tag) {
         case MirConstant: {
-            ll_value = codegen_constant(self, inst);
+            ll_value = codegen_constant(self, index, ll_block);
             break;
         }
         case MirAdd:
@@ -267,9 +291,67 @@ LLVMValueRef codegen_inst(self_t, MirIndex index, LLVMBasicBlockRef ll_block) {
     return ll_value;
 }
 
-LLVMValueRef codegen_constant(self_t, MirInst *inst) {
-    LLVMTypeRef ll_type = codegen_type_to_llvm(self, inst->data.ty_pl.ty);
-    return LLVMConstInt(ll_type, inst->data.ty_pl.payload, false);
+LLVMValueRef codegen_constant(self_t, MirIndex index, LLVMBasicBlockRef ll_block) {
+    MirInst *inst = mir_get_inst(self->mir, index);
+    Type const_ty = inst->data.ty_pl.ty;
+
+    // Cannot codegen non int/ptr constants
+    assert(type_is_integer(const_ty));
+
+    // If it not a pointer, its an int.
+    if (type_tag(const_ty) != TY_PTR) {
+        LLVMTypeRef ll_type = codegen_type_to_llvm(self, inst->data.ty_pl.ty);
+        return LLVMConstInt(ll_type, inst->data.ty_pl.payload, false);
+    }
+
+    // It's a pointer, we only support *i8, which means its a const string. for now
+    //todo lots of bad assumptions
+    assert(type_tag(const_ty.extended->data.inner_type) == TypeI8);
+
+    // Add the string and related instructions
+    char *str_content_raw = codegen_get_ast_token_content(self, inst->data.ty_pl.payload);
+    char *str_content = malloc(strlen(str_content_raw) - 1);
+    strncpy(str_content, str_content_raw + 1, strlen(str_content_raw) - 2);
+    str_content[strlen(str_content_raw) - 2] = '\0';
+    free(str_content_raw);
+    LLVMTypeRef str_type = LLVMArrayType(LLVMInt8Type(), strlen(str_content));
+    LLVMValueRef str_global = LLVMAddGlobal(self->ll_module, str_type, "const_string");
+    LLVMSetInitializer(str_global, LLVMConstString(str_content, strlen(str_content), false));
+    LLVMSetGlobalConstant(str_global, true);
+    LLVMSetLinkage(str_global, LLVMPrivateLinkage);
+    LLVMSetUnnamedAddress(str_global, LLVMGlobalUnnamedAddr);
+    LLVMSetAlignment(str_global, 1);
+    free(str_content);
+
+    //todo not sure what below does
+    LLVMValueRef zeroIndex = LLVMConstInt( LLVMInt64Type(), 0, true );
+    LLVMValueRef indexes[2] = { zeroIndex, zeroIndex };
+    LLVMValueRef gep = LLVMBuildInBoundsGEP2(self->ll_builder, str_type, str_global, indexes, 2, "gep");
+
+    return gep;
+
+
+//todo some yoinked stack overflow code for string literals
+//LLVMValueRef defineStringLiteral( const char *sourceString, size_t size ) {
+//    LLVMTypeRef strType = LLVMArrayType( LLVMInt8Type(), size );
+//    LLVMValueRef str = LLVMAddGlobal(module->getLLVMModule(), strType, "");
+//    LLVMSetInitializer(str, LLVMConstString( sourceString, size, true ));
+//    LLVMSetGlobalConstant(str, true);
+//    LLVMSetLinkage(str, LLVMPrivateLinkage);
+//    LLVMSetUnnamedAddress(str, LLVMGlobalUnnamedAddr);
+//    LLVMSetAlignment(str, 1);
+//
+//
+//    LLVMValueRef zeroIndex = LLVMConstInt( LLVMInt64Type(), 0, true );
+//    LLVMValueRef indexes[2] = { zeroIndex, zeroIndex };
+//
+//    LLVMValueRef gep = LLVMBuildInBoundsGEP2(builder, strType, str, indexes, 2, "");
+//
+//    return gep;
+//}
+
+
+    assert(false);
 }
 
 LLVMValueRef codegen_binary_op(self_t, MirIndex index, LLVMBasicBlockRef ll_block) {

@@ -40,11 +40,11 @@ static void run_file(char *path) {
     printf("%s", main_str);
     free(main_str);
 
-    Decl *add_decl = module_find_decl(&module, "add");
-    char *add_str = mir_debug_print(add_decl->mir);
-    printf("// begin fn add\n");
-    printf("%s", add_str);
-    free(add_str);
+//    Decl *add_decl = module_find_decl(&module, "add");
+//    char *add_str = mir_debug_print(add_decl->mir);
+//    printf("// begin fn add\n");
+//    printf("%s", add_str);
+//    free(add_str);
 
     bool emitted = module_emit_llvm(&module);
     if (!emitted) {

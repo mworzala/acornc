@@ -17,10 +17,21 @@ TEST(Parser, PtrTypeExpression) {
 let a: *i32 = 1;
 )#";
     auto expected = R"#(
-%0 = type(i32)
-%1 = type(*, inner = %0)
+%1 = type(*, inner = type(i32))
 %2 = int(1)
 %3 = let(a, type = %1, init = %2)
+)#";
+    EXPECT_STMT(input, expected);
+}
+
+TEST(Parser, PtrPtrTypeExpression) {
+    auto input = R"#(
+let a: **i32 = 1;
+)#";
+    auto expected = R"#(
+%2 = type(*, inner = type(*, inner = type(i32)))
+%3 = int(1)
+%4 = let(a, type = %2, init = %3)
 )#";
     EXPECT_STMT(input, expected);
 }

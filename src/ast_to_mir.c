@@ -183,10 +183,7 @@ Mir lower_ast_fn(self_t, AstIndex fn_index) {
     // Setup expected type from return type
     Type ret_type = {.tag = TY_VOID};
     if (proto->data.rhs != ast_index_empty) {
-        AstNode *ret_type_expr = ast_get_node_tagged(self->ast, proto->data.rhs, AST_TYPE);
-        char *ret_type_name = get_token_content(self, ret_type_expr->main_token);
-        ret_type = type_from_name(ret_type_name);
-        free(ret_type_name);
+        ret_type = mir_lower_type_expr(self, proto->data.rhs);
     }
 
     assert(self->exp_type == NULL);
@@ -228,11 +225,7 @@ MirIndex mir_lower_let(self_t, AstIndex stmt_index) {
     Type type_annotation = {TypeUnknown};
     if (node->data.lhs != ast_index_empty) {
         // Type annotation has been provided, use it.
-        AstNode *type_node = ast_get_node_tagged(self->ast, node->data.lhs, AST_TYPE);
-
-        char *type_name = get_token_content(self, type_node->main_token);
-        type_annotation = type_from_name(type_name);
-        free(type_name);
+        type_annotation = mir_lower_type_expr(self, node->data.lhs);
     } else {
         // Type annotation is currently required
         fprintf(stderr, "Type annotation required for let statement\n");
@@ -286,6 +279,29 @@ MirIndex mir_lower_let(self_t, AstIndex stmt_index) {
     return store_index;
 }
 
+Type mir_lower_type_expr(self_t, AstIndex index) {
+    AstNode *node = ast_get_node_tagged(self->ast, index, AST_TYPE);
+
+    char *name = get_token_content(self, node->main_token);
+    if (strcmp(name, "*") == 0) {
+        free(name);
+
+        // Pointer type
+        Type ptr_type = mir_lower_type_expr(self, node->data.lhs);
+
+        //todo memory leak, this is never freed. Need to allocate these in an arena probably
+        ExtendedType *extended = malloc(sizeof(ExtendedType));
+        extended->tag = TY_PTR;
+        extended->data.inner_type = ptr_type;
+
+        return (Type) {.extended = extended};
+    }
+
+    Type ty = type_from_name(name);
+    free(name);
+    return ty;
+}
+
 
 MirIndex mir_lower_expr(self_t, AstIndex expr_index) {
     AstNode *node = ast_get_node(self->ast, expr_index);
@@ -294,6 +310,8 @@ MirIndex mir_lower_expr(self_t, AstIndex expr_index) {
     switch (node->tag) {
         case AST_INTEGER:
             return mir_lower_int_const(self, expr_index);
+        case AST_STRING:
+            return mir_lower_string_const(self, expr_index);
         case AST_REF:
             return mir_lower_ref(self, expr_index);
         case AST_BINARY:
@@ -324,11 +342,33 @@ MirIndex mir_lower_int_const(self_t, AstIndex expr_index) {
     assert(self->exp_type != NULL);
     assert(type_is_integer(*self->exp_type));
     Type type = *self->exp_type;
+    // For now, a pointer type initialized with a const int is an i64.
+    if (type_tag(type) == TY_PTR)
+        type = (Type) {.tag = TypeI64};
 
     return add_inst(self, MirConstant, (MirInstData) {
         .ty_pl = {
             .ty = type,
             .payload = value, //todo this needs to point into values list
+        }
+    });
+}
+
+MirIndex mir_lower_string_const(self_t, AstIndex expr_index) {
+    AstNode *node = ast_get_node_tagged(self->ast, expr_index, AST_STRING);
+
+    // Ensure the type is *i8
+    assert(self->exp_type != NULL);
+    Type type = *self->exp_type;
+    assert(type_tag(type) == TY_PTR);
+    assert(type.extended->data.inner_type.tag == TypeI8);
+
+    return add_inst(self, MirConstant, (MirInstData) {
+        .ty_pl = {
+            .ty = type,
+            // Payload is an index into the token list for the string literal
+            //todo add values array
+            .payload = node->main_token,
         }
     });
 }
@@ -419,16 +459,18 @@ MirIndex mir_lower_bin_op(self_t, AstIndex expr_index) {
     TypeTag ret_ty = type_tag(*self->exp_type);
     if (op_tag == MirAdd || op_tag == MirSub || op_tag == MirMul || op_tag == MirDiv) {
         assert(type_is_integer(*self->exp_type));
-    } else if (op_tag == MirEq || op_tag == MirNEq || op_tag == MirGt || op_tag == MirGtEq || op_tag == MirLt || op_tag == MirLtEq) {
+    } else if (op_tag == MirEq || op_tag == MirNEq || op_tag == MirGt || op_tag == MirGtEq || op_tag == MirLt ||
+               op_tag == MirLtEq) {
         assert(ret_ty == TypeBool);
-    } else assert(false);
+    } else
+        assert(false);
 
     // Determine the type of the operands
     Type operand_type;
     if (op_tag == MirAdd || op_tag == MirSub || op_tag == MirMul || op_tag == MirDiv) {
         operand_type = *self->exp_type;
     } else if (op_tag == MirGt || op_tag == MirGtEq || op_tag == MirLt || op_tag == MirLtEq) {
-        operand_type = (Type) { .tag = TypeI64 }; // todo for now just the biggest type since its valid to compare across bit widths
+        operand_type = (Type) {.tag = TypeI64}; // todo for now just the biggest type since its valid to compare across bit widths
     } else if (op_tag == MirEq || op_tag == MirNEq) {
         //todo unsupported for now, not sure the rule here (probably it depends on the type of LHS)
         assert(false);
@@ -466,6 +508,7 @@ MirIndex mir_lower_call(self_t, AstIndex expr_index) {
     if (call_data.arg_start != ast_index_empty) {
         for (AstIndex arg_index = call_data.arg_start; arg_index <= call_data.arg_end; arg_index++) {
             //todo setup expected types here
+            //todo cannot easily do that in this pass, as we do not yet know types.
             Ref lowered_arg = index_to_ref(mir_lower_expr(self, self->ast->extra_data.data[arg_index]));
             index_list_add(&arg_indices, lowered_arg);
         }
@@ -512,10 +555,7 @@ MirIndex mir_lower_block(self_t, AstIndex block_index, AstFnProto *proto_data) {
                 AstNode *param = ast_get_node_tagged(self->ast, self->ast->extra_data.data[i], AST_FN_PARAM);
 
                 // Get type
-                AstNode *type_expr = ast_get_node_tagged(self->ast, param->data.rhs, AST_TYPE);
-                char *type_str = get_token_content(self, type_expr->main_token);
-                Type param_ty = type_from_name(type_str);
-                free(type_str);
+                Type param_ty = mir_lower_type_expr(self, param->data.rhs);
 
                 // Create the `arg` node.
                 AstIndex arg_index = add_inst(self, MirArg, (MirInstData) {

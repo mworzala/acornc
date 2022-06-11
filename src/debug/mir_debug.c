@@ -57,8 +57,9 @@ static void print_block_inst_ref(self_t, Ref ref, int indent) {
 }
 
 static void print_type(self_t, Type ty) {
-    TypeTag tag = type_tag(ty);
-    print(self, "%s", type_tag_to_string(tag))
+    char *type_str = type_to_string(ty);
+    print(self, "%s", type_str);
+    free(type_str);
 }
 
 
