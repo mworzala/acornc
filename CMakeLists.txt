@@ -19,7 +19,10 @@ target_include_directories(${PROJECT_NAME}_lib PUBLIC /opt/homebrew/opt/llvm@12/
 target_link_libraries(${PROJECT_NAME}_lib PRIVATE LLVM)
 
 # Executable
-add_executable(${PROJECT_NAME} bin/main.c)
+file(GLOB_RECURSE EXE_SOURCES bin/*.c)
+file(GLOB_RECURSE EXE_HEADERS bin/*.h)
+add_executable(${PROJECT_NAME} ${EXE_SOURCES} ${EXE_HEADERS})
+target_include_directories(${PROJECT_NAME} PUBLIC bin)
 target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_lib)
 
 if (test)

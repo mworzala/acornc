@@ -48,10 +48,11 @@ TokenIndex parse_assert(self_t, TokenType type) {
 }
 
 static AstIndex error(self_t, AstError code) {
+    Token current_tok = parse_peek_curr(self);
     error_list_add(&self->errors, (CompileError) {
         .error_code = code,
         .node = ast_index_empty,
-        .location = {UINT32_MAX, UINT32_MAX},
+        .location = {current_tok.loc.start, UINT32_MAX},
         .data = NULL,
     });
     ast_node_list_add(&self->nodes, (AstNode) {

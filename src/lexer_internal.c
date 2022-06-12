@@ -52,8 +52,8 @@ Token new_token(self_t, TokenType type) {
     return (Token) {
         .type = type,
         .loc = {
-            .start = (size_t) self->start,
-            .end = (size_t) self->current,
+            .start = (size_t) self->start - self->origin,
+            .end = (size_t) self->current - self->origin,
         }
     };
 }
@@ -63,8 +63,8 @@ Token new_token_error(self_t, const char *message) {
     return (Token) {
         .type = TOK_ERROR,
         .loc = {
-            .start = (size_t) self->start,
-            .end = (size_t) self->current,
+            .start = (size_t) self->start - self->origin,
+            .end = (size_t) self->current - self->origin,
         },
     };
 }

@@ -631,7 +631,7 @@ Type type_check_expr(self_t, AstIndex expr_index) {
             break;
         }
         default:
-            printf("Unsupported type check for node %s!\n", mir_tag_to_string(node->tag));
+            printf("Unsupported type check for node %s!\n", ast_tag_to_string(node->tag));
             assert(false);
     }
 
