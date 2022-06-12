@@ -55,3 +55,28 @@ let "foo"
 )#";
     EXPECT_STMT(input, expected);
 }
+
+TEST(Parser, LetWithNoInitializer) {
+    auto input = "let foo =";
+    //todo eof not the correct error here
+    auto expected = R"#(
+let "foo"
+  error
+ERR : unexpected end of file
+)#";
+    EXPECT_STMT(input, expected);
+}
+
+TEST(Parser, LetMissingInitializerParseBelow) {
+    auto input = "{ let foo =;\nlet bar = 1 }";
+    //todo incorrect error
+    auto expected = R"#(
+block
+  let "foo"
+    error
+  let "bar"
+    int "1"
+ERR : unexpected end of file
+)#";
+    EXPECT_STMT(input, expected);
+}

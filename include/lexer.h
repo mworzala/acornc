@@ -35,14 +35,14 @@ const char *token_type_to_string(TokenType type);
 
 #undef self_t
 
-typedef struct loc_s {
+typedef struct token_loc_s {
     size_t start;
     size_t end;
-} Loc;
+} TokenLoc;
 
 typedef struct token_s {
     TokenType type;
-    Loc loc;
+    TokenLoc loc;
 } Token;
 
 typedef struct token_list_s {

@@ -25,6 +25,26 @@ testing::AssertionResult parse_check_generic(ParseFn parse, const char *expr, co
         actual_len -= 1;
     }
 
+    if (parser.errors.size > 0) {
+        for (size_t i = 0; i < parser.errors.size; i++) {
+            CompileError *err = parser.errors.data[i];
+            sprintf(actual + strlen(actual), "ERR : %s", ast_error_to_string(static_cast<AstError>(err->error_code)));
+
+            Span span = err->location;
+            if (span.start != UINT32_MAX) {
+                sprintf(actual + strlen(actual), " @ %d", span.start);
+
+                if (span.end != UINT32_MAX) {
+                    sprintf(actual + strlen(actual), "..%d", span.end);
+                }
+            }
+
+            sprintf(actual + strlen(actual), "\n");
+        }
+    }
+
+    actual_len = strlen(actual);
+
     bool result = actual_len == strlen(expected) && strcmp(actual, expected) == 0;
     if (!result) {
         printf("Expected:\n%s\n", expected);

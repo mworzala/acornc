@@ -22,6 +22,8 @@ void parser_init(self_t, uint8_t *source) {
 
     ast_node_list_init(&self->nodes);
     index_list_init(&self->extra_data);
+
+    error_list_init(&self->errors);
 }
 
 Ast parser_parse(self_t) {
@@ -32,6 +34,7 @@ Ast parser_parse(self_t) {
         .tokens = self->tokens,
         .nodes = self->nodes,
         .extra_data = self->extra_data,
+        .errors = self->errors,
     };
 }
 

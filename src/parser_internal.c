@@ -1,7 +1,6 @@
 #include "parser_internal.h"
 
 #include <assert.h>
-#include <printf.h>
 
 #include "array_util.h"
 #include "parser.h"
@@ -9,11 +8,6 @@
 #define self_t Parser *self
 
 // SECTION: Parsing utilities
-
-Token parse_peek_last(self_t) {
-    assert(self->tok_index > 0);
-    return self->tokens.data[self->tok_index - 1];
-}
 
 Token parse_peek_curr(self_t) {
     return self->tokens.data[self->tok_index];
@@ -51,6 +45,28 @@ TokenIndex parse_assert(self_t, TokenType type) {
         assert(false);
     }
     return self->tok_index - 1;
+}
+
+static AstIndex error(self_t, AstError code) {
+    error_list_add(&self->errors, (CompileError) {
+        .error_code = code,
+        .node = ast_index_empty,
+        .location = {UINT32_MAX, UINT32_MAX},
+        .data = NULL,
+    });
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_ERROR,
+        .main_token = UINT32_MAX,
+        .data = { ast_index_empty, ast_index_empty },
+    });
+    return self->nodes.size - 1;
+}
+
+AstIndex parse_error(self_t) {
+    if (parse_peek_curr(self).type == TOK_EOF) {
+        return error(self, AST_ERR_UNEXPECTED_EOF);
+    }
+    assert(false);
 }
 
 
@@ -247,16 +263,17 @@ AstIndex int_expr_bp(self_t) {
 
     for (;;) {
         Token token = parse_peek_curr(self);
-        BindingPower bp = token_bp(token, top.lhs == UINT32_MAX);
+        BindingPower bp = token_bp(token, top.lhs == ast_index_empty);
 
-        bool is_not_op =
-            bp.lhs ==
-            0;                     // We return 0, 0 if it was not a valid operator, and none of them return 0 for LHS.
+        bool is_not_op = bp.lhs == 0; // We return 0, 0 if it was not a valid operator, and none of them return 0 for LHS.
         bool is_low_bp = bp.lhs < top.min_bp;// Too low of binding power (precedence) to continue.
         if (is_not_op || is_low_bp) {
             ParseFrame res = top;
             if (parse_frame_stack_empty(&stack)) {
                 parse_frame_stack_free(&stack);
+                if (res.lhs == ast_index_empty) {
+                    return error(self, AST_ERR_UNEXPECTED_EOF);
+                }
                 return res.lhs;
             }
 
@@ -329,6 +346,13 @@ AstIndex int_expr_bp(self_t) {
 
 AstIndex expr_literal(self_t) {
     Token next = parse_peek_curr(self);
+
+    // If we are at EOF, nothing can be parsed
+    if (next.type == TOK_EOF) {
+        return parse_error(self);
+    }
+
+
     if (next.type == TOK_NUMBER) {
         parse_advance(self);
         ast_node_list_add(&self->nodes, (AstNode) {
@@ -581,6 +605,7 @@ int_parse_list(self_t, AstIndex (*parse_fn)(self_t), TokenType open, TokenType c
         index_list_add(&inner_indices, idx);
 
         if (idx == ast_index_empty) {
+            //todo probably need to add an error? Although this may be unreachable
             assert(false);
         }
 
@@ -589,8 +614,14 @@ int_parse_list(self_t, AstIndex (*parse_fn)(self_t), TokenType open, TokenType c
         } else if (parse_peek_curr(self).type == close) {
             break;
         } else {
-            assert(false);
-            //            parse_error(self, "Expected ';' or '}'");
+            // Insert an error, however we can still continue trying to parse this
+            //  eg this is a non-fatal parse error.
+            error_list_add(&self->errors, (CompileError) {
+                .error_code = AST_ERR_MISSING_SEMICOLON, //todo this isnt always a semicolon, depends on `delimiter`
+                .node = ast_index_empty,
+                .location = {parse_peek_curr(self).loc.start - (size_t) self->source, UINT32_MAX},
+                .data = NULL,
+            });
         }
     }
     parse_assert(self, close);

@@ -57,6 +57,8 @@ const char *ast_tag_to_string(AstTag tag) {
             return "module";
         case AST_EMPTY:
             return "<empty>";
+        case AST_ERROR:
+            return "error";
         default:
             return "<?>";
     }
@@ -100,3 +102,14 @@ AstNode *ast_get_node_tagged(self_t, AstIndex index, AstTag tag) {
 }
 
 #undef self_t
+
+char *ast_error_to_string(AstError error) {
+    switch (error) {
+        case AST_ERR_UNEXPECTED_EOF:
+            return "unexpected end of file";
+        case AST_ERR_MISSING_SEMICOLON:
+            return "missing semicolon";
+        default:
+            return "unknown error";
+    }
+}

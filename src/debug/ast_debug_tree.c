@@ -311,6 +311,9 @@ static void print_node(self_t, AstIndex index, int indent) {
         case AST_TYPE:
             print_type_expr(self, node, indent);
             break;
+        case AST_ERROR:
+            print_nothing_generic(self, node);
+            break;
         default:
             assert(false);
     }

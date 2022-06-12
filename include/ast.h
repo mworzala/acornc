@@ -4,6 +4,7 @@
 #include "common.h"
 #include "lexer.h"
 #include "array_util.h"
+#include "error.h"
 
 // Represents an index into the ast node list (of an AstNode)
 typedef uint32_t AstIndex;
@@ -121,6 +122,8 @@ typedef enum ast_tag_s {
     // All values always empty value.
     AST_EMPTY,
 
+    AST_ERROR,
+
     __AST_LAST,
 } AstTag;
 
@@ -181,6 +184,7 @@ typedef struct ast_s {
     // Index zero contains the root node (which is present no matter what)
     AstNodeList nodes;
     IndexList extra_data;
+    ErrorList errors;
 } Ast;
 
 #define self_t Ast *self
@@ -189,5 +193,13 @@ AstNode *ast_get_node(self_t, AstIndex index);
 AstNode *ast_get_node_tagged(self_t, AstIndex index, AstTag tag);
 
 #undef self_t
+
+// AST Errors
+typedef enum ast_error_s {
+    AST_ERR_UNEXPECTED_EOF,
+    AST_ERR_MISSING_SEMICOLON,
+} AstError;
+
+char *ast_error_to_string(AstError error);
 
 #endif //ACORNC_AST_H

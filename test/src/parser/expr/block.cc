@@ -61,3 +61,31 @@ block
 )#";
     EXPECT_EXPR(input, expected, false);
 }
+
+TEST(Parser, BlockWithMissingSemicolon) {
+    auto input = "{ let foo = 1\nlet bar = 1 }";
+    auto expected = R"#(
+block
+  let "foo"
+    int "1"
+  let "bar"
+    int "1"
+ERR : missing semicolon @ 14
+)#";
+    EXPECT_EXPR(input, expected, false);
+}
+
+TEST(Parser, BlockWithMissingSemicolonAfterError) {
+    auto input = "{ let foo =\nlet bar = 1 }";
+    //todo unexpected EOF is not the correct error here
+    auto expected = R"#(
+block
+  let "foo"
+    error
+  let "bar"
+    int "1"
+ERR : unexpected end of file
+ERR : missing semicolon @ 12
+)#";
+    EXPECT_EXPR(input, expected, false);
+}
