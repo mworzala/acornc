@@ -412,7 +412,7 @@ AstIndex expr_return(self_t) {
     AstIndex expr = ast_index_empty;
     TokenType next = parse_peek_curr(self).type;
     // Semicolon to manually terminate, rbrace if it is last in a block.
-    if (next != TOK_SEMI && next != TOK_RBRACE) {
+    if (next != TOK_SEMI && next != TOK_RBRACE && next != TOK_EOF) {
         expr = int_expr(self);
     }
 

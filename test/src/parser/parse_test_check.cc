@@ -1,7 +1,6 @@
 #include "parse_test_check.h"
 
 extern "C" {
-#include "debug/ast_debug.h"
 #include "debug/ast_debug_tree.h"
 }
 
