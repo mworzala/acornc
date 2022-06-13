@@ -1,0 +1,19 @@
+on: workflow_dispatch
+
+jobs:
+  fuzz_sample:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Clang
+        uses: egor-tensin/setup-clang@v1
+        with:
+          version: 12
+          platform: x64
+      - name: Run fuzzer
+        run: ./fuzzing/fuzzer.sh
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: fuzz_sample_artifact
+          path: fuzzing/artifacts
