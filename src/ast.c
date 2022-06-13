@@ -107,6 +107,8 @@ char *ast_error_to_string(AstError error) {
     switch (error) {
         case AST_ERR_UNEXPECTED_EOF:
             return "unexpected end of file";
+        case AST_ERR_EXPECTED_EXPRESSION:
+            return "expected expression, found ...";
         case AST_ERR_MISSING_SEMICOLON:
             return "missing semicolon";
         default:

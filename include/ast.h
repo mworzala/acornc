@@ -197,6 +197,7 @@ AstNode *ast_get_node_tagged(self_t, AstIndex index, AstTag tag);
 // AST Errors
 typedef enum ast_error_s {
     AST_ERR_UNEXPECTED_EOF,
+    AST_ERR_EXPECTED_EXPRESSION,
     AST_ERR_MISSING_SEMICOLON,
 } AstError;
 

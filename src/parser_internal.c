@@ -53,7 +53,7 @@ static AstIndex error(self_t, AstError code) {
         .error_code = code,
         .node = ast_index_empty,
         .location = {current_tok.loc.start, UINT32_MAX},
-        .data = NULL,
+        .message = ast_error_to_string(code),
     });
     ast_node_list_add(&self->nodes, (AstNode) {
         .tag = AST_ERROR,
@@ -273,7 +273,7 @@ AstIndex int_expr_bp(self_t) {
             if (parse_frame_stack_empty(&stack)) {
                 parse_frame_stack_free(&stack);
                 if (res.lhs == ast_index_empty) {
-                    return error(self, AST_ERR_UNEXPECTED_EOF);
+                    return error(self, AST_ERR_EXPECTED_EXPRESSION);
                 }
                 return res.lhs;
             }
@@ -621,7 +621,7 @@ int_parse_list(self_t, AstIndex (*parse_fn)(self_t), TokenType open, TokenType c
                 .error_code = AST_ERR_MISSING_SEMICOLON, //todo this isnt always a semicolon, depends on `delimiter`
                 .node = ast_index_empty,
                 .location = {parse_peek_curr(self).loc.start - (size_t) self->source, UINT32_MAX},
-                .data = NULL,
+                .message = "Missing semicolon",
             });
         }
     }

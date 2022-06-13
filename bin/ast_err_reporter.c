@@ -69,10 +69,7 @@ static void print_ast_error(char *file_name, Ast *ast, CompileError *error) {
 
     char *line = get_line(ast->source, row - 1);
 
-    char *error_string = ast_error_to_string(error->error_code);
-    char *full_error_string = "Expected expression, found ';'";
-
-    printf("%s:%d:%d: " RED "error" reset ": %s\n", file_name, row, col, error_string);
+    printf("%s:%d:%d: " RED "error" reset ": %s\n", file_name, row, col, error->message);
     printf("%s\n", line);
     printf("%*s" GRN "^" reset "\n", col, "");
 

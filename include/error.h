@@ -23,8 +23,13 @@ typedef struct compile_error_s {
 
     // Error code, depends on context of error.
     uint32_t error_code;
+    // Raw string content of the message, will use data below in the future
+    // Memory is owned by the error.
+    char *message;
+
     // Replacements for error messages, content depends completely on the type of error.
-    void **data;  //todo not sure the semantics of this yet. Might replace with struct
+    //todo not used for now
+//    void **data;  //todo not sure the semantics of this yet. Might replace with struct
 } CompileError;
 
 // SECTION: Error list
