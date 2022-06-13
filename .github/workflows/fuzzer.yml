@@ -19,6 +19,7 @@ jobs:
       - name: Run fuzzer
         run: ./fuzzing/fuzzer.sh
       - name: Upload artifacts
+        if: always()
         uses: actions/upload-artifact@v3
         with:
           name: fuzz_sample_artifact
