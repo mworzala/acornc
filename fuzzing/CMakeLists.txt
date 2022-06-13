@@ -1,5 +1,5 @@
-set(CMAKE_C_COMPILER /opt/homebrew/opt/llvm@12/bin/clang)
-set(CMAKE_CXX_COMPILER /opt/homebrew/opt/llvm@12/bin/clang)
+#set(CMAKE_C_COMPILER /opt/homebrew/opt/llvm@12/bin/clang)
+#set(CMAKE_CXX_COMPILER /opt/homebrew/opt/llvm@12/bin/clang)
 
 project(acorn_fuzzing CXX)
 
