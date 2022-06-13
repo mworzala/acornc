@@ -192,6 +192,10 @@ typedef struct ast_s {
 AstNode *ast_get_node(self_t, AstIndex index);
 AstNode *ast_get_node_tagged(self_t, AstIndex index, AstTag tag);
 
+// Returns a string containing the content of the token at the given index.
+// The caller owns the string memory.
+char *ast_get_token_content(self_t, TokenIndex token);
+
 #undef self_t
 
 // AST Errors

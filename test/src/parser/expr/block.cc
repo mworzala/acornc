@@ -84,7 +84,7 @@ block
     error
   let "bar"
     int "1"
-ERR : unexpected end of file
+ERR : expected expression, found ... @ 12
 ERR : missing semicolon @ 12
 )#";
     EXPECT_EXPR(input, expected, false);

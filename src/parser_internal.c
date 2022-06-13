@@ -620,7 +620,7 @@ int_parse_list(self_t, AstIndex (*parse_fn)(self_t), TokenType open, TokenType c
             error_list_add(&self->errors, (CompileError) {
                 .error_code = AST_ERR_MISSING_SEMICOLON, //todo this isnt always a semicolon, depends on `delimiter`
                 .node = ast_index_empty,
-                .location = {parse_peek_curr(self).loc.start - (size_t) self->source, UINT32_MAX},
+                .location = {parse_peek_curr(self).loc.start, UINT32_MAX},
                 .message = "Missing semicolon",
             });
         }

@@ -1,4 +1,6 @@
 #include <assert.h>
+#include <stdlib.h>
+#include <string.h>
 #include "ast.h"
 
 
@@ -99,6 +101,15 @@ AstNode *ast_get_node_tagged(self_t, AstIndex index, AstTag tag) {
     AstNode *node = ast_get_node(self, index);
     assert(tag == node->tag);
     return node;
+}
+
+char *ast_get_token_content(self_t, TokenIndex token) {
+    Token main_token = self->tokens.data[token];
+    size_t str_len = main_token.loc.end - main_token.loc.start;
+    char *str = malloc(str_len + 1);
+    memcpy(str, (const void *) self->source + main_token.loc.start, str_len);
+    str[str_len] = '\0';
+    return str;
 }
 
 #undef self_t

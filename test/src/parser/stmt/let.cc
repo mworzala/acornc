@@ -62,7 +62,7 @@ TEST(Parser, LetWithNoInitializer) {
     auto expected = R"#(
 let "foo"
   error
-ERR : unexpected end of file
+ERR : unexpected end of file @ 9
 )#";
     EXPECT_STMT(input, expected);
 }
@@ -76,7 +76,7 @@ block
     error
   let "bar"
     int "1"
-ERR : unexpected end of file
+ERR : expected expression, found ... @ 11
 )#";
     EXPECT_STMT(input, expected);
 }

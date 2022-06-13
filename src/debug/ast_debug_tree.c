@@ -28,10 +28,9 @@ typedef struct {
 #define get_extra(self, index) *index_list_get(&(self)->ast->extra_data, (index))
 
 void print_token(self_t, TokenIndex token_idx) {
-    Token token = self->ast->tokens.data[token_idx];
-    print(self, "\"%.*s\"",
-            (int)(token.loc.end - token.loc.start),
-            (char *)token.loc.start);
+    char *str = ast_get_token_content(self->ast, token_idx);
+    print(self, "\"%s\"", str);
+    free(str);
 }
 
 

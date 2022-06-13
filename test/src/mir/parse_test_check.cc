@@ -35,11 +35,7 @@ testing::AssertionResult parse_check_mir(bool extended, const char *expr, const 
             AstIndex idx = ast.extra_data.data[index];
 
             AstNode *fn_node = ast_get_node(&ast, idx);
-            Token main_token = ast.tokens.data[fn_node->main_token + 1];
-            size_t str_len = main_token.loc.end - main_token.loc.start;
-            char *str = static_cast<char *>(malloc(str_len + 1));
-            memcpy(str, (const void *) main_token.loc.start, str_len);
-            str[str_len] = '\0';
+            char *str = ast_get_token_content(&ast, fn_node->main_token + 1);
 
             sprintf(actual + strlen(actual), "// begin fn %s\n", str);
 

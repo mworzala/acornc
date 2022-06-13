@@ -14,7 +14,7 @@ testing::AssertionResult lex_reg_check(const char *input, const char *expected) 
     while ((token = lexer_next(&lexer)).type != TOK_EOF) {
         char buf[32];
         memset(buf, 0, 32);
-        memcpy(buf, (char *) token.loc.start, token.loc.end - token.loc.start);
+        memcpy(buf, (char *) (input + token.loc.start), token.loc.end - token.loc.start);
         actual_ss << token_type_to_string(token.type) << "~" << buf << " ";
     }
 

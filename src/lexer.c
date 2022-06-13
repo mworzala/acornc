@@ -30,7 +30,7 @@ void token_list_insert(self_t, Token token) {
 #define self_t Lexer *self
 
 void lexer_init(self_t, const uint8_t *source) {
-    self->origin = (uint32_t) (size_t) source;
+    self->origin = (size_t) source;
     self->start = source;
     self->current = source;
 }

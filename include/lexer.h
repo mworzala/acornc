@@ -61,7 +61,7 @@ void token_list_insert(self_t, Token token);
 #undef self_t
 
 typedef struct lexer_s {
-    uint32_t origin;
+    size_t origin;
     const uint8_t *start;
     const uint8_t *current;
 } Lexer;

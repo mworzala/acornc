@@ -105,17 +105,6 @@ static MirIndex fill_inst(self_t, MirIndex reserved, MirInstTag tag, MirInstData
     return reserved;
 }
 
-// Returns a string containing the content of the token at the given index.
-// The caller owns the string memory.
-static char *get_token_content(self_t, TokenIndex token) {
-    Token main_token = self->ast->tokens.data[token];
-    size_t str_len = main_token.loc.end - main_token.loc.start;
-    char *str = malloc(str_len + 1);
-    memcpy(str, (const void *) main_token.loc.start, str_len);
-    str[str_len] = '\0';
-    return str;
-}
-
 static void push_scope(self_t) {
     AtmScope *scope = malloc(sizeof(AtmScope));
     atm_scope_init(scope, self->scope);
@@ -137,7 +126,7 @@ static AstIndex find_named_fn(self_t, const char *name) {
         if (decl->tag != AST_NAMED_FN)
             continue;
 
-        char *fn_name = get_token_content(self, decl->main_token + 1);
+        char *fn_name = ast_get_token_content(self->ast, decl->main_token + 1);
         bool same = strcmp(fn_name, name) == 0;
         free(fn_name);
 
@@ -264,7 +253,7 @@ MirIndex mir_lower_let(self_t, AstIndex stmt_index) {
     });
 
     // Insert the pointer to the scope
-    char *name = get_token_content(self, node->main_token + 1);
+    char *name = ast_get_token_content(self->ast, node->main_token + 1);
     atm_scope_set(self->scope, name, alloc_index, AtmScopeItemTypeVar);
     free(name);
 
@@ -282,7 +271,7 @@ MirIndex mir_lower_let(self_t, AstIndex stmt_index) {
 Type mir_lower_type_expr(self_t, AstIndex index) {
     AstNode *node = ast_get_node_tagged(self->ast, index, AST_TYPE);
 
-    char *name = get_token_content(self, node->main_token);
+    char *name = ast_get_token_content(self->ast, node->main_token);
     if (strcmp(name, "*") == 0) {
         free(name);
 
@@ -334,7 +323,7 @@ MirIndex mir_lower_int_const(self_t, AstIndex expr_index) {
 
     // Parse u32
     //todo string interning and then parse up to u64 for now
-    char *str = get_token_content(self, node->main_token);
+    char *str = ast_get_token_content(self->ast, node->main_token);
     uint32_t value = strtol(str, NULL, 10);
     free(str);
 
@@ -377,7 +366,7 @@ MirIndex mir_lower_ref(self_t, AstIndex expr_index) {
     AstNode *node = ast_get_node_tagged(self->ast, expr_index, AST_REF);
 
     // Lookup name in scope
-    char *name = get_token_content(self, node->main_token);
+    char *name = ast_get_token_content(self->ast, node->main_token);
     MirIndex *index = atm_scope_get(self->scope, name);
 
     if (index == NULL) {
@@ -426,7 +415,7 @@ MirIndex mir_lower_bin_op(self_t, AstIndex expr_index) {
     AstNode *node = ast_get_node_tagged(self->ast, expr_index, AST_BINARY);
 
     // Determine the operation
-    char *op_str = get_token_content(self, node->main_token);
+    char *op_str = ast_get_token_content(self->ast, node->main_token);
     MirInstTag op_tag;
     if (strcmp(op_str, "+") == 0) {
         op_tag = MirAdd;
@@ -565,7 +554,7 @@ MirIndex mir_lower_block(self_t, AstIndex block_index, AstFnProto *proto_data) {
                     }
                 });
 
-                char *param_name = get_token_content(self, param->main_token);
+                char *param_name = ast_get_token_content(self->ast, param->main_token);
                 //todo why am i not inserting as a ref?
                 atm_scope_set(self->scope, param_name, arg_index, AtmScopeItemTypeArg);
                 free(param_name);
