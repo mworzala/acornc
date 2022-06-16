@@ -1,8 +1,2 @@
 
-foreign fn puts(s: *i8) i32;
-
-fn main() i32 {
-    let a = ;
-    let string: *i8 = "Hello, world!";
-    return puts(string);
-}
+const a = 10;

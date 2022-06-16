@@ -73,6 +73,10 @@ typedef enum ast_tag_s {
 
     // Top level decls
 
+    // main_token:  The `const` token
+    // lhs/rhs:     Type expression/init expression
+    AST_CONST,
+
     // main_token:  The token representing the `fn` keyword
     // lhs/rhs:     Prototype/Body
     AST_NAMED_FN,

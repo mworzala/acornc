@@ -36,7 +36,7 @@ BindingPower token_bp(Token token, bool is_prefix);
 // Top level
 AstIndex int_module(self_t);
 AstIndex int_top_level_decl(self_t);
-//AstIndex tl_const_decl(self_t); todo not included for now, structs and functions are declared like in c
+AstIndex tl_const_decl(self_t);
 AstIndex tl_fn_decl(self_t);
 AstIndex tl_struct_decl(self_t);
 AstIndex tl_enum_decl(self_t);

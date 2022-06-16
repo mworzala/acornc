@@ -19,6 +19,7 @@ typedef enum token_type_s {
     TOK_SEMI, TOK_COLON, TOK_COMMA, TOK_DOT,
 
     // Keywords
+    TOK_CONST,
     TOK_ELSE, TOK_ENUM, TOK_FN,
     TOK_FOREIGN, TOK_IF, TOK_LET,
     TOK_RETURN, TOK_STRUCT, TOK_WHILE,

@@ -69,13 +69,14 @@ typedef enum mir_inst_tag_s {
 char *mir_tag_to_string(MirInstTag tag);
 
 // 8 bytes max
+//todo 12? ty_pl must be a ptr + u32
 typedef union mir_inst_data_s {
     uint8_t noop;
     Type ty;
     Ref un_op;
     struct {
-        Ref lhs;
-        Ref rhs;
+        Ref lhs; // Note: This is represented as an int in c, so this is actually 8 bytes violating the rule above.
+        Ref rhs; // Note: This is represented as an int in c, so this is actually 8 bytes violating the rule above.
     } bin_op;
     struct {
         Type ty;
@@ -84,7 +85,7 @@ typedef union mir_inst_data_s {
     } ty_pl;
     struct {
         uint32_t payload;
-        Ref operand;
+        Ref operand; // Note: This is represented as an int in c, so this is actually 8 bytes violating the rule above.
     } pl_op;
     char *fn_ptr;
 } MirInstData;
@@ -124,7 +125,6 @@ MirInst *mir_inst_list_get(self_t, uint32_t index);
 typedef struct mir_s {
     MirInstList instructions;
     IndexList extra;
-    // extra u32 list todo refactor ast list to list util (they are all u32)
     // values value list todo value union
 } Mir;
 

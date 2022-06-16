@@ -163,6 +163,14 @@ static void print_type_expr(self_t, AstNode *node, int indent) {
     print_node_if_present(self, node->data.lhs, indent + 2);
 }
 
+static void print_const(self_t, AstNode *node, int indent) {
+    print_token(self, node->main_token + 1);
+    print(self, "\n");
+
+    print_node_if_present(self, node->data.lhs, indent + 2);
+    print_node_if_present(self, node->data.rhs, indent + 2);
+}
+
 static void print_named_fn(self_t, AstNode *node, int indent) {
     print_token(self, node->main_token + 1);
     print(self, "\n");
@@ -283,6 +291,9 @@ static void print_node(self_t, AstIndex index, int indent) {
             break;
 
         // Declarations
+        case AST_CONST:
+            print_const(self, node, indent);
+            break;
         case AST_NAMED_FN:
             print_named_fn(self, node, indent);
             break;

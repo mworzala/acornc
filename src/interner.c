@@ -21,7 +21,7 @@ static StringKey string_set_add_new(self_t, char *string) {
         self->data = ARRAY_GROW(char *, self->data, self->capacity);
     }
 
-    self->data[self->size] = string;
+    self->data[self->size] = strdup(string);
     self->size++;
     return self->size - 1;
 }

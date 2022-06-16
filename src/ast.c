@@ -36,6 +36,8 @@ const char *ast_tag_to_string(AstTag tag) {
         case AST_LET:
             return "let";
 
+        case AST_CONST:
+            return "const";
         case AST_NAMED_FN:
             return "named_fn";
         case AST_STRUCT:

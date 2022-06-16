@@ -171,6 +171,7 @@ static TokenType check_keyword(self_t, int32_t start, int32_t length,
 
 /*
  * Based on the following string table:
+ * const
  * else
  *  num
  * false
@@ -186,6 +187,7 @@ static TokenType check_keyword(self_t, int32_t start, int32_t length,
 TokenType lex_ident_or_keyword(self_t) {
     // @formatter:off
     switch (self->start[0]) {
+        case 'c': return check_keyword(self, 1, 4, "onst", TOK_CONST);
         case 'e':
             if (self->current - self->start > 1) {
                 switch (self->start[1]) {

@@ -122,6 +122,8 @@ AstIndex int_module(self_t) {
 }
 
 AstIndex int_top_level_decl(self_t) {
+    if (parse_match(self, TOK_CONST))
+        return tl_const_decl(self);
     if (parse_match(self, TOK_FN) || parse_match(self, TOK_FOREIGN)) {
         return tl_fn_decl(self);
     } else if (parse_match(self, TOK_STRUCT)) {
@@ -131,6 +133,35 @@ AstIndex int_top_level_decl(self_t) {
     }
 
     return ast_index_empty;
+}
+
+AstIndex tl_const_decl(self_t) {
+    TokenIndex main_token = parse_assert(self, TOK_CONST);
+
+    // Parse name, accessible from `main_token + 1`
+    parse_assert(self, TOK_IDENT);
+
+    // Parse the type expression (optional)
+    AstIndex type_expr = ast_index_empty;
+    if (parse_match_advance(self, TOK_COLON)) {
+        type_expr = type_expr_constant(self);
+    }
+
+    // Parse the = (which is required)
+    parse_assert(self, TOK_EQ);
+
+    // Parse the init expression
+    AstIndex init_expr = int_expr(self);
+
+    // Construct node
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_CONST,
+        .main_token = main_token,
+        .data = {
+            .lhs = type_expr,
+            .rhs = init_expr,
+        }});
+    return self->nodes.size - 1;
 }
 
 AstIndex tl_fn_decl(self_t) {

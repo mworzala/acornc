@@ -2,6 +2,7 @@
 foreign fn puts(str: *i8) i32;
 
 fn main() i32 {
-    puts("Hello, world!");
+    let string = "Hello, world!";
+    puts(string);
     return 0;
 }
