@@ -27,8 +27,9 @@ typedef struct ast_lowering_s {
 
 HirIndex ast_lower_module(self_t, AstIndex module_index);
 HirIndex ast_lower_tl_decl(self_t, AstIndex decl_index);
-HirIndex ast_lower_stmt(self_t, AstIndex decl_index);
-HirIndex ast_lower_expr(self_t, AstIndex decl_index);
+HirIndex ast_lower_stmt(self_t, AstIndex stmt_index);
+HirIndex ast_lower_expr(self_t, AstIndex expr_index);
+HirIndex ast_lower_type(self_t, AstIndex type_index);
 
 #undef self_t
 

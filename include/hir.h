@@ -14,6 +14,16 @@ typedef enum hir_inst_tag_s {
 
     // Represents an integer if the size fits into 64 bits. Added to HIR
     HIR_INT,
+    // Uses `str_value`.
+    HIR_STRING,
+    // Uses `int_value`, either 1 or 0
+    HIR_BOOL,
+
+    // All use `bin_op`
+    HIR_ADD,
+    HIR_SUB,
+    HIR_MUL,
+    HIR_DIV,
 
     // Represents a const declaration within a module
     // pl_op where pl is the name of the const (in the intern table), and op is the value of the const
@@ -22,6 +32,15 @@ typedef enum hir_inst_tag_s {
     // Represents a module (file)
     //todo how is this represented?
     HIR_MODULE,
+
+    // Ensures the inner expression matches the given type.
+    // pl_op where pl is the type, and op is the expression to match.
+    HIR_AS_TYPE,
+
+    // Represents a type expression (for now a static name (eg i32, bool) optionally prefixed with a ptr)
+    // ty
+    //todo dedicated tests
+    HIR_TYPE,
 
     __HIR_LAST,
 } HirInstTag;
@@ -32,10 +51,22 @@ char *hir_tag_to_string(HirInstTag tag);
 typedef union hir_inst_data_s {
     uint8_t noop;
     uint64_t int_value;
+    StringKey str_value;
     struct {
         uint32_t payload;
         HirIndex operand;
     } pl_op;
+    struct {
+        bool is_ptr;
+        // if `is_ptr`, inner is a HirIndex pointing to the pointed type
+        // otherwise, inner is a StringKey representing the type name
+        uint32_t inner;
+    } ty;
+    HirIndex un_op;
+    struct {
+        HirIndex lhs;
+        HirIndex rhs;
+    } bin_op;
 } HirInstData;
 
 typedef struct hir_inst_s {

@@ -7,3 +7,19 @@ TEST(Hir, SmallInt) {
 )#";
     EXPECT_EXPR(input, expected);
 }
+
+TEST(Hir, String) {
+    auto input = "\"Hello, world!\"";
+    auto expected = R"#(
+%0 = str("Hello, world!")
+)#";
+    EXPECT_EXPR(input, expected);
+}
+
+TEST(Hir, Bool) {
+    auto input = "true";
+    auto expected = R"#(
+%0 = bool(true)
+)#";
+    EXPECT_EXPR(input, expected);
+}

@@ -3,11 +3,21 @@
 char *hir_tag_to_string(HirInstTag tag) {
     switch (tag) {
         case HIR_RESERVED:      return "HIR_RESERVED";
+
         case HIR_INT:           return "HIR_INT";
+        case HIR_STRING:        return "HIR_STRING";
+        case HIR_BOOL:          return "HIR_BOOL";
+
+        case HIR_ADD:           return "HIR_ADD";
+        case HIR_SUB:           return "HIR_SUB";
+        case HIR_MUL:           return "HIR_MUL";
+        case HIR_DIV:           return "HIR_DIV";
+
         case HIR_CONST_DECL:    return "HIR_CONST_DECL";
         case HIR_MODULE:        return "HIR_MODULE";
-        default:
-            return "<?>";
+        case HIR_AS_TYPE:       return "HIR_AS_TYPE";
+        case HIR_TYPE:          return "HIR_TYPE";
+        default:                return "<?>";
     }
 }
 

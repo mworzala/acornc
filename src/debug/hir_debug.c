@@ -77,22 +77,70 @@ static void print_int(self_t, HirIndex index, HirInst *inst, int indent) {
     print(self, "int(%llu)\n", inst->data.int_value);
 }
 
+static void print_string_inst(self_t, HirIndex index, HirInst *inst, int indent) {
+    print_default_header(self, index, indent);
+    print(self, "str(");
+    print_string(self, inst->data.str_value, true);
+    print(self, ")\n");
+}
+
+static void print_bool(self_t, HirIndex index, HirInst *inst, int indent) {
+    print_default_header(self, index, indent);
+    print(self, "bool(");
+    print(self, inst->data.int_value ? "true" : "false");
+    print(self, ")\n");
+}
+
+static void print_binary_generic(self_t, char *name, HirIndex index, HirInst *inst, int indent) {
+    print_inst(self, inst->data.bin_op.lhs, indent);
+    print_inst(self, inst->data.bin_op.rhs, indent);
+
+    print_default_header(self, index, indent);
+    print(self, "%s(%%%d, %%%d)\n", name, inst->data.bin_op.lhs, inst->data.bin_op.rhs);
+}
+
+static void print_as_type(self_t, HirIndex index, HirInst *inst, int indent) {
+    print_inst(self, inst->data.pl_op.operand, indent);
+
+    print_default_header(self, index, indent);
+    print(self, "as_type(");
+    print_inst(self, inst->data.pl_op.payload, 0);
+    print(self, ", %%%d)\n", inst->data.pl_op.operand);
+}
+
+static void print_type(self_t, HirIndex index, HirInst *inst, int indent) {
+    if (inst->data.ty.is_ptr) {
+        // This is a pointer, just print a * and inner
+        print(self, "*")
+        print_inst(self, inst->data.ty.inner, 0);
+        return;
+    }
+
+    // Not a pointer, print the type name
+    print_string(self, inst->data.ty.inner, false);
+}
+
 
 static void print_inst(self_t, HirIndex index, int indent) {
     HirInst *inst = hir_get_inst(self->hir, index);
     assert(inst != NULL);
 
     switch (inst->tag) {
-        case HIR_MODULE:
-            assert(false);
+        case HIR_MODULE:        assert(false);
 
-        case HIR_CONST_DECL:
-            print_const_decl(self, index, inst, indent);
-            break;
+        case HIR_CONST_DECL:    print_const_decl(self, index, inst, indent); break;
 
-        case HIR_INT:
-            print_int(self, index, inst, indent);
-            break;
+        case HIR_INT:           print_int(self, index, inst, indent); break;
+        case HIR_STRING:        print_string_inst(self, index, inst, indent); break;
+        case HIR_BOOL:          print_bool(self, index, inst, indent); break;
+
+        case HIR_ADD:           print_binary_generic(self, "add", index, inst, indent); break;
+        case HIR_SUB:           print_binary_generic(self, "sub", index, inst, indent); break;
+        case HIR_MUL:           print_binary_generic(self, "mul", index, inst, indent); break;
+        case HIR_DIV:           print_binary_generic(self, "div", index, inst, indent); break;
+
+        case HIR_AS_TYPE:       print_as_type(self, index, inst, indent); break;
+        case HIR_TYPE:          print_type(self, index, inst, indent); break;
 
         default:
             assert(false);
