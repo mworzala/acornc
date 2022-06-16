@@ -41,8 +41,11 @@ HirIndex ast_lower_module(self_t, AstIndex module_index) {
 // Top level declarations
 
 HirIndex ast_lower_const(self_t, AstNode *node) {
+    // AST const only counts declarations like `const x = 42`, not functions. Even though they both result in HIR_CONST_DECL
+    //todo when `const a = fn() {};` is supported by parser, this will not be the case.
     assert(node->tag == AST_CONST);
     HirIndex result = reserve_inst(self);
+    HirIndex block_inline = reserve_inst(self);
 
     // Intern the name of the declaration
     char *name_bytes = ast_get_token_content(self->ast, node->main_token + 1);
@@ -66,10 +69,14 @@ HirIndex ast_lower_const(self_t, AstNode *node) {
         });
     }
 
+    fill_inst(self, block_inline, HIR_BLOCK_INLINE, (HirInstData) {
+        .un_op = init_expr,
+    });
+
     return fill_inst(self, result, HIR_CONST_DECL, (HirInstData) {
         .pl_op = {
             .payload = name,
-            .operand = init_expr,
+            .operand = block_inline,
         }
     });
 }
@@ -94,7 +101,18 @@ HirIndex ast_lower_tl_decl(self_t, AstIndex decl_index) {
 // Statements
 
 HirIndex ast_lower_stmt(self_t, AstIndex decl_index) {
-    assert(false);
+    AstNode *node = ast_get_node(self->ast, decl_index);
+
+    HirIndex result;
+    switch (node->tag) {
+        //todo let stmt
+        default: {
+            result = ast_lower_expr(self, decl_index);
+            break;
+        }
+    }
+
+    return result;
 }
 
 
@@ -167,6 +185,44 @@ HirIndex ast_lower_binary(self_t, AstNode *node) {
     });
 }
 
+HirIndex ast_lower_block(self_t, AstNode *node) {
+    assert(node->tag == AST_BLOCK);
+
+    if (node->data.lhs == ast_index_empty) {
+        // Block is empty
+        HirIndex extra_index = add_extra(self, 0);
+        return add_inst(self, HIR_BLOCK, (HirInstData) {
+            .extra = extra_index,
+        });
+    }
+
+    // Block is not empty, parse statements
+    HirIndex result = reserve_inst(self);
+    IndexList stmts;
+    index_list_init(&stmts);
+
+    for (AstIndex extra_idx = node->data.lhs; extra_idx <= node->data.rhs; extra_idx++) {
+        AstIndex stmt_index = self->ast->extra_data.data[extra_idx];
+        HirIndex stmt = ast_lower_stmt(self, stmt_index);
+        index_list_add(&stmts, stmt);
+
+        //todo do not allow returns in here
+        //todo last statement should become an implicit return
+        //todo need to add an implicit return field to the AST block node
+    }
+
+    // Add the block data to extra_data
+    HirBlock block_data = (HirBlock) {.len = stmts.size};
+    HirIndex data_index = index_list_add_sized(&self->extra, block_data);
+    for (size_t i = 0; i < stmts.size; i++) {
+        add_extra(self, stmts.data[i]);
+    }
+
+    return fill_inst(self, result, HIR_BLOCK, (HirInstData) {
+        .extra = data_index,
+    });
+}
+
 HirIndex ast_lower_expr(self_t, AstIndex decl_index) {
     AstNode *node = ast_get_node(self->ast, decl_index);
 
@@ -186,6 +242,10 @@ HirIndex ast_lower_expr(self_t, AstIndex decl_index) {
         }
         case AST_BINARY: {
             result = ast_lower_binary(self, node);
+            break;
+        }
+        case AST_BLOCK: {
+            result = ast_lower_block(self, node);
             break;
         }
         default:

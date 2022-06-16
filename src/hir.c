@@ -13,7 +13,12 @@ char *hir_tag_to_string(HirInstTag tag) {
         case HIR_MUL:           return "HIR_MUL";
         case HIR_DIV:           return "HIR_DIV";
 
+        case HIR_BLOCK_INLINE:  return "HIR_BLOCK_INLINE";
+        case HIR_BLOCK:         return "HIR_BLOCK";
+
         case HIR_CONST_DECL:    return "HIR_CONST_DECL";
+        case HIR_FN_DECL:       return "HIR_FN_DECL";
+
         case HIR_MODULE:        return "HIR_MODULE";
         case HIR_AS_TYPE:       return "HIR_AS_TYPE";
         case HIR_TYPE:          return "HIR_TYPE";

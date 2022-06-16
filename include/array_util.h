@@ -32,12 +32,12 @@ typedef struct index_list_s {
 void index_list_init(self_t);
 void index_list_free(self_t);
 void index_list_add(self_t, uint32_t index);
-void index_list_add_multi(self_t, void *data, size_t size);
+uint32_t index_list_add_multi(self_t, void *data, size_t size);
 uint32_t *index_list_get(self_t, uint32_t i);
 bool index_list_contains(self_t, uint32_t index);
 
 #define index_list_add_sized(self, data) index_list_add_multi(self, &(data), sizeof(data) / sizeof(uint32_t))
-#define index_list_get_sized(self, Type, start_index) *((Type*) index_list_get(start_index);
+#define index_list_get_sized(self, Type, start_index) ((Type*) index_list_get(self, start_index));
 
 #undef self_t
 

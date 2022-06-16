@@ -57,7 +57,7 @@ void index_list_add(self_t, uint32_t index) {
     self->size++;
 }
 
-void index_list_add_multi(self_t, void *data, size_t size) {
+uint32_t index_list_add_multi(self_t, void *data, size_t size) {
     // Size may not be greater than 8 because then ARRAY_GROW_CAPACITY is not guaranteed to allocate enough new memory.
     // The initial size is 8, and will always double after that.
     assert(size <= 8);
@@ -68,7 +68,9 @@ void index_list_add_multi(self_t, void *data, size_t size) {
     }
 
     memcpy(self->data + self->size, data, size * sizeof(uint32_t));
+    uint32_t start_index = self->size;
     self->size += size;
+    return start_index;
 }
 
 uint32_t *index_list_get(self_t, uint32_t i) {

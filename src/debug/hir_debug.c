@@ -22,7 +22,7 @@ typedef struct {
     self->buffer_index += strlen(self->buffer + self->buffer_index); \
 }
 
-#define get_extra(self, index) *index_list_get(&(self)->ast->extra_data, (index))
+#define get_extra(self, index) *index_list_get(&(self)->hir->extra, (index))
 
 void print_string(self_t, StringKey key, bool quote) {
     // str still owned by string set
@@ -62,14 +62,10 @@ static void print_const_decl(self_t, HirIndex index, HirInst *inst, int indent) 
     // Print const name
     print_string(self, inst->data.pl_op.payload, false);
 
-    print(self, ": %%%d = ", index);
-    print(self, "todo({\n");
+    print(self, ": ");
 
-    // Print initializer
-    print_inst(self, inst->data.pl_op.operand, indent + 2);
-
-    print_indent(self, indent);
-    print(self, "})\n");
+    // Print content
+    print_inst(self, inst->data.pl_op.operand, 0);
 }
 
 static void print_int(self_t, HirIndex index, HirInst *inst, int indent) {
@@ -97,6 +93,44 @@ static void print_binary_generic(self_t, char *name, HirIndex index, HirInst *in
 
     print_default_header(self, index, indent);
     print(self, "%s(%%%d, %%%d)\n", name, inst->data.bin_op.lhs, inst->data.bin_op.rhs);
+}
+
+static void print_block_inline(self_t, HirIndex index, HirInst *inst, int indent) {
+    print_default_header(self, index, indent);
+
+    print(self, "block_inline({\n");
+
+    print_inst(self, inst->data.un_op, indent + 2);
+
+    print_indent(self, indent);
+    print(self, "})\n");
+}
+
+static void print_block(self_t, HirIndex index, HirInst *inst, int indent) {
+    print_default_header(self, index, indent);
+    print(self, "block(");
+
+    HirBlock *block_data = index_list_get_sized(&self->hir->extra, HirBlock, inst->data.extra);
+    assert(block_data != NULL);
+
+    // Exit early if block is empty
+    if (block_data->len == 0) {
+        print(self, ")\n");
+        return;
+    }
+
+    // Print each statement
+    print(self, "{\n");
+
+    for (size_t i = 0; i < block_data->len; i++) {
+        HirIndex stmt_index = get_extra(self, inst->data.extra + i + 1);
+        print_inst(self, stmt_index, indent + 2);
+        if (i < block_data->len - 1)
+            print(self, "\n");
+    }
+
+    print_indent(self, indent);
+    print(self, "})\n");
 }
 
 static void print_as_type(self_t, HirIndex index, HirInst *inst, int indent) {
@@ -138,6 +172,9 @@ static void print_inst(self_t, HirIndex index, int indent) {
         case HIR_SUB:           print_binary_generic(self, "sub", index, inst, indent); break;
         case HIR_MUL:           print_binary_generic(self, "mul", index, inst, indent); break;
         case HIR_DIV:           print_binary_generic(self, "div", index, inst, indent); break;
+
+        case HIR_BLOCK_INLINE:  print_block_inline(self, index, inst, indent); break;
+        case HIR_BLOCK:         print_block(self, index, inst, indent); break;
 
         case HIR_AS_TYPE:       print_as_type(self, index, inst, indent); break;
         case HIR_TYPE:          print_type(self, index, inst, indent); break;

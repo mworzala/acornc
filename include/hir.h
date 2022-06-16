@@ -25,9 +25,19 @@ typedef enum hir_inst_tag_s {
     HIR_MUL,
     HIR_DIV,
 
+    // May only contain a single expression, which is treated as the "return" from the block
+    // Uses `un_op`
+    HIR_BLOCK_INLINE,
+    // Contains a number of expressions
+    // Uses `extra` pointing to `HirBlock`
+    HIR_BLOCK,
+
     // Represents a const declaration within a module
     // pl_op where pl is the name of the const (in the intern table), and op is the value of the const
+    // The value can be either a block_inline or a fn_decl
     HIR_CONST_DECL,
+    // `extra` pointing to a `HirFnDecl`
+    HIR_FN_DECL,
 
     // Represents a module (file)
     //todo how is this represented?
@@ -47,11 +57,12 @@ typedef enum hir_inst_tag_s {
 
 char *hir_tag_to_string(HirInstTag tag);
 
-// 8 bytes max
+// 8 bytes max, if something needs to be bigger use `extra`
 typedef union hir_inst_data_s {
     uint8_t noop;
     uint64_t int_value;
     StringKey str_value;
+    uint32_t extra;
     struct {
         uint32_t payload;
         HirIndex operand;
@@ -68,6 +79,20 @@ typedef union hir_inst_data_s {
         HirIndex rhs;
     } bin_op;
 } HirInstData;
+
+typedef struct hir_block_s {
+    uint32_t len; // One instruction index follows for each `len`
+} HirBlock;
+
+typedef struct hir_fn_decl_s {
+    uint32_t flags;
+    HirIndex ret_ty; // If 0, return type is void
+    uint32_t param_len; // One instruction follows for each parameter (points to a HIR_PARAM)
+    uint32_t body_len; // One instruction follows for each body instruction
+} HirFnDecl;
+
+#define HIR_FN_DECL_FLAGS_NONE (0x0)
+#define HIR_FN_DECL_FLAGS_FOREIGN (0x1)
 
 typedef struct hir_inst_s {
     HirInstTag tag;
