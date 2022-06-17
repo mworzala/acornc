@@ -76,10 +76,12 @@ typedef struct ast_index_pair_s {
     AstIndex second;
 } AstIndexPair;
 
+// Has the option to wrap an AstIndex. Called on the last element of an int_parse_list if there is no trailing delimiter. Ignored if NULL
+typedef AstIndex (*AstWrapCallback)(self_t, AstIndex);
 // Parses a list of expressions, think function parameters
 // parse_fn=fn_param open=( close=) delimiter=,
 // Has language semantics of allowing a trailing delimiter or not.
-AstIndexPair int_parse_list(self_t, AstIndex (*parse_fn)(self_t), TokenType open, TokenType close, TokenType delimiter);
+AstIndexPair int_parse_list(self_t, AstIndex (*parse_fn)(self_t), TokenType open, TokenType close, TokenType delimiter, AstWrapCallback wrap_func);
 
 #undef self_t
 

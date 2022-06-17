@@ -6,7 +6,8 @@ TEST(Parser, BasicIf) {
 if
   bool "true"
   block
-    int "1"
+    iret
+      int "1"
 )#";
     EXPECT_EXPR(input, expected, false);
 }
@@ -17,9 +18,11 @@ TEST(Parser, BasicIfElse) {
 if
   bool "true"
   block
-    int "1"
+    iret
+      int "1"
   block
-    int "2"
+    iret
+      int "2"
 )#";
     EXPECT_EXPR(input, expected, false);
 }
@@ -30,13 +33,16 @@ TEST(Parser, BasicIfElseIfElse) {
 if
   bool "true"
   block
-    int "1"
+    iret
+      int "1"
   if
     bool "false"
     block
-      int "2"
+      iret
+        int "2"
     block
-      int "3"
+      iret
+        int "3"
 )#";
     EXPECT_EXPR(input, expected, false);
 }

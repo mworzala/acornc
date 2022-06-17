@@ -28,18 +28,18 @@ block
 }
 
 TEST(Parser, BlockAllowNoFinalSemicolon) {
-    //todo this is actually syntax sugar for a return statement. Need to add that either here or when lowering. Probably lowering
     auto input = "{1;2}";
     auto expected = R"#(
 block
   int "1"
-  int "2"
+  iret
+    int "2"
 )#";
     EXPECT_EXPR(input, expected, false);
 }
 
 TEST(Parser, BlockAcceptExprOrStmt) {
-    auto input = "{let x; x}";
+    auto input = "{let x; x;}";
     auto expected = R"#(
 block
   let "x"
@@ -53,7 +53,7 @@ block
 
 
 TEST(Parser, BlockWithinBlock) {
-    auto input = "{{x}}";
+    auto input = "{{x;};}";
     auto expected = R"#(
 block
   block
@@ -63,7 +63,7 @@ block
 }
 
 TEST(Parser, BlockWithMissingSemicolon) {
-    auto input = "{ let foo = 1\nlet bar = 1 }";
+    auto input = "{ let foo = 1\nlet bar = 1; }";
     auto expected = R"#(
 block
   let "foo"
@@ -74,9 +74,10 @@ ERR : missing semicolon @ 14
 )#";
     EXPECT_EXPR(input, expected, false);
 }
+//todo add a test to ensure an `iret` does not contain a statement, eg { let x = 1 } is not valid
 
 TEST(Parser, BlockWithMissingSemicolonAfterError) {
-    auto input = "{ let foo =\nlet bar = 1 }";
+    auto input = "{ let foo =\nlet bar = 1; }";
     //todo unexpected EOF is not the correct error here
     auto expected = R"#(
 block

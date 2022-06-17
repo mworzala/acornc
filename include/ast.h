@@ -46,6 +46,10 @@ typedef enum ast_tag_s {
     // main_token:  The token representing 'return'
     // lhs/rhs:     The expr being returned, if present/Empty
     AST_RETURN,
+    // Implicit return, only used if the last expression in a block does not have a semicolon
+    // main_token:  Nothing
+    // lhs/rhs:     The inner expr/empty
+    AST_I_RETURN,
 
     // main_token:  The token representing 'if'
     // lhs/rhs   :  Condition expr/IfData

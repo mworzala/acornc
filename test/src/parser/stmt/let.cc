@@ -68,7 +68,7 @@ ERR : unexpected end of file @ 9
 }
 
 TEST(Parser, LetMissingInitializerParseBelow) {
-    auto input = "{ let foo =;\nlet bar = 1 }";
+    auto input = "{ let foo =;\nlet bar = 1; }";
     //todo incorrect error
     auto expected = R"#(
 block

@@ -38,6 +38,8 @@ typedef enum hir_inst_tag_s {
     HIR_CONST_DECL,
     // `extra` pointing to a `HirFnDecl`
     HIR_FN_DECL,
+    // `pl_op` with name and type expr
+    HIR_FN_PARAM,
 
     // Represents a module (file)
     //todo how is this represented?
@@ -86,9 +88,9 @@ typedef struct hir_block_s {
 
 typedef struct hir_fn_decl_s {
     uint32_t flags;
-    HirIndex ret_ty; // If 0, return type is void
+    HirIndex ret_ty; // If 0, return type is void, otherwise a type index
     uint32_t param_len; // One instruction follows for each parameter (points to a HIR_PARAM)
-    uint32_t body_len; // One instruction follows for each body instruction
+    uint32_t body; // body block instruction
 } HirFnDecl;
 
 #define HIR_FN_DECL_FLAGS_NONE (0x0)

@@ -58,7 +58,7 @@ static AstIndex error(self_t, AstError code) {
     ast_node_list_add(&self->nodes, (AstNode) {
         .tag = AST_ERROR,
         .main_token = UINT32_MAX,
-        .data = { ast_index_empty, ast_index_empty },
+        .data = {ast_index_empty, ast_index_empty},
     });
     return self->nodes.size - 1;
 }
@@ -196,8 +196,7 @@ AstIndex tl_struct_decl(self_t) {
 
     parse_assert(self, TOK_IDENT);// Eat the identifier, can be accessed using main_token + 1
 
-    AstIndexPair entry_data = int_parse_list(self, struct_field,
-                                             TOK_LBRACE, TOK_RBRACE, TOK_SEMI);
+    AstIndexPair entry_data = int_parse_list(self, struct_field, TOK_LBRACE, TOK_RBRACE, TOK_SEMI, NULL);
 
     ast_node_list_add(&self->nodes, (AstNode) {
         .tag = AST_STRUCT,
@@ -211,8 +210,7 @@ AstIndex tl_enum_decl(self_t) {
 
     parse_assert(self, TOK_IDENT);// Eat the identifier, can be accessed using main_token + 1
 
-    AstIndexPair entry_data = int_parse_list(self, enum_case,
-                                             TOK_LBRACE, TOK_RBRACE, TOK_COMMA);
+    AstIndexPair entry_data = int_parse_list(self, enum_case, TOK_LBRACE, TOK_RBRACE, TOK_COMMA, NULL);
 
     ast_node_list_add(&self->nodes, (AstNode) {
         .tag = AST_ENUM,
@@ -297,7 +295,8 @@ AstIndex int_expr_bp(self_t) {
         Token token = parse_peek_curr(self);
         BindingPower bp = token_bp(token, top.lhs == ast_index_empty);
 
-        bool is_not_op = bp.lhs == 0; // We return 0, 0 if it was not a valid operator, and none of them return 0 for LHS.
+        bool is_not_op =
+            bp.lhs == 0; // We return 0, 0 if it was not a valid operator, and none of them return 0 for LHS.
         bool is_low_bp = bp.lhs < top.min_bp;// Too low of binding power (precedence) to continue.
         if (is_not_op || is_low_bp) {
             ParseFrame res = top;
@@ -422,12 +421,20 @@ AstIndex expr_literal(self_t) {
     return ast_index_empty;
 }
 
+static AstIndex _wrap_in_iret(self_t, AstIndex idx) {
+    ast_node_list_add(&self->nodes, (AstNode) {
+        .tag = AST_I_RETURN,
+        .main_token = UINT32_MAX,
+        .data = {idx, ast_index_empty},
+    });
+    return self->nodes.size - 1;
+}
+
 AstIndex expr_block(self_t) {
     assert(parse_peek_curr(self).type == TOK_LBRACE);
     TokenIndex main_token = self->tok_index;
 
-    AstIndexPair data = int_parse_list(self, int_stmt,
-                                       TOK_LBRACE, TOK_RBRACE, TOK_SEMI);
+    AstIndexPair data = int_parse_list(self, int_stmt, TOK_LBRACE, TOK_RBRACE, TOK_SEMI, _wrap_in_iret);
 
     // Create the block node
     ast_node_list_add(&self->nodes, (AstNode) {
@@ -532,12 +539,12 @@ AstIndex fn_proto(self_t, bool foreign) {
     TokenIndex main_token = parse_assert(self, TOK_IDENT);
 
     // Parse parameters
-    AstIndexPair param_data = int_parse_list(self, fn_param,
-                                             TOK_LPAREN, TOK_RPAREN, TOK_COMMA);
+    AstIndexPair param_data = int_parse_list(self, fn_param, TOK_LPAREN, TOK_RPAREN, TOK_COMMA, NULL);
 
     // Parse type expression
     AstIndex type_expr = ast_index_empty;
-    if (parse_peek_curr(self).type != TOK_LBRACE) {
+    TokenType next_tok = parse_peek_curr(self).type;
+    if (next_tok != TOK_LBRACE && next_tok != TOK_SEMI) {
         type_expr = type_expr_constant(self);
     }
 
@@ -605,8 +612,7 @@ AstIndex enum_case(self_t) {
 
 AstIndex call_data(self_t) {
     // Parse parameters
-    AstIndexPair param_data = int_parse_list(self, int_expr,
-                                             TOK_LPAREN, TOK_RPAREN, TOK_COMMA);
+    AstIndexPair param_data = int_parse_list(self, int_expr, TOK_LPAREN, TOK_RPAREN, TOK_COMMA, NULL);
 
     AstIndex call_data_idx = self->extra_data.size;
     AstCallData call_data = {
@@ -623,7 +629,8 @@ AstIndex call_data(self_t) {
 // Unmapped
 
 AstIndexPair
-int_parse_list(self_t, AstIndex (*parse_fn)(self_t), TokenType open, TokenType close, TokenType delimiter) {
+int_parse_list(self_t, AstIndex (*parse_fn)(self_t), TokenType open, TokenType close, TokenType delimiter,
+               AstWrapCallback wrap_func) {
     parse_assert(self, open);
 
     // Need to store the inner indices so that they can all be added at once to ensure
@@ -634,7 +641,6 @@ int_parse_list(self_t, AstIndex (*parse_fn)(self_t), TokenType open, TokenType c
     // Parse inner expressions
     while (parse_peek_curr(self).type != close) {
         AstIndex idx = parse_fn(self);
-        index_list_add(&inner_indices, idx);
 
         if (idx == ast_index_empty) {
             //todo probably need to add an error? Although this may be unreachable
@@ -644,7 +650,8 @@ int_parse_list(self_t, AstIndex (*parse_fn)(self_t), TokenType open, TokenType c
         if (parse_peek_curr(self).type == delimiter) {
             parse_advance(self);
         } else if (parse_peek_curr(self).type == close) {
-            break;
+            if (wrap_func != NULL)
+                idx = wrap_func(self, idx);
         } else {
             // Insert an error, however we can still continue trying to parse this
             //  eg this is a non-fatal parse error.
@@ -655,6 +662,8 @@ int_parse_list(self_t, AstIndex (*parse_fn)(self_t), TokenType open, TokenType c
                 .message = "Missing semicolon",
             });
         }
+
+        index_list_add(&inner_indices, idx);
     }
     parse_assert(self, close);
 

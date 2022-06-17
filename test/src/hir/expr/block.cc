@@ -9,7 +9,7 @@ TEST(Hir, BlockEmpty) {
 }
 
 TEST(Hir, BlockNestedEmpty) {
-    auto input = "{{}}";
+    auto input = "{{};}";
     auto expected = R"#(
 %0 = block({
   %1 = block()

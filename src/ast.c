@@ -24,6 +24,8 @@ const char *ast_tag_to_string(AstTag tag) {
             return "block";
         case AST_RETURN:
             return "ret";
+        case AST_I_RETURN:
+            return "iret";
         case AST_IF:
             return "if";
         case AST_WHILE:

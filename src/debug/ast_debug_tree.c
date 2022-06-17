@@ -85,7 +85,16 @@ static void print_return(self_t, AstNode *node, int indent) {
     self->buffer_index--;
     print(self, "\n");
 
-    // Print LHS/RHS
+    // Print LHS
+    print_node_if_present(self, node->data.lhs, indent + 2);
+}
+
+static void print_i_return(self_t, AstNode *node, int indent) {
+    // This index subtraction removes the space added by print_node.
+    self->buffer_index--;
+    print(self, "\n");
+
+    // Print LHS
     print_node_if_present(self, node->data.lhs, indent + 2);
 }
 
@@ -271,6 +280,9 @@ static void print_node(self_t, AstIndex index, int indent) {
             break;
         case AST_RETURN:
             print_return(self, node, indent);
+            break;
+        case AST_I_RETURN:
+            print_i_return(self, node, indent);
             break;
         case AST_BLOCK:
             print_block(self, node, indent);

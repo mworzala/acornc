@@ -30,6 +30,11 @@ static HirIndex fill_inst(self_t, HirIndex reserved, HirInstTag tag, HirInstData
 }
 
 
+// SECTION: Forward declarations
+
+HirIndex ast_lower_block(self_t, AstNode *node);
+
+
 // SECTION: Implementation
 // The implementation of lowering each ast node.
 
@@ -81,6 +86,94 @@ HirIndex ast_lower_const(self_t, AstNode *node) {
     });
 }
 
+HirIndex ast_lower_fn_param(self_t, AstNode *node) {
+    assert(node->tag == AST_FN_PARAM);
+    HirIndex result = reserve_inst(self);
+
+    // Intern the name of the parameter
+    char *name_bytes = ast_get_token_content(self->ast, node->main_token);
+    StringKey name = string_set_add(&self->strings, name_bytes);
+    free(name_bytes);
+
+    // Parse the type annotation
+    assert(node->data.rhs != ast_index_empty);
+    HirIndex type_expr = ast_lower_type(self, node->data.rhs);
+
+    return fill_inst(self, result, HIR_FN_PARAM, (HirInstData) {
+        .pl_op = {
+            .payload = name,
+            .operand = type_expr,
+        }
+    });
+}
+
+HirIndex ast_lower_fn_named(self_t, AstNode *node) {
+    assert(node->tag == AST_NAMED_FN);
+    AstNode *proto_node = ast_get_node_tagged(self->ast, node->data.lhs, AST_FN_PROTO);
+    AstFnProto *proto = index_list_get_sized(&self->ast->extra_data, AstFnProto, proto_node->data.lhs);
+    HirIndex const_decl_index = reserve_inst(self);
+    HirIndex fn_decl_index = reserve_inst(self);
+
+    // Intern the name of the declaration
+    char *name_bytes = ast_get_token_content(self->ast, node->main_token + 1);
+    StringKey name = string_set_add(&self->strings, name_bytes);
+    free(name_bytes);
+
+    // Return type
+    HirIndex ret_ty = hir_index_empty;
+    if (proto_node->data.rhs != ast_index_empty) {
+        ret_ty = ast_lower_type(self, proto_node->data.rhs);
+    }
+
+    // Lower parameters
+    IndexList param_indices;
+    index_list_init(&param_indices);
+    if (proto->param_start != ast_index_empty) {
+        for (AstIndex param_index = proto->param_start; param_index <= proto->param_end; param_index++) {
+            AstNode *param_node = ast_get_node_tagged(self->ast, self->ast->extra_data.data[param_index], AST_FN_PARAM);
+            HirIndex param_hir = ast_lower_fn_param(self, param_node);
+            index_list_add(&param_indices, param_hir);
+
+            //todo need to add params to the scope
+        }
+    }
+
+    // Lower the body
+    HirIndex body = hir_index_empty;
+    if (!(proto->flags & FN_PROTO_FOREIGN)) {
+        AstNode *body_node = ast_get_node_tagged(self->ast, node->data.rhs, AST_BLOCK);
+        body = ast_lower_block(self, body_node);
+        //todo somehow need to insert an as_node here probably?
+        //     or alternatively add some state saying we are in a void function so a return statement with
+        //     expr is an error (or specify type otherwise which can be used to insert an as_node)
+    }
+
+    // Create the function details
+    HirFnDecl fn_decl = (HirFnDecl) {
+        .flags = proto->flags, // todo these flags may not stay synced with AST.
+        .ret_ty = ret_ty,
+        .param_len = param_indices.size,
+        .body = body,
+    };
+    HirIndex extra_index = index_list_add_sized(&self->extra, fn_decl);
+
+    // Add the params to extra as required by fn_decl
+    for (size_t i = 0; i < param_indices.size; i++)
+        add_extra(self, param_indices.data[i]);
+    index_list_free(&param_indices);
+
+    fill_inst(self, fn_decl_index, HIR_FN_DECL, (HirInstData) {
+        .extra = extra_index,
+    });
+
+    return fill_inst(self, const_decl_index, HIR_CONST_DECL, (HirInstData) {
+        .pl_op = {
+            .payload = name,
+            .operand = fn_decl_index,
+        }
+    });
+}
+
 HirIndex ast_lower_tl_decl(self_t, AstIndex decl_index) {
     AstNode *node = ast_get_node(self->ast, decl_index);
 
@@ -88,6 +181,10 @@ HirIndex ast_lower_tl_decl(self_t, AstIndex decl_index) {
     switch (node->tag) {
         case AST_CONST: {
             result = ast_lower_const(self, node);
+            break;
+        }
+        case AST_NAMED_FN: {
+            result = ast_lower_fn_named(self, node);
             break;
         }
         default:

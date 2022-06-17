@@ -18,6 +18,7 @@ char *hir_tag_to_string(HirInstTag tag) {
 
         case HIR_CONST_DECL:    return "HIR_CONST_DECL";
         case HIR_FN_DECL:       return "HIR_FN_DECL";
+        case HIR_FN_PARAM:      return "HIR_FN_PARAM";
 
         case HIR_MODULE:        return "HIR_MODULE";
         case HIR_AS_TYPE:       return "HIR_AS_TYPE";

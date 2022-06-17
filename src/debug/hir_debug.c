@@ -68,6 +68,51 @@ static void print_const_decl(self_t, HirIndex index, HirInst *inst, int indent) 
     print_inst(self, inst->data.pl_op.operand, 0);
 }
 
+static void print_fn_decl(self_t, HirIndex index, HirInst *inst, int indent) {
+    HirFnDecl *decl = index_list_get_sized(&self->hir->extra, HirFnDecl, inst->data.extra);
+
+    print_default_header(self, index, indent);
+
+    // Foreign flag
+    if (decl->flags & HIR_FN_DECL_FLAGS_FOREIGN)
+        print(self, ".foreign ");
+
+    print(self, "fn(");
+
+    // Parameters
+    print(self, "params = ");
+    if (decl->param_len == 0) {
+        print(self, "[]");
+    } else {
+        print(self, "[\n");
+        HirIndex param_start = inst->data.extra + (sizeof(HirFnDecl) / sizeof(HirIndex));
+        for (uint32_t i = 0; i < decl->param_len; i++) {
+            print_inst(self, get_extra(self, param_start + i), indent + 2);
+        }
+        print(self, "]");
+    }
+
+    if (!(decl->flags & HIR_FN_DECL_FLAGS_FOREIGN)) {
+        print(self, ", ");
+
+        // Body
+        print_inst(self, decl->body, 0);
+        self->buffer_index -= 1; // Remove the newline added by the body print
+    }
+
+    print(self, ")\n");
+}
+
+static void print_fn_param(self_t, HirIndex index, HirInst *inst, int indent) {
+    print_indent(self, indent);
+
+    print_string(self, inst->data.pl_op.payload, false);
+    print(self, ": ");
+
+    print_inst(self, inst->data.pl_op.operand, 0);
+    print(self, "\n");
+}
+
 static void print_int(self_t, HirIndex index, HirInst *inst, int indent) {
     print_default_header(self, index, indent);
     print(self, "int(%llu)\n", inst->data.int_value);
@@ -163,6 +208,8 @@ static void print_inst(self_t, HirIndex index, int indent) {
         case HIR_MODULE:        assert(false);
 
         case HIR_CONST_DECL:    print_const_decl(self, index, inst, indent); break;
+        case HIR_FN_DECL:       print_fn_decl(self, index, inst, indent); break;
+        case HIR_FN_PARAM:      print_fn_param(self, index, inst, indent); break;
 
         case HIR_INT:           print_int(self, index, inst, indent); break;
         case HIR_STRING:        print_string_inst(self, index, inst, indent); break;
