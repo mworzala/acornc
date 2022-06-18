@@ -511,7 +511,7 @@ HirIndex ast_lower_block(self_t, AstNode *node) {
 }
 
 HirIndex ast_lower_return(self_t, AstNode *node) {
-    assert(node->tag == AST_RETURN || node->tag == AST_I_RETURN);
+    assert(node->tag == AST_RETURN);
     HirIndex result = reserve_inst(self);
 
     // Parse the return value if present
@@ -537,6 +537,78 @@ HirIndex ast_lower_return(self_t, AstNode *node) {
 
     return fill_inst(self, result, HIR_RETURN, (HirInstData) {
         .un_op = ret_value,
+    });
+}
+
+HirIndex ast_lower_ireturn(self_t, AstNode *node) {
+    assert(node->tag == AST_I_RETURN);
+    HirIndex result = reserve_inst(self);
+
+    // Parse the return value
+    HirIndex ret_value = ast_lower_expr(self, node->data.lhs);
+
+    return fill_inst(self, result, HIR_BREAK_INLINE, (HirInstData) {
+        .un_op = ret_value,
+    });
+}
+
+HirIndex ast_lower_if(self_t, AstNode *node) {
+    assert(node->tag == AST_IF);
+    HirIndex result = reserve_inst(self);
+
+    // Parse the condition
+    HirIndex cond = ast_lower_expr(self, node->data.lhs);
+
+    // Parse the blocks
+    AstIfData *data = index_list_get_sized(&self->ast->extra_data, AstIfData, node->data.rhs);
+    AstNode *then_node = ast_get_node_tagged(self->ast, data->then_block, AST_BLOCK);
+    HirIndex then_block = ast_lower_block(self, then_node);
+
+    HirIndex else_block = hir_index_empty;
+    if (data->else_block != ast_index_empty) {
+        AstNode *else_node = ast_get_node(self->ast, data->else_block);
+        if (else_node->tag == AST_BLOCK) {
+            else_block = ast_lower_block(self, else_node);
+        } else if (else_node->tag == AST_IF) {
+            else_block = ast_lower_if(self, else_node);
+        } else {
+            assert(false);
+        }
+    }
+
+    // Create data object
+    HirCond cond_data = (HirCond) {
+        .condition = cond,
+        .then_branch = then_block,
+        .else_branch = else_block,
+    };
+    HirIndex extra_index = index_list_add_sized(&self->extra, cond_data);
+
+    return fill_inst(self, result, HIR_COND, (HirInstData) {
+        .extra = extra_index,
+    });
+}
+
+HirIndex ast_lower_while(self_t, AstNode *node) {
+    assert(node->tag == AST_WHILE);
+    HirIndex result = reserve_inst(self);
+
+    // Parse the condition
+    HirIndex cond = ast_lower_expr(self, node->data.lhs);
+
+    // Parse the block
+    AstNode *block_node = ast_get_node_tagged(self->ast, node->data.rhs, AST_BLOCK);
+    HirIndex block = ast_lower_block(self, block_node);
+
+    // Create data object
+    HirLoop loop_data = (HirLoop) {
+        .condition = cond,
+        .body = block,
+    };
+    HirIndex extra_index = index_list_add_sized(&self->extra, loop_data);
+
+    return fill_inst(self, result, HIR_LOOP, (HirInstData) {
+        .extra = extra_index,
     });
 }
 
@@ -570,9 +642,19 @@ HirIndex ast_lower_expr(self_t, AstIndex decl_index) {
             break;
         }
         case AST_RETURN:
-        case AST_I_RETURN:
             result = ast_lower_return(self, node);
             break;
+        case AST_I_RETURN:
+            result = ast_lower_ireturn(self, node);
+            break;
+        case AST_IF: {
+            result = ast_lower_if(self, node);
+            break;
+        }
+        case AST_WHILE: {
+            result = ast_lower_while(self, node);
+            break;
+        }
         default:
             assert(false);
     }

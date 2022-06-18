@@ -11,8 +11,6 @@ typedef uint32_t HirIndex;
 
 /*
  * TODOS
- * - AST_IF
- * - AST_WHILE
  * - AST_DOT (?)
  * - AST_CALL
  * - AST_STRUCT
@@ -48,12 +46,18 @@ typedef enum hir_inst_tag_s {
     // May only contain a single expression, which is treated as the "return" from the block
     // Uses `un_op`
     HIR_BLOCK_INLINE,
+    // Always contains an expresion, uses un_op.
+    HIR_BREAK_INLINE,
     // Contains a number of expressions
     // Uses `extra` pointing to `HirBlock`
     HIR_BLOCK,
-
     // May contain an expression, uses un_op. If zero no expression is present
     HIR_RETURN,
+
+    // `extra` points to HirCond
+    HIR_COND,
+    // `extra` points to HirLoop
+    HIR_LOOP,
 
     // Uses `un_op` pointing to the init expr
     HIR_LET,
@@ -107,6 +111,17 @@ typedef union hir_inst_data_s {
         HirIndex rhs;
     } bin_op;
 } HirInstData;
+
+typedef struct hir_cond_s {
+    HirIndex condition;
+    HirIndex then_branch;
+    HirIndex else_branch;
+} HirCond;
+
+typedef struct hir_loop_s {
+    HirIndex condition;
+    HirIndex body;
+} HirLoop;
 
 typedef struct hir_block_s {
     uint32_t len; // One instruction index follows for each `len`

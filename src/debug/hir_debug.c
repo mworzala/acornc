@@ -158,6 +158,13 @@ static void print_block_inline(self_t, HirIndex index, HirInst *inst, int indent
     print(self, "})\n");
 }
 
+static void print_break_inline(self_t, HirIndex index, HirInst *inst, int indent) {
+    print_inst_if_present(self, inst->data.un_op, indent);
+
+    print_default_header(self, index, indent);
+    print(self, "break_inline(%%%d)\n", inst->data.un_op);
+}
+
 static void print_block(self_t, HirIndex index, HirInst *inst, int indent) {
     print_default_header(self, index, indent);
     print(self, "block(");
@@ -190,6 +197,31 @@ static void print_return(self_t, HirIndex index, HirInst *inst, int indent) {
 
     print_default_header(self, index, indent);
     print(self, "ret(%%%d)\n", inst->data.un_op);
+}
+
+static void print_cond(self_t, HirIndex index, HirInst *inst, int indent) {
+    HirCond *cond = index_list_get_sized(&self->hir->extra, HirCond, inst->data.extra);
+    print_inst(self, cond->condition, indent);
+    print_inst(self, cond->then_branch, indent);
+    print_inst_if_present(self, cond->else_branch, indent);
+
+    print_default_header(self, index, indent);
+    print(self, "cond(%%%d, %%%d, ", cond->condition, cond->then_branch);
+    if (cond->else_branch != hir_index_empty) {
+        print(self, "%%%d", cond->else_branch);
+    } else {
+        print(self, "_");
+    }
+    print(self, ")\n");
+}
+
+static void print_loop(self_t, HirIndex index, HirInst *inst, int indent) {
+    HirLoop *cond = index_list_get_sized(&self->hir->extra, HirLoop, inst->data.extra);
+    print_inst(self, cond->condition, indent);
+    print_inst(self, cond->body, indent);
+
+    print_default_header(self, index, indent);
+    print(self, "loop(%%%d, %%%d)\n", cond->condition, cond->body);
 }
 
 static void print_let(self_t, HirIndex index, HirInst *inst, int indent) {
@@ -258,9 +290,12 @@ static void print_inst(self_t, HirIndex index, int indent) {
         case HIR_OR:            print_binary_generic(self, "or", index, inst, indent); break;
 
         case HIR_BLOCK_INLINE:  print_block_inline(self, index, inst, indent); break;
+        case HIR_BREAK_INLINE:  print_break_inline(self, index, inst, indent); break;
         case HIR_BLOCK:         print_block(self, index, inst, indent); break;
-
         case HIR_RETURN:        print_return(self, index, inst, indent); break;
+
+        case HIR_COND:          print_cond(self, index, inst, indent); break;
+        case HIR_LOOP:          print_loop(self, index, inst, indent); break;
 
         case HIR_LET:           print_let(self, index, inst, indent); break;
 

@@ -23,9 +23,12 @@ char *hir_tag_to_string(HirInstTag tag) {
         case HIR_OR:            return "HIR_OR";
 
         case HIR_BLOCK_INLINE:  return "HIR_BLOCK_INLINE";
+        case HIR_BREAK_INLINE:  return "HIR_BREAK_INLINE";
         case HIR_BLOCK:         return "HIR_BLOCK";
-
         case HIR_RETURN:        return "HIR_RETURN";
+
+        case HIR_COND:          return "HIR_COND";
+        case HIR_LOOP:          return "HIR_LOOP";
 
         case HIR_LET:           return "HIR_LET";
 
