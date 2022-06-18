@@ -14,6 +14,7 @@ Hir ast_lower(Ast *ast) {
     //todo errors
 
     //todo scope
+    lowering.fn_ret_ty = UINT32_MAX;
 
     // Lower root (as a module)
     ast_lower_module(&lowering, ast_index_root);

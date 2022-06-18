@@ -32,6 +32,9 @@ typedef enum hir_inst_tag_s {
     // Uses `extra` pointing to `HirBlock`
     HIR_BLOCK,
 
+    // May contain an expression, uses un_op. If zero no expression is present
+    HIR_RETURN,
+
     // Represents a const declaration within a module
     // pl_op where pl is the name of the const (in the intern table), and op is the value of the const
     // The value can be either a block_inline or a fn_decl

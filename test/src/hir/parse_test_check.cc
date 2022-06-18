@@ -25,6 +25,7 @@ testing::AssertionResult lower_check_generic(LowerFn lower, ParseFn parse, const
     hir_inst_list_init(&lowering.instructions);
     index_list_init(&lowering.extra);
     string_set_init(&lowering.strings);
+    lowering.fn_ret_ty = UINT32_MAX;
 
     HirIndex hir_root = lower(&lowering, ast_root);
     Hir hir = (Hir) {

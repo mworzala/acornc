@@ -16,6 +16,8 @@ char *hir_tag_to_string(HirInstTag tag) {
         case HIR_BLOCK_INLINE:  return "HIR_BLOCK_INLINE";
         case HIR_BLOCK:         return "HIR_BLOCK";
 
+        case HIR_RETURN:        return "HIR_RETURN";
+
         case HIR_CONST_DECL:    return "HIR_CONST_DECL";
         case HIR_FN_DECL:       return "HIR_FN_DECL";
         case HIR_FN_PARAM:      return "HIR_FN_PARAM";

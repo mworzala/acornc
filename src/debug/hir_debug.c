@@ -178,6 +178,13 @@ static void print_block(self_t, HirIndex index, HirInst *inst, int indent) {
     print(self, "})\n");
 }
 
+static void print_return(self_t, HirIndex index, HirInst *inst, int indent) {
+    print_inst_if_present(self, inst->data.un_op, indent);
+
+    print_default_header(self, index, indent);
+    print(self, "ret(%%%d)\n", inst->data.un_op);
+}
+
 static void print_as_type(self_t, HirIndex index, HirInst *inst, int indent) {
     print_inst(self, inst->data.pl_op.operand, indent);
 
@@ -222,6 +229,8 @@ static void print_inst(self_t, HirIndex index, int indent) {
 
         case HIR_BLOCK_INLINE:  print_block_inline(self, index, inst, indent); break;
         case HIR_BLOCK:         print_block(self, index, inst, indent); break;
+
+        case HIR_RETURN:        print_return(self, index, inst, indent); break;
 
         case HIR_AS_TYPE:       print_as_type(self, index, inst, indent); break;
         case HIR_TYPE:          print_type(self, index, inst, indent); break;

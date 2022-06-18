@@ -141,11 +141,16 @@ HirIndex ast_lower_fn_named(self_t, AstNode *node) {
     // Lower the body
     HirIndex body = hir_index_empty;
     if (!(proto->flags & FN_PROTO_FOREIGN)) {
+        // Set the return type for use in `return` statements
+        self->fn_ret_ty = ret_ty;
+
         AstNode *body_node = ast_get_node_tagged(self->ast, node->data.rhs, AST_BLOCK);
         body = ast_lower_block(self, body_node);
         //todo somehow need to insert an as_node here probably?
         //     or alternatively add some state saying we are in a void function so a return statement with
         //     expr is an error (or specify type otherwise which can be used to insert an as_node)
+
+        self->fn_ret_ty = UINT32_MAX;
     }
 
     // Create the function details
@@ -320,6 +325,34 @@ HirIndex ast_lower_block(self_t, AstNode *node) {
     });
 }
 
+HirIndex ast_lower_return(self_t, AstNode *node) {
+    assert(node->tag == AST_RETURN || node->tag == AST_I_RETURN);
+    HirIndex result = reserve_inst(self);
+
+    // Parse the return value if present
+    HirIndex ret_value = hir_index_empty;
+    if (node->data.lhs != ast_index_empty) {
+        ret_value = ast_lower_expr(self, node->data.lhs);
+    }
+
+    assert(self->fn_ret_ty != UINT32_MAX); // Ensure we are actually in a block
+    if (self->fn_ret_ty == 0) { // Void return type
+        assert(ret_value == hir_index_empty);
+    } else {
+        // Insert as_type node
+        ret_value = add_inst(self, HIR_AS_TYPE, (HirInstData) {
+            .pl_op = {
+                .payload = self->fn_ret_ty,
+                .operand = ret_value,
+            }
+        });
+    }
+
+    return fill_inst(self, result, HIR_RETURN, (HirInstData) {
+        .un_op = ret_value,
+    });
+}
+
 HirIndex ast_lower_expr(self_t, AstIndex decl_index) {
     AstNode *node = ast_get_node(self->ast, decl_index);
 
@@ -345,6 +378,10 @@ HirIndex ast_lower_expr(self_t, AstIndex decl_index) {
             result = ast_lower_block(self, node);
             break;
         }
+        case AST_RETURN:
+        case AST_I_RETURN:
+            result = ast_lower_return(self, node);
+            break;
         default:
             assert(false);
     }

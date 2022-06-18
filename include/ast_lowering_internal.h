@@ -21,6 +21,10 @@ typedef struct ast_lowering_s {
 
     // Intermediate state
     //todo scope
+    // If 0, the current function return type is void
+    // If UINT32_MAX, not inside a function
+    // Otherwise, the index contains the return type
+    HirIndex fn_ret_ty;
 } AstLowering;
 
 #define self_t AstLowering *self
