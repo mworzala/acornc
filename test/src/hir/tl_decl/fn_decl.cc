@@ -26,8 +26,8 @@ fn foo(x: i32, y: i32) {}
 )#";
     auto expected = R"#(
 foo: %1 = fn(params = [
-  x: i32
-  y: i32
+  x: %2 = param(i32)
+  y: %4 = param(i32)
 ], %6 = block())
 )#";
     EXPECT_TL_DECL(input, expected);

@@ -7,16 +7,27 @@ char *hir_tag_to_string(HirInstTag tag) {
         case HIR_INT:           return "HIR_INT";
         case HIR_STRING:        return "HIR_STRING";
         case HIR_BOOL:          return "HIR_BOOL";
+        case HIR_REF:           return "HIR_REF";
 
         case HIR_ADD:           return "HIR_ADD";
         case HIR_SUB:           return "HIR_SUB";
         case HIR_MUL:           return "HIR_MUL";
         case HIR_DIV:           return "HIR_DIV";
+        case HIR_CMP_EQ:        return "HIR_CMP_EQ";
+        case HIR_CMP_NE:        return "HIR_CMP_NE";
+        case HIR_CMP_LT:        return "HIR_CMP_LT";
+        case HIR_CMP_LE:        return "HIR_CMP_LE";
+        case HIR_CMP_GT:        return "HIR_CMP_GT";
+        case HIR_CMP_GE:        return "HIR_CMP_GE";
+        case HIR_AND:           return "HIR_AND";
+        case HIR_OR:            return "HIR_OR";
 
         case HIR_BLOCK_INLINE:  return "HIR_BLOCK_INLINE";
         case HIR_BLOCK:         return "HIR_BLOCK";
 
         case HIR_RETURN:        return "HIR_RETURN";
+
+        case HIR_LET:           return "HIR_LET";
 
         case HIR_CONST_DECL:    return "HIR_CONST_DECL";
         case HIR_FN_DECL:       return "HIR_FN_DECL";

@@ -9,6 +9,16 @@ typedef uint32_t HirIndex;
 
 #define hir_index_empty (0)
 
+/*
+ * TODOS
+ * - AST_IF
+ * - AST_WHILE
+ * - AST_DOT (?)
+ * - AST_CALL
+ * - AST_STRUCT
+ * - AST_ENUM
+ */
+
 typedef enum hir_inst_tag_s {
     HIR_RESERVED, // Does not represent any content, just for placeholding.
 
@@ -18,12 +28,22 @@ typedef enum hir_inst_tag_s {
     HIR_STRING,
     // Uses `int_value`, either 1 or 0
     HIR_BOOL,
+    // Uses `un_op` referencing the index of the referenced element (let, fn param, etc)
+    HIR_REF,
 
     // All use `bin_op`
     HIR_ADD,
     HIR_SUB,
     HIR_MUL,
     HIR_DIV,
+    HIR_CMP_EQ,
+    HIR_CMP_NE,
+    HIR_CMP_LT,
+    HIR_CMP_LE,
+    HIR_CMP_GT,
+    HIR_CMP_GE,
+    HIR_AND,
+    HIR_OR,
 
     // May only contain a single expression, which is treated as the "return" from the block
     // Uses `un_op`
@@ -34,6 +54,9 @@ typedef enum hir_inst_tag_s {
 
     // May contain an expression, uses un_op. If zero no expression is present
     HIR_RETURN,
+
+    // Uses `un_op` pointing to the init expr
+    HIR_LET,
 
     // Represents a const declaration within a module
     // pl_op where pl is the name of the const (in the intern table), and op is the value of the const

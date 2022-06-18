@@ -19,13 +19,8 @@ testing::AssertionResult lower_check_generic(LowerFn lower, ParseFn parse, const
     };
 
     // Lower the AST to HIR.
-    //todo write AstLowering init/free fn
     AstLowering lowering;
-    lowering.ast = &ast;
-    hir_inst_list_init(&lowering.instructions);
-    index_list_init(&lowering.extra);
-    string_set_init(&lowering.strings);
-    lowering.fn_ret_ty = UINT32_MAX;
+    ast_lowering_init(&lowering, &ast);
 
     HirIndex hir_root = lower(&lowering, ast_root);
     Hir hir = (Hir) {
@@ -33,6 +28,8 @@ testing::AssertionResult lower_check_generic(LowerFn lower, ParseFn parse, const
         .extra = lowering.extra,
         .strings = lowering.strings,
     };
+
+    ast_lowering_free(&lowering);
 
     // Print the HIR to string
     char *actual = hir_debug_print(&hir, hir_root);

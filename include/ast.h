@@ -71,8 +71,8 @@ typedef enum ast_tag_s {
 
     // main_token:  The token representing the `let` keyword
     //              The identifier always follows this token
-    // lhs:         The type expression, if present todo this is never present for now.
-    // rhs:         The initializer expression, if present
+    // lhs:         The type expression, if present
+    // rhs:         The initializer expression, if present todo this is always present for now.
     AST_LET,
 
     // Top level decls

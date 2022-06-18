@@ -16,7 +16,8 @@ extern "C" {
 #define EXPECT_TL_DECL(source, expected) \
     EXPECT_PRED4(lower_check_generic, ast_lower_tl_decl, int_top_level_decl, source, (expected) + 1)
 
-// todo stmt
+#define EXPECT_STMT(source, expected) \
+    EXPECT_PRED4(lower_check_generic, ast_lower_stmt, int_stmt, source, (expected) + 1)
 
 #define EXPECT_EXPR(source, expected) \
     EXPECT_PRED4(lower_check_generic, ast_lower_expr, int_expr, source, (expected) + 1)

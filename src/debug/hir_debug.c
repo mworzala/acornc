@@ -109,8 +109,10 @@ static void print_fn_param(self_t, HirIndex index, HirInst *inst, int indent) {
     print_string(self, inst->data.pl_op.payload, false);
     print(self, ": ");
 
+    print_default_header(self, index, 0);
+    print(self, "param(");
     print_inst(self, inst->data.pl_op.operand, 0);
-    print(self, "\n");
+    print(self, ")\n");
 }
 
 static void print_int(self_t, HirIndex index, HirInst *inst, int indent) {
@@ -130,6 +132,11 @@ static void print_bool(self_t, HirIndex index, HirInst *inst, int indent) {
     print(self, "bool(");
     print(self, inst->data.int_value ? "true" : "false");
     print(self, ")\n");
+}
+
+static void print_ref(self_t, HirIndex index, HirInst *inst, int indent) {
+    print_default_header(self, index, indent);
+    print(self, "ref(%%%d)\n", inst->data.un_op);
 }
 
 static void print_binary_generic(self_t, char *name, HirIndex index, HirInst *inst, int indent) {
@@ -185,6 +192,20 @@ static void print_return(self_t, HirIndex index, HirInst *inst, int indent) {
     print(self, "ret(%%%d)\n", inst->data.un_op);
 }
 
+static void print_let(self_t, HirIndex index, HirInst *inst, int indent) {
+    // Print init_expr, always required for now.
+    print_inst(self, inst->data.pl_op.operand, indent);
+
+    print_default_header(self, index, indent);
+    print(self, "let(%%%d)", inst->data.pl_op.operand);
+
+    // Print debug name
+    print(self, " // ");
+    print_string(self, inst->data.pl_op.payload, false);
+
+    print(self, "\n");
+}
+
 static void print_as_type(self_t, HirIndex index, HirInst *inst, int indent) {
     print_inst(self, inst->data.pl_op.operand, indent);
 
@@ -221,16 +242,27 @@ static void print_inst(self_t, HirIndex index, int indent) {
         case HIR_INT:           print_int(self, index, inst, indent); break;
         case HIR_STRING:        print_string_inst(self, index, inst, indent); break;
         case HIR_BOOL:          print_bool(self, index, inst, indent); break;
+        case HIR_REF:           print_ref(self, index, inst, indent); break;
 
         case HIR_ADD:           print_binary_generic(self, "add", index, inst, indent); break;
         case HIR_SUB:           print_binary_generic(self, "sub", index, inst, indent); break;
         case HIR_MUL:           print_binary_generic(self, "mul", index, inst, indent); break;
         case HIR_DIV:           print_binary_generic(self, "div", index, inst, indent); break;
+        case HIR_CMP_EQ:        print_binary_generic(self, "cmp_eq", index, inst, indent); break;
+        case HIR_CMP_NE:        print_binary_generic(self, "cmp_ne", index, inst, indent); break;
+        case HIR_CMP_LT:        print_binary_generic(self, "cmp_lt", index, inst, indent); break;
+        case HIR_CMP_LE:        print_binary_generic(self, "cmp_le", index, inst, indent); break;
+        case HIR_CMP_GT:        print_binary_generic(self, "cmp_gt", index, inst, indent); break;
+        case HIR_CMP_GE:        print_binary_generic(self, "cmp_ge", index, inst, indent); break;
+        case HIR_AND:           print_binary_generic(self, "and", index, inst, indent); break;
+        case HIR_OR:            print_binary_generic(self, "or", index, inst, indent); break;
 
         case HIR_BLOCK_INLINE:  print_block_inline(self, index, inst, indent); break;
         case HIR_BLOCK:         print_block(self, index, inst, indent); break;
 
         case HIR_RETURN:        print_return(self, index, inst, indent); break;
+
+        case HIR_LET:           print_let(self, index, inst, indent); break;
 
         case HIR_AS_TYPE:       print_as_type(self, index, inst, indent); break;
         case HIR_TYPE:          print_type(self, index, inst, indent); break;
