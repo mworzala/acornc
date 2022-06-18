@@ -35,6 +35,11 @@ static void run_file(char *path) {
         exit(1);
     }
 
+    bool lowered_ast = module_lower_ast(&module);
+    if (!lowered_ast) {
+        fprintf(stderr, "Could not lower ast\n");
+    }
+
     bool lowered = module_lower_main(&module);
     if (!lowered) {
         fprintf(stderr, "Could not lower main for file: %s\n", path);

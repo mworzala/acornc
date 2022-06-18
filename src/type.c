@@ -2,6 +2,7 @@
 #include "type.h"
 
 #include "string.h"
+#include "hir.h"
 
 char *type_tag_to_string(TypeTag tag) {
     switch (tag) {
@@ -131,4 +132,20 @@ Type type_from_name(char *type_name) {
     assert(false);
 
 #undef is_name
+}
+
+
+
+Type type_from_hir_inst(Hir *hir, HirIndex index) {
+    HirInst *type_inst = hir_get_inst_tagged(hir, index, HIR_TYPE);
+
+    if (type_inst->data.ty.is_ptr) {
+        ExtendedType *ext_ty = malloc(sizeof(ExtendedType));
+        ext_ty->tag = TY_PTR;
+        ext_ty->data.inner_type = type_from_hir_inst(hir, type_inst->data.ty.inner);
+    }
+
+    // Name is borrowed from the string set
+    char *name = string_set_get(&hir->strings, type_inst->data.ty.inner);
+    return type_from_name(name);
 }

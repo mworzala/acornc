@@ -6,6 +6,7 @@
 #include "array_util.h"
 #include "parser.h"
 #include "ast_to_mir.h"
+#include "ast_lowering.h"
 
 // SECTION: Declaration
 
@@ -91,6 +92,7 @@ void module_init(self_t, char *path) {
     self->name = strrchr(path, '/') + 1;
 
     self->ast = NULL;
+    self->hir = NULL;
     decl_list_init(&self->decls);
     self->codegen = NULL;
 }
@@ -164,8 +166,76 @@ bool module_parse(self_t) {
     return true;
 }
 
-bool module_lower_main(self_t) {
+static Decl decl_from_hir(self_t, HirIndex index) {
+    HirInst *inst = hir_get_inst(self->hir, index);
+
+    if (inst->tag == HIR_CONST_DECL) {
+        StringKey name = inst->data.pl_op.payload;
+        HirInst *fn_decl = hir_get_inst(self->hir, inst->data.pl_op.operand);
+        if (fn_decl->tag != HIR_FN_DECL)
+            assert(false);
+
+        HirFnDecl *fn_data = index_list_get_sized(&self->hir->extra, HirFnDecl, fn_decl->data.extra);
+        HirIndex param_start = fn_decl->data.extra + (sizeof(HirFnDecl) / sizeof(HirInst));
+
+        Type *param_types = malloc(sizeof(Type) * fn_data->param_len);
+        for (size_t i = 0; i < fn_data->param_len; i++) {
+            param_types[i] = type_from_hir_inst(self->hir, self->hir->extra.data[param_start + i]);
+        }
+
+        DeclFnData *decl_fn = malloc(sizeof(DeclFnData));
+        *decl_fn = (DeclFnData) {
+            .ret_type = type_from_hir_inst(self->hir, fn_data->ret_ty),
+            .param_count = fn_data->param_len,
+            .param_types = param_types,
+        };
+
+        return (Decl) {
+            name,
+            (fn_data->flags & HIR_FN_DECL_FLAGS_FOREIGN) ? DeclStateGenerated : DeclStateUnused,
+            .data = decl_fn,
+            .mir = NULL,
+        };
+    } else {
+        assert(false);
+    }
+}
+
+static void extract_decls_from_hir(self_t) {
+    HirInst *module_inst = hir_get_inst_tagged(self->hir, 0, HIR_MODULE);
+    HirModule *module_data = index_list_get_sized(&self->hir->extra, HirModule, module_inst->data.extra);
+    assert(module_data != NULL);
+
+    HirIndex decl_start = module_inst->data.extra + (sizeof(HirModule) / sizeof(HirIndex));
+    for (HirIndex i = 0; i < module_data->decl_count; i++) {
+        HirIndex decl_index = decl_start + i;
+        Decl decl = decl_from_hir(self, decl_index);
+        decl_list_add(&self->decls, decl);
+    }
+}
+
+bool module_lower_ast(self_t) {
     assert(self->ast != NULL);
+    assert(self->hir == NULL);
+
+    self->hir = malloc(sizeof(Hir));
+    *self->hir = ast_lower(self->ast);
+
+    //todo check for errors
+
+    // Extract Decls from HIR
+    extract_decls_from_hir(self);
+
+    // We are now done with AST
+//    ast_free(self->ast);
+    free(self->ast);
+    self->ast = NULL;
+
+    return true;
+}
+
+bool module_lower_main(self_t) {
+    assert(self->hir != NULL);
 
     // Extract declarations from module
     AstNode *root_node = ast_get_node_tagged(self->ast, ast_index_root, AST_MODULE);

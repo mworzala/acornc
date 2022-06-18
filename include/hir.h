@@ -11,7 +11,6 @@ typedef uint32_t HirIndex;
 
 /*
  * TODOS
- * - AST_CALL
  * - AST_STRUCT
  * - AST_ENUM
  * - AST_DOT (?)
@@ -75,7 +74,7 @@ typedef enum hir_inst_tag_s {
     HIR_FN_PARAM,
 
     // Represents a module (file)
-    //todo how is this represented?
+    // `extra` pointing to a `HirModule`
     HIR_MODULE,
 
     // Ensures the inner expression matches the given type.
@@ -114,6 +113,10 @@ typedef union hir_inst_data_s {
         HirIndex rhs;
     } bin_op;
 } HirInstData;
+
+typedef struct hir_module_s {
+    uint32_t decl_count; // An index for each argument follows
+} HirModule;
 
 typedef struct hir_call_s {
     HirIndex target;

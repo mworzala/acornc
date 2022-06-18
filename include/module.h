@@ -4,6 +4,8 @@
 #include "common.h"
 #include "ast.h"
 #include "mir.h"
+#include "hir.h"
+#include "interner.h"
 #include "codegen.h"
 
 // SECTION: Declaration
@@ -16,27 +18,53 @@ typedef enum decl_state_s {
     DeclStateGenerated,
 } DeclState;
 
+typedef enum decl_type_s {
+    DECL_TYPE_FN,
+    DECL_TYPE_STRUCT,
+    DECL_TYPE_ENUM,
+} DeclType;
+
+typedef union decl_data_s {
+    struct decl_fn_data_s *fn_data;
+} DeclData;
+
 typedef struct decl_s {
-    char *name;
+    StringKey name;
     DeclState state;
 
-    AstIndex ast_index;
-
-    // Only present after lowering
-    Mir *mir;
-    // May be present before lowering
-    //todo not good to bring llvm into this struct, will eventually have a Map<decl index, LLVMValueRef>
-    LLVMValueRef llvm_value;
+    DeclData data;
+    Mir *mir; // Only present after lowering
 } Decl;
 
-#define self_t Decl *self
+typedef struct decl_fn_data_s {
+    Type ret_type;
+    uint32_t param_count;
+    Type *param_types;
+} DeclFnData;
 
-void decl_init_from_ast(self_t, Ast *ast, AstIndex ast_index);
-void decl_free(self_t);
 
-Mir *decl_get_mir_in_module(self_t, Module *module);
 
-#undef self_t
+//typedef struct decl_s {
+//    char *name;
+//    DeclState state;
+//
+//    AstIndex ast_index;
+//
+//    // Only present after lowering
+//    Mir *mir;
+//    // May be present before lowering
+//    //todo not good to bring llvm into this struct, will eventually have a Map<decl index, LLVMValueRef>
+//    LLVMValueRef llvm_value;
+//} Decl;
+
+//#define self_t Decl *self
+//
+//void decl_init_from_ast(self_t, Ast *ast, AstIndex ast_index);
+//void decl_free(self_t);
+//
+//Mir *decl_get_mir_in_module(self_t, Module *module);
+//
+//#undef self_t
 
 typedef struct decl_list_s {
     uint32_t size;
@@ -60,13 +88,15 @@ typedef struct module_s {
     char *path;
     char *name;
 
+    // Filled during HIR>>MIR lowering
+    DeclList decls;
+
     // Not always present
     Ast *ast;
-    // Filled late
-    DeclList decls;
+    // Not always present
+    Hir *hir;
     // Only present once codegen has started
     Codegen *codegen;
-
 } Module;
 
 #define self_t Module *self
@@ -75,6 +105,7 @@ void module_init(self_t, char *path);
 void module_free(self_t);
 
 bool module_parse(self_t);
+bool module_lower_ast(self_t);
 bool module_lower_main(self_t);
 bool module_emit_llvm(self_t);
 

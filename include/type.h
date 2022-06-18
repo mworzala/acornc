@@ -2,6 +2,7 @@
 #define CONFIG_TYPE_H
 
 #include "common.h"
+#include "hir.h"
 
 typedef enum type_tag_s {
     // Placeholder type, may not be present in any MIR node.
@@ -74,5 +75,10 @@ typedef struct extended_type_s {
         uint16_t bits;
     } data;
 } ExtendedType;
+
+
+
+
+Type type_from_hir_inst(Hir *hir, HirIndex index);
 
 #endif //CONFIG_TYPE_H
