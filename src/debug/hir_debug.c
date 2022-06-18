@@ -224,6 +224,26 @@ static void print_loop(self_t, HirIndex index, HirInst *inst, int indent) {
     print(self, "loop(%%%d, %%%d)\n", cond->condition, cond->body);
 }
 
+static void print_call(self_t, HirIndex index, HirInst *inst, int indent) {
+    HirCall *call = index_list_get_sized(&self->hir->extra, HirCall, inst->data.extra);
+    print_inst(self, call->target, indent);
+    HirIndex arg_start = inst->data.extra + (sizeof(HirCall) / sizeof(HirIndex));
+    for (size_t i = 0; i < call->arg_count; i++) {
+        HirIndex arg_index = get_extra(self, arg_start + i);
+        print_inst(self, arg_index, indent);
+    }
+
+    print_default_header(self, index, indent);
+    print(self, "call(%%%d, args = [", call->target);
+    for (size_t i = 0; i < call->arg_count; i++) {
+        HirIndex arg_index = get_extra(self, arg_start + i);
+        print(self, "%%%d", arg_index);
+        if (i < call->arg_count - 1)
+            print(self, ", ");
+    }
+    print(self, "])\n");
+}
+
 static void print_let(self_t, HirIndex index, HirInst *inst, int indent) {
     // Print init_expr, always required for now.
     print_inst(self, inst->data.pl_op.operand, indent);
@@ -296,6 +316,8 @@ static void print_inst(self_t, HirIndex index, int indent) {
 
         case HIR_COND:          print_cond(self, index, inst, indent); break;
         case HIR_LOOP:          print_loop(self, index, inst, indent); break;
+
+        case HIR_CALL:          print_call(self, index, inst, indent); break;
 
         case HIR_LET:           print_let(self, index, inst, indent); break;
 

@@ -11,10 +11,10 @@ typedef uint32_t HirIndex;
 
 /*
  * TODOS
- * - AST_DOT (?)
  * - AST_CALL
  * - AST_STRUCT
  * - AST_ENUM
+ * - AST_DOT (?)
  */
 
 typedef enum hir_inst_tag_s {
@@ -58,6 +58,9 @@ typedef enum hir_inst_tag_s {
     HIR_COND,
     // `extra` points to HirLoop
     HIR_LOOP,
+
+    // `extra` points to HirCall
+    HIR_CALL,
 
     // Uses `un_op` pointing to the init expr
     HIR_LET,
@@ -111,6 +114,11 @@ typedef union hir_inst_data_s {
         HirIndex rhs;
     } bin_op;
 } HirInstData;
+
+typedef struct hir_call_s {
+    HirIndex target;
+    uint32_t arg_count; // An index for each argument follows
+} HirCall;
 
 typedef struct hir_cond_s {
     HirIndex condition;

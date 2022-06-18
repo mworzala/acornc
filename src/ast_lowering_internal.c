@@ -612,6 +612,40 @@ HirIndex ast_lower_while(self_t, AstNode *node) {
     });
 }
 
+HirIndex ast_lower_call(self_t, AstNode *node) {
+    assert(node->tag == AST_CALL);
+    AstCallData *data = index_list_get_sized(&self->ast->extra_data, AstCallData, node->data.rhs);
+    HirIndex result = reserve_inst(self);
+
+    // Parse the callee
+    HirIndex callee = ast_lower_expr(self, node->data.lhs);
+
+    // Parse the arguments
+    IndexList args;
+    index_list_init(&args);
+    if (data->arg_start != ast_index_empty) {
+        for (AstIndex arg_idx = data->arg_start; arg_idx <= data->arg_end; arg_idx++) {
+            AstIndex arg_node = self->ast->extra_data.data[arg_idx];
+            HirIndex arg = ast_lower_expr(self, arg_node);
+            index_list_add(&args, arg);
+        }
+    }
+
+    // Create the data object
+    HirCall call_data = (HirCall) {
+        .target = callee,
+        .arg_count = args.size,
+    };
+    HirIndex extra_index = index_list_add_sized(&self->extra, call_data);
+    for (size_t i = 0; i < args.size; i++)
+        add_extra(self, args.data[i]);
+    index_list_free(&args);
+
+    return fill_inst(self, result, HIR_CALL, (HirInstData) {
+        .extra = extra_index,
+    });
+}
+
 HirIndex ast_lower_expr(self_t, AstIndex decl_index) {
     AstNode *node = ast_get_node(self->ast, decl_index);
 
@@ -653,6 +687,10 @@ HirIndex ast_lower_expr(self_t, AstIndex decl_index) {
         }
         case AST_WHILE: {
             result = ast_lower_while(self, node);
+            break;
+        }
+        case AST_CALL: {
+            result = ast_lower_call(self, node);
             break;
         }
         default:

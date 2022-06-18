@@ -30,6 +30,8 @@ char *hir_tag_to_string(HirInstTag tag) {
         case HIR_COND:          return "HIR_COND";
         case HIR_LOOP:          return "HIR_LOOP";
 
+        case HIR_CALL:          return "HIR_CALL";
+
         case HIR_LET:           return "HIR_LET";
 
         case HIR_CONST_DECL:    return "HIR_CONST_DECL";
